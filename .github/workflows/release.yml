@@ -1,0 +1,72 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+
+env:
+  VERSION: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build the binary for the current OS
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            GOOS=windows GOARCH=amd64 go build -ldflags "-w -s" -o "tooka-${{ matrix.os }}-${{ env.VERSION }}.exe"
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            GOOS=darwin GOARCH=amd64 go build -ldflags "-w -s" -o "tooka-${{ matrix.os }}-${{ env.VERSION }}"
+          else
+            GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o "tooka-${{ matrix.os }}-${{ env.VERSION }}"
+          fi
+
+
+      - name: Upload the binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: tooka-${{ matrix.os }}-${{ env.VERSION }}
+          path: |
+            ${{ matrix.os == 'windows-latest' && format('tooka-{0}-{1}.exe', matrix.os, env.VERSION) || format('tooka-{0}-{1}', matrix.os, env.VERSION) }}
+
+  upload_to_release:
+    name: Upload to GitHub release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+#      - name: Create attestation for all builds
+#        uses: actions/attest-build-provenance@v2
+#        with:
+#          subject-path: artifacts/tooka-*
+
+      - name: Create a GitHub Release (Draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          name: Tooka ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          files: artifacts/tooka-*

@@ -1,0 +1,30 @@
+rules:
+  - id: "img-date-001"
+    name: "Organize Images by Date"
+    enabled: true
+
+    match:
+      extensions: [".jpg", ".jpeg", ".png"]
+      mime_type: "image/*"
+      pattern: "IMG_*"
+      metadata:
+        exif_date: true
+        fields:
+          - key: "EXIF:Model"
+            pattern: "iPhone*"
+      conditions:
+        older_than_days: 7
+        size_greater_than_kb: 100
+        filename_regex: "^IMG_.*"
+
+    actions:
+      - type: move
+        destination: "~/Pictures/Organized"
+        path_template:
+          source: "exif"
+          format: "{year}/{month}/{day}"
+        rename_template: "{year}-{month}_{filename}.{ext}"
+        create_dirs: true
+
+    flags:
+      dry_run: false
