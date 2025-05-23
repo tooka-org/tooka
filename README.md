@@ -296,3 +296,11 @@ tooka export --id <rule_id> --output <path.yaml>
 
 Tooka is a flexible, user-driven file sorter designed to help users regain control over their digital clutter via manual, rule-based sorting.
 With a focus on usability and extensibility, it balances power and simplicity in a clean CLI interface, perfect for Linux and Windows users.
+
+
+---
+
+# CONSIDER
+
+- Terminal Colors: https://github.com/console-rs/indicatif
+- Terminal Design: https://github.com/crossterm-rs/crossterm
