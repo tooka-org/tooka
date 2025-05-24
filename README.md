@@ -1,70 +1,88 @@
-#  Tooka
+# Tooka
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="max-width: 600px;">
 </div>
 
+A fast, rule-based CLI tool for organizing your files.
+
 > [!WARNING]
-> Tooka lacks tests and is therefore still in early beta. Do not use in production!
-
-## 📦 Introduction
-
-**Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, and manage files based on custom rules defined in YAML format.
-
-You write rules. Tooka sorts files.
-
-With a simple CLI, Tooka enables automated file handling through matching criteria like filename, extension, metadata, and file age.
+> Tooka lacks tests and is currently in early beta. Do **not** use it in production environments!
 
 ---
 
-## ⚙️ Features
+## Introduction
 
-* Define rules using YAML
-* Match by file attributes, EXIF metadata, name patterns, and conditions
-* Perform actions like move, copy, compress, delete, skip, and rename
-* Dry-run mode for testing
-* Works across Windows, macOS, and Linux
-* Shell autocompletions
+**Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
+
+You write the rules. Tooka does the sorting.
+
+With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.
 
 ---
 
-## 🚀 Getting Started
+## Features
+
+* Define custom file rules in YAML
+* Match by attributes like name, extension, size, metadata, and age
+* Perform actions: move, copy, rename, delete, compress, skip
+* Dry-run mode for safe previews
+* Cross-platform: Windows, macOS, and Linux
+* Shell autocompletion support
+
+---
+
+## Getting Started
 
 1. **Download Tooka** from the [releases page](https://github.com/Benji377/tooka/releases)
-2. Run `tooka` in your terminal to confirm it's working
-3. Create or import rules with `tooka add` or by placing YAML files in the rules directory:
+2. Run `tooka` in your terminal to verify it's installed
+3. Add rules via `tooka add` or place `.yaml` files in the rules directory:
 
    * **Linux**: `/home/<user>/.local/share/tooka`
    * **Windows**: `C:\Users\<user>\AppData\Roaming\github.benji377\tooka\data`
    * **macOS**: `/Users/<user>/Library/Application Support/io.github.benji377.tooka`
-4. Run `tooka sort` to apply your rules to a folder
+
+4. Run a dry-run to test your rules:
+
+   ```bash
+   tooka sort --dry-run ~/Downloads
+    ```
 
 > [!IMPORTANT]
-> **Always perform a dry-run first** using `tooka sort --dry-run` to review what files will be moved, renamed, or deleted. Tooka is not responsible for lost or changed files. Proceed carefully!
+> **Always run a dry-run first** to see what files would be moved, renamed, or deleted. Tooka **cannot recover lost or changed files**. Proceed carefully!
 
+5. Once verified, run Tooka normally:
 
-5. Explore all options with `tooka --help`
+   ```bash
+   tooka sort ~/Downloads
+   ```
 
----
+6. Explore all options with:
 
-## 🛠️ CLI Commands
-
-| Command               | Description                                 |
-| --------------------- | ------------------------------------------- |
-| `add <YAML-file>`     | Import a rule file                          |
-| `remove <ID>`         | Remove a rule by its ID                     |
-| `toggle <ID>`         | Enable/disable a rule                       |
-| `list`                | List all available rules                    |
-| `export <ID> <path>`  | Export a rule to file                       |
-| `sort [OPTIONS]`      | Apply rules to sort files                   |
-| `config [OPTIONS]`    | Show or edit configuration                  |
-| `completions <Shell>` | Generate shell completions (bash, zsh, etc) |
+   ```bash
+   tooka --help
+   ```
 
 ---
 
-## 🧠 Rule Structure
+## CLI Commands
 
-Here’s an example rule:
+| Command               | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `add <YAML-file>`     | Import a rule file                                 |
+| `remove <ID>`         | Remove a rule by its ID                            |
+| `toggle <ID>`         | Enable or disable a rule                           |
+| `list`                | List all available rules                           |
+| `export <ID> <path>`  | Export a rule to file                              |
+| `sort [OPTIONS]`      | Apply active rules to sort files                   |
+| `config [OPTIONS]`    | View or modify Tooka’s configuration               |
+| `completions <shell>` | Generate autocompletions for bash, zsh, fish, etc. |
+
+---
+
+## Rule Structure
+
+Here's an example rule:
 
 ```yaml
 rules:
@@ -75,7 +93,7 @@ rules:
     match:
       extensions: [".jpg", ".jpeg", ".png"]
       mime_type: "image/*"
-      pattern: "IMG_*" # simple prefix match
+      pattern: "IMG_*"
       metadata:
         exif_date: true
         fields:
@@ -96,64 +114,95 @@ rules:
         create_dirs: true
 ```
 
-### 🔍 Match Fields
+---
 
-| Field                | Description                                                              |
-| -------------------- | ------------------------------------------------------------------------ |
-| `extensions`         | Match by file extension (e.g., `.jpg`)                                   |
-| `mime_type`          | Match MIME types like `image/*`                                          |
-| `pattern`            | Simple prefix string matching on filenames (e.g., `IMG_`)                |
-| `filename_regex`     | Full regular expression for advanced filename matching                   |
-| `metadata.exif_date` | Use EXIF date for sorting                                                |
-| `metadata.fields`    | Match specific metadata fields using `key` + `pattern`                   |
-| `conditions`         | Logical conditions like file age, size, owner, symlink status, and regex |
+### Match Fields
 
-
-### 🪄 Matching Logic
-
-* The **first** matching rule is applied.
-* If no rule matches, the file is left untouched.
-* Use `enabled: false` to temporarily disable a rule.
+| Field                | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| `extensions`         | File extension filter (e.g., `.jpg`, `.pdf`)                |
+| `mime_type`          | Match MIME types like `image/*`                             |
+| `pattern`            | Simple filename prefix matching (e.g., `IMG_`)              |
+| `filename_regex`     | Advanced regex pattern matching on filenames                |
+| `metadata.exif_date` | Use EXIF date (e.g., for images)                            |
+| `metadata.fields`    | Match EXIF or custom metadata by key/pattern                |
+| `conditions`         | Add constraints: age, size, symlink status, ownership, etc. |
 
 ---
 
-## ✏️ Actions
+### Matching Logic
 
-| Type           | Description                    |
-| -------------- | ------------------------------ |
-| `move`, `copy` | Relocate or duplicate the file |
-| `rename`       | Change the filename            |
-| `compress`     | Compress the file (GZIP)       |
-| `delete`       | Delete the file                |
-| `skip`         | Skip file without action       |
+* The **first** matching rule is applied
+* If no rule matches, the file is left untouched
+* Use `enabled: false` to temporarily disable rules without deleting them
 
-Each action can be enhanced with:
+---
+
+## Actions
+
+| Action Type    | Description                         |
+| -------------- | ----------------------------------- |
+| `move`, `copy` | Move or duplicate the file          |
+| `rename`       | Rename file using a template        |
+| `compress`     | Compress the file using GZIP        |
+| `delete`       | Delete the file                     |
+| `skip`         | Skip file without taking any action |
+
+Optional fields:
 
 * `destination`: Target directory
-* `path_template`: Dynamic folder structure (e.g., by EXIF date)
+* `path_template`: Dynamic folder structure, e.g., based on date
 * `rename_template`: Use variables like `{filename}`, `{year}`, `{ext}`
-* `create_dirs`: Create missing directories if needed
+* `create_dirs`: Automatically create missing folders
 
 ---
 
 ## 🔧 Configuration
 
-To view or edit Tooka’s configuration, run:
+Tooka uses a YAML configuration file stored in your system’s configuration directory. You can manage it entirely via the CLI:
 
 ```bash
 tooka config --help
 ```
 
-You can set paths for rules, default folders, and more.
+### What You Can Configure
+
+The configuration file includes:
+
+| Field                | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `config_version`     | Internal version tracking for config migrations      |
+| `source_folder`      | Default folder Tooka uses to sort files              |
+| `rules_file`         | Path to the active YAML rule set                     |
+| `logs_folder`        | Directory where Tooka writes log files               |
+| `first_run_complete` | Tracks whether Tooka's first-run setup has completed |
+
+These values are saved automatically when running Tooka. You can also manage them manually or programmatically using the API.
+
+> 💡 Default values are initialized based on platform-specific directories like `~/Downloads` and system data paths (via `ProjectDirs` and `UserDirs`).
 
 ---
 
-## 📄 License
+### Config File Behavior
 
-Tooka is open source and licensed under the [GPLv3 License](LICENSE).
+Tooka handles config loading and saving automatically:
+
+* On first run, if no config file exists, a default is created and saved
+* All config values are serialized/deserialized as YAML
+* Config location:
+
+  * **Linux**: `~/.config/github.benji377/tooka/config.yaml`
+  * **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
+  * **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
 
 ---
 
-## 🙋 Support
+## License
 
-For bugs, features, or discussions, visit the [GitHub Discussions](https://github.com/Benji377/tooka/discussions).
+Tooka is open source and available under the [GPLv3 License](LICENSE).
+
+---
+
+## Support
+
+Have a bug, idea, or question? Join the conversation in [GitHub Discussions](https://github.com/Benji377/tooka/discussions).
