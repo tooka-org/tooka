@@ -28,6 +28,7 @@ enum Commands {
     List(commands::list::ListArgs),
     Remove(commands::remove::RemoveArgs),
     Sort(commands::sort::SortArgs),
+    Toggle(commands::toggle::ToggleArgs),
     Completions(commands::completions::CompletionsArgs)
 }
 
@@ -50,6 +51,7 @@ fn main() {
         Commands::List(args) => commands::list::run(args),
         Commands::Remove(args) => commands::remove::run(args),
         Commands::Sort(args) => commands::sort::run(args),
+        Commands::Toggle(args) => commands::toggle::run(args),
         Commands::Completions(args) => commands::completions::run(args),
     }
 }

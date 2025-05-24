@@ -12,8 +12,6 @@ use std::{
 
 use crate::globals::{MAIN_LOGGER_HANDLE, OPS_LOGGER_HANDLE};
 
-// Static global logger handles
-
 
 /// Initialize the main logger with daily rotation, overwrites each day
 pub fn init_main_logger() -> io::Result<()> {

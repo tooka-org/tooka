@@ -4,4 +4,5 @@ pub mod export;
 pub mod list;
 pub mod remove;
 pub mod sort;
+pub mod toggle;
 pub mod completions;

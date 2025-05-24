@@ -6,10 +6,12 @@ use crate::core::rules;
 pub struct ListArgs;
 
 pub fn run(_args: ListArgs) {
-    println!("Listing all rules...");
+    log::info!("Listing all rules...");
+
     match rules::list_rules() {
         Ok(rules) => {
             if rules.is_empty() {
+                log::info!("No rules found.");
                 println!("No rules found.");
             } else {
                 for rule in rules {
@@ -17,6 +19,9 @@ pub fn run(_args: ListArgs) {
                 }
             }
         },
-        Err(e) => eprintln!("❌ Error listing rules: {}", e),
+        Err(e) => {
+            println!("❌ Error listing rules: {}", e);
+            log::error!("Error listing rules: {}", e);
+        }
     }
 }

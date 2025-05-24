@@ -19,6 +19,10 @@ pub struct SortArgs {
 
 pub fn run(args: SortArgs) {
     println!("Running sort...");
+    log::info!("Running sort with source: {:?}, rules: {:?}, dry_run: {}", 
+               args.source, 
+               args.rules, 
+               args.dry_run);
 
     init_ops_logger().expect("Failed to initialize operations logger");
 
@@ -27,6 +31,8 @@ pub fn run(args: SortArgs) {
     let dry_run = args.dry_run;
 
     let results = sorter::sort_files(source, rules, dry_run);
+    println!("Sorting completed. Results:");
+    log::info!("Sorting completed, found {} matches", results.as_ref().map_or(0, |r| r.len()));
     match results {
         Ok(matches) => {
             for match_result in matches {
@@ -38,7 +44,8 @@ pub fn run(args: SortArgs) {
             }
         },
         Err(e) => {
-            eprintln!("Error during sorting: {}", e);
+            log::error!("Error during sorting: {}", e);
+            println!("Error during sorting: {}", e);
         }
     }
 }

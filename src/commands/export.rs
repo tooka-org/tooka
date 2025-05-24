@@ -14,11 +14,17 @@ pub struct ExportArgs {
 }
 
 pub fn run(args: ExportArgs) {
-    println!("Exporting rule ID: {}", args.id);
-    println!("Output path: {}", args.output);
+    println!("📤 Exporting rule with ID: {}", args.id);
+    log::info!("Exporting rule with ID: {} to {}", args.id, args.output);
 
     match rules::export_rule(&args.id, &args.output) {
-        Ok(_) => println!("✅ Rule exported successfully!"),
-        Err(e) => eprintln!("❌ Error exporting rule: {}", e),
+        Ok(_) => {
+            println!("✅ Rule exported successfully!"); 
+            log::info!("Rule exported successfully to: {}", args.output);
+        },
+        Err(e) => {
+            println!("❌ Error exporting rule: {}", e);
+            log::error!("Error exporting rule with ID {}: {}", args.id, e);
+        }
     }
 }
