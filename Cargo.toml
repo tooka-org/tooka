@@ -1,7 +1,15 @@
 [package]
 name = "tooka"
 version = "0.1.0"
+description = "A fast, rule-based CLI tool for organizing your files"
+authors = ["Benjamin Demetz"]
+license-file = "LICENSE"
+readme = "README.md"
+repository = "https://github.com/Benji377/tooka"
+# homepage = "https://tooka.deno.dev"
+default-run = "tooka"
 edition = "2024"
+rust-version = "1.87"
 
 [dependencies]
 chrono = "0.4.41"
@@ -23,3 +31,19 @@ shellexpand = "3.1.1"
 simplelog = "0.12.2"
 users = "0.11.0"
 walkdir = "2.5.0"
+
+[profile.release]
+opt-level = 3
+lto = false
+codegen-units = 1
+strip = true
+
+[package.metadata.packager]
+product-name = "tooka"
+identifier = "io.github.benji377.tooka"
+category = "Utility"
+#homepage = "https://tooka.deno.dev"
+icons = ["assets/logo.svg"]
+licenseFile = "LICENSE"
+formats = ["all"]
+before-packaging-command = "cargo build --release"

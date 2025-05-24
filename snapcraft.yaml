@@ -1,0 +1,28 @@
+name: tooka
+base: core22
+version: 0.1.0
+summary: A fast, rule-based CLI tool for organizing your files.
+description: Tooka is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
+icon: assets/logo.svg
+grade: stable
+confinement: strict
+architectures:
+    - build-on: [amd64]
+    - build-on: [arm64]
+    - build-on: [riscv64]
+    - build-on: [armhf]
+
+parts:
+    raspirus:
+        plugin: rust
+        source: .
+        stage-packages:
+            - zlib1g-dev
+        rust-cargo-parameters: [--no-default-features]
+
+apps:
+    raspirus:
+        command: bin/tooka
+        plugs:
+            - home
+            - removable-media
