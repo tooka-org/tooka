@@ -1,8 +1,11 @@
-# Tooka
+#  Tooka
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="max-width: 600px;">
 </div>
+
+> [!WARNING]
+> Tooka lacks tests and is therefore still in early beta. Do not use in production!
 
 ## 📦 Introduction
 
@@ -35,6 +38,11 @@ With a simple CLI, Tooka enables automated file handling through matching criter
    * **Windows**: `C:\Users\<user>\AppData\Roaming\github.benji377\tooka\data`
    * **macOS**: `/Users/<user>/Library/Application Support/io.github.benji377.tooka`
 4. Run `tooka sort` to apply your rules to a folder
+
+> [!IMPORTANT]
+> **Always perform a dry-run first** using `tooka sort --dry-run` to review what files will be moved, renamed, or deleted. Tooka is not responsible for lost or changed files. Proceed carefully!
+
+
 5. Explore all options with `tooka --help`
 
 ---
