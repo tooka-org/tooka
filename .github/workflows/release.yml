@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
 
 env:
-    VERSION: 2.2.1
+    VERSION: 0.1.0
 
 jobs:
     # Release build job
@@ -24,7 +24,7 @@ jobs:
               if: matrix.platform == 'ubuntu-latest'
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y build-essential curl libssl-dev libgtk-3-dev
+                  sudo apt-get install -y build-essential curl
 
             - name: Rust setup
               uses: dtolnay/rust-toolchain@stable
