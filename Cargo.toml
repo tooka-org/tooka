@@ -29,8 +29,11 @@ serde = {version = "1.0.219", features = ["derive"]}
 serde_yaml = "0.9.34"
 shellexpand = "3.1.1"
 simplelog = "0.12.2"
-users = "0.11.0"
 walkdir = "2.5.0"
+
+[target.'cfg(unix)'.dependencies]
+users = "0.11.0"
+
 
 [profile.release]
 opt-level = 3

@@ -290,12 +290,8 @@ fn match_file_owner(metadata: &fs::Metadata, owner: &str) -> bool {
     }
     #[cfg(windows)]
     {
-        log::debug!("Matching file owner for Windows system: {}", owner);
-        use std::os::windows::fs::MetadataExt;
-        let sid = metadata.sid();
-        if let Ok(user) = users::get_user_by_sid(sid) {
-            return user.name() == owner;
-        }
+        log::warn!("Owner matching not implemented on Windows.");
+        return false;
     }
     log::debug!("File owner does not match for file: {:?}", metadata);
     false
