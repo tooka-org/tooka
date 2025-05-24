@@ -2,6 +2,8 @@ mod commands;
 mod core;
 mod globals;
 
+use core::logger::init_main_logger;
+
 use clap::Parser;
 
 #[derive(clap::Parser)]
@@ -36,6 +38,10 @@ fn main() {
         eprintln!("Error loading configuration: {}", e);
         std::process::exit(1);
     }
+    init_main_logger()
+        .expect("Failed to initialize main logger");
+
+    log::info!("Tooka CLI started");
 
     match cli.command {
         Commands::Config(args) => commands::config::run(args),

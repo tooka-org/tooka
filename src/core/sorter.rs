@@ -1,9 +1,11 @@
 use std::path::PathBuf;
+use rayon::prelude::*;
 
 use crate::core::rules::{self, RulesFile};
 use crate::core::config;
 use crate::core::file_match;
 use crate::core::file_ops;
+use crate::core::logger::log_file_operation;
 
 pub struct MatchResult {
     pub file_name: String,
@@ -37,17 +39,26 @@ pub fn sort_files(source: String, rules: String, dry_run: bool) -> Result<Vec<Ma
         rules::load_rules_from_ids(rule_ids).map_err(|e| e.to_string())?
     };
 
-    let mut results = Vec::new();
+    let entries: Vec<PathBuf> = source_path.read_dir()
+        .map_err(|e| e.to_string())?
+        .filter_map(|res| match res {
+            Ok(entry) => {
+                match entry.file_type() {
+                    Ok(ft) if ft.is_file() => Some(entry.path()),
+                    _ => None,
+                }
+            }
+            Err(_) => None,
+        })
+        .collect();
 
-    for entry in source_path.read_dir().map_err(|e| e.to_string())? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        if entry.file_type().map_err(|e| e.to_string())?.is_file() {
-            let file_path = entry.path();
-            results.extend(sort_file(&file_path, &rules_file, dry_run)?);
-        }
-    }
+    // Use Rayon to process files in parallel
+    let results: Result<Vec<_>, _> = entries.par_iter()
+        .map(|file_path| sort_file(file_path, &rules_file, dry_run))
+        .collect();
 
-    Ok(results)
+    // Flatten Vec<Vec<MatchResult>> into Vec<MatchResult>
+    results.map(|vec_of_vec| vec_of_vec.into_iter().flatten().collect())
 }
 
 fn sort_file(file_path: &PathBuf, rules_file: &RulesFile, dry_run: bool) -> Result<Vec<MatchResult>, String> {
@@ -63,6 +74,11 @@ fn sort_file(file_path: &PathBuf, rules_file: &RulesFile, dry_run: bool) -> Resu
             // For each action in the rule, execute it and collect results
             for action in &rule.actions {
                 let op_result = file_ops::execute_action(file_path, action, dry_run)?;
+                if dry_run {
+                    log_file_operation(&format!("DRY-{}] '{}' to '{}'", action.r#type, file_path.display(), op_result.new_path.display()));
+                } else {
+                    log_file_operation(&format!("[{}] '{}' to '{}'", action.r#type, file_path.display(), op_result.new_path.display()));
+                }
                 results.push(MatchResult {
                     file_name: file_name.clone(),
                     matched_rule_id: rule.id.clone(),
