@@ -1,5 +1,5 @@
-use std::sync::Mutex;
 use once_cell::sync::OnceCell;
+use std::sync::Mutex;
 
 pub static CONFIG_VERSION: usize = 0;
 pub static CONFIG_FILE_NAME: &str = "tooka.yaml";

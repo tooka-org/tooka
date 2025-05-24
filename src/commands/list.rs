@@ -1,5 +1,5 @@
-use clap::Args;
 use crate::core::rules;
+use clap::Args;
 
 #[derive(Args)]
 #[command(about = "Lists all current rules with their metadata")]
@@ -15,10 +15,13 @@ pub fn run(_args: ListArgs) {
                 println!("No rules found.");
             } else {
                 for rule in rules {
-                    println!("ID: {}, Name: {}, Enabled: {}", rule.id, rule.name, rule.enabled);
+                    println!(
+                        "ID: {}, Name: {}, Enabled: {}",
+                        rule.id, rule.name, rule.enabled
+                    );
                 }
             }
-        },
+        }
         Err(e) => {
             println!("❌ Error listing rules: {}", e);
             log::error!("Error listing rules: {}", e);

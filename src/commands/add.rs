@@ -1,5 +1,5 @@
-use clap::Args;
 use crate::core::rules;
+use clap::Args;
 
 #[derive(Args)]
 #[command(about = "Adds a new rule by importing a YAML snippet file")]

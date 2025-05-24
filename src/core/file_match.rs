@@ -1,12 +1,16 @@
-use std::path::{Path, PathBuf};
-use chrono::Utc;
 use crate::core::rules;
-use crate::core::rules::{Match as RuleMatch};
-use std::fs;
+use crate::core::rules::Match as RuleMatch;
+use chrono::Utc;
 use glob;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 fn match_extensions(file_path: &Path, extensions: Vec<String>) -> bool {
-    log::debug!("Matching extensions {:?} for file: {:?}", extensions, file_path);
+    log::debug!(
+        "Matching extensions {:?} for file: {:?}",
+        extensions,
+        file_path
+    );
     if let Some(extension) = file_path.extension() {
         if let Some(extension_str) = extension.to_str() {
             return extensions.iter().any(|ext| ext == extension_str);
@@ -16,14 +20,19 @@ fn match_extensions(file_path: &Path, extensions: Vec<String>) -> bool {
 }
 
 fn match_mime_type(file_path: &PathBuf, mime_type: String) -> bool {
-    log::debug!("Matching MIME type '{}' for file: {:?}", mime_type, file_path);
+    log::debug!(
+        "Matching MIME type '{}' for file: {:?}",
+        mime_type,
+        file_path
+    );
     if let Some(mime) = mime_guess::from_path(file_path).first() {
         let mime_essence = mime.essence_str();
         if let Some(idx) = mime_type.find("/*") {
             log::debug!("Handling wildcard MIME type: {}", mime_type);
             // Handle wildcard, e.g., "image/*"
             let prefix = &mime_type[..idx];
-            return mime_essence.starts_with(prefix) && mime_essence.chars().nth(prefix.len()) == Some('/');
+            return mime_essence.starts_with(prefix)
+                && mime_essence.chars().nth(prefix.len()) == Some('/');
         } else {
             log::debug!("Exact MIME type match: {}", mime_type);
             // Exact match
@@ -35,16 +44,14 @@ fn match_mime_type(file_path: &PathBuf, mime_type: String) -> bool {
 
 fn match_pattern(file_path: &Path, pattern: String) -> bool {
     log::debug!("Matching pattern '{}' for file: {:?}", pattern, file_path);
-    let file_name = file_path.file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
+    let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
     log::debug!("Extracted file name for pattern matching: '{}'", file_name);
     let regex = match regex::Regex::new(&pattern) {
         Ok(re) => re,
         Err(e) => {
             log::error!("Invalid regex pattern '{}': {}", pattern, e);
             return false; // Invalid regex pattern
-        },
+        }
     };
     let res = regex.is_match(file_name);
     log::debug!("Pattern match result for file '{}': {}", file_name, res);
@@ -59,7 +66,10 @@ fn match_metadata(file_path: &PathBuf, metadata_match: &rules::MetadataMatch) ->
             let mut bufreader = std::io::BufReader::new(file);
             if let Ok(exif) = exif::Reader::new().read_from_container(&mut bufreader) {
                 log::debug!("EXIF metadata found for file: {:?}", file_path);
-                if exif.get_field(exif::Tag::DateTime, exif::In::PRIMARY).is_none() {
+                if exif
+                    .get_field(exif::Tag::DateTime, exif::In::PRIMARY)
+                    .is_none()
+                {
                     log::debug!("No EXIF date found in file: {:?}", file_path);
                     return false;
                 }
@@ -75,19 +85,30 @@ fn match_metadata(file_path: &PathBuf, metadata_match: &rules::MetadataMatch) ->
     }
 
     // Check additional metadata fields
-    log::debug!("Matching additional metadata fields for file: {:?}", file_path);
+    log::debug!(
+        "Matching additional metadata fields for file: {:?}",
+        file_path
+    );
     for field in &metadata_match.fields {
-            if !match_metadata_field(file_path, field) {
-                log::debug!("Metadata field '{}' did not match for file: {:?}", field.key, file_path);
-                return false;
-            }
+        if !match_metadata_field(file_path, field) {
+            log::debug!(
+                "Metadata field '{}' did not match for file: {:?}",
+                field.key,
+                file_path
+            );
+            return false;
+        }
     }
     log::debug!("All metadata fields matched for file: {:?}", file_path);
     true
 }
 
 fn match_metadata_field(file_path: &PathBuf, field: &rules::MetadataField) -> bool {
-    log::debug!("Matching metadata field '{}' for file: {:?}", field.key, file_path);
+    log::debug!(
+        "Matching metadata field '{}' for file: {:?}",
+        field.key,
+        file_path
+    );
     // Try to read EXIF metadata and match the field
     if let Ok(file) = fs::File::open(file_path) {
         log::debug!("Opened file for EXIF metadata: {:?}", file_path);
@@ -102,20 +123,32 @@ fn match_metadata_field(file_path: &PathBuf, field: &rules::MetadataField) -> bo
                     let value = f.display_value().with_unit(&exif).to_string();
                     // Use glob pattern matching for the pattern
                     if let Some(ref pattern_str) = field.pattern {
-                        log::debug!("Matching value '{}' against pattern '{}'", value, pattern_str);
+                        log::debug!(
+                            "Matching value '{}' against pattern '{}'",
+                            value,
+                            pattern_str
+                        );
                         if let Ok(pattern) = glob::Pattern::new(pattern_str) {
                             if pattern.matches(&value) {
                                 log::debug!("Value '{}' matches pattern '{}'", value, pattern_str);
                                 return true;
                             }
-                            log::debug!("Value '{}' does not match pattern '{}'", value, pattern_str);
+                            log::debug!(
+                                "Value '{}' does not match pattern '{}'",
+                                value,
+                                pattern_str
+                            );
                         }
                     }
                 }
             }
         }
     }
-    log::debug!("No matching metadata field '{}' found for file: {:?}", field.key, file_path);
+    log::debug!(
+        "No matching metadata field '{}' found for file: {:?}",
+        field.key,
+        file_path
+    );
     false
 }
 
@@ -126,7 +159,7 @@ fn match_conditions(file_path: &PathBuf, conditions: &rules::Conditions) -> bool
         Err(e) => {
             log::warn!("Failed to get metadata for file {:?}: {}", file_path, e);
             return false;
-        },
+        }
     };
 
     // older_than_days
@@ -150,14 +183,22 @@ fn match_conditions(file_path: &PathBuf, conditions: &rules::Conditions) -> bool
     if let Some(min_kb) = conditions.size_greater_than_kb {
         log::debug!("Checking if file size is greater than {} KB", min_kb);
         if metadata.len() < min_kb * 1024 {
-            log::debug!("File size {} bytes is less than {} KB", metadata.len(), min_kb);
+            log::debug!(
+                "File size {} bytes is less than {} KB",
+                metadata.len(),
+                min_kb
+            );
             return false;
         }
     }
 
     // created_between
     if let Some(ref range) = conditions.created_between {
-        log::debug!("Checking if file was created between {} and {}", range.from, range.to);
+        log::debug!(
+            "Checking if file was created between {} and {}",
+            range.from,
+            range.to
+        );
         if let Ok(created) = metadata.created() {
             let created_date = chrono::DateTime::<Utc>::from(created).date_naive();
             let from_date = match chrono::NaiveDate::parse_from_str(&range.from, "%Y-%m-%d") {
@@ -165,18 +206,23 @@ fn match_conditions(file_path: &PathBuf, conditions: &rules::Conditions) -> bool
                 Err(e) => {
                     log::warn!("Failed to parse 'from' date '{}': {}", range.from, e);
                     return false;
-                },
+                }
             };
             let to_date = match chrono::NaiveDate::parse_from_str(&range.to, "%Y-%m-%d") {
                 Ok(date) => date,
                 Err(e) => {
                     log::warn!("Failed to parse 'to' date '{}': {}", range.to, e);
                     return false;
-                },
+                }
             };
             log::debug!("File created date: {}", created_date);
             if created_date < from_date || created_date > to_date {
-                log::debug!("File creation date {} not in range {} - {}", created_date, from_date, to_date);
+                log::debug!(
+                    "File creation date {} not in range {} - {}",
+                    created_date,
+                    from_date,
+                    to_date
+                );
                 return false;
             }
         } else {
@@ -188,16 +234,24 @@ fn match_conditions(file_path: &PathBuf, conditions: &rules::Conditions) -> bool
     // filename_regex
     if let Some(ref pattern) = conditions.filename_regex {
         let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-        log::debug!("Checking if file name '{}' matches regex '{}'", file_name, pattern);
+        log::debug!(
+            "Checking if file name '{}' matches regex '{}'",
+            file_name,
+            pattern
+        );
         let regex = match regex::Regex::new(pattern) {
             Ok(re) => re,
             Err(e) => {
                 log::warn!("Invalid regex pattern '{}': {}", pattern, e);
                 return false;
-            },
+            }
         };
         if !regex.is_match(file_name) {
-            log::debug!("File name '{}' does not match regex '{}'", file_name, pattern);
+            log::debug!(
+                "File name '{}' does not match regex '{}'",
+                file_name,
+                pattern
+            );
             return false;
         }
     }
@@ -319,7 +373,12 @@ pub fn match_rule_matcher(file_path: &PathBuf, matcher: &RuleMatch) -> bool {
         log::debug!("Checking ANY sub-matchers for file: {:?}", file_path);
         if !any_matchers.iter().enumerate().any(|(i, sub)| {
             let res = match_rule_matcher(file_path, sub);
-            log::debug!("ANY sub-matcher {} result: {} for file: {:?}", i, res, file_path);
+            log::debug!(
+                "ANY sub-matcher {} result: {} for file: {:?}",
+                i,
+                res,
+                file_path
+            );
             res
         }) {
             log::debug!("ANY sub-matchers failed for file: {:?}", file_path);

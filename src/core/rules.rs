@@ -1,12 +1,6 @@
-use serde::{Deserialize, Serialize};
-use std::{
-    fs,
-    io,
-    path::Path,
-    error::Error,
-    fmt,
-};
 use crate::core::config;
+use serde::{Deserialize, Serialize};
+use std::{error::Error, fmt, fs, io, path::Path};
 
 /// Top-level struct for the rules.yaml file
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -20,7 +14,7 @@ pub struct Rule {
     pub name: String,
     pub enabled: bool,
     pub matcher: Match,
-    pub actions: Vec<Action>
+    pub actions: Vec<Action>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -94,7 +88,9 @@ impl fmt::Display for RuleValidationError {
         match self {
             RuleValidationError::MissingId => write!(f, "rule id is required"),
             RuleValidationError::MissingName(id) => write!(f, "rule {}: name is required", id),
-            RuleValidationError::NoActions(id) => write!(f, "rule {}: at least one action is required", id),
+            RuleValidationError::NoActions(id) => {
+                write!(f, "rule {}: at least one action is required", id)
+            }
             RuleValidationError::InvalidAction(id, idx, msg) => {
                 write!(f, "rule {}: action {} invalid: {}", id, idx, msg)
             }
@@ -115,7 +111,10 @@ impl Rule {
             return Err(RuleValidationError::MissingName(self.id.clone()));
         }
         if self.actions.is_empty() {
-            log::error!("Rule validation failed: no actions defined for rule {}", self.id);
+            log::error!(
+                "Rule validation failed: no actions defined for rule {}",
+                self.id
+            );
             return Err(RuleValidationError::NoActions(self.id.clone()));
         }
         for (i, action) in self.actions.iter().enumerate() {
@@ -133,7 +132,12 @@ impl Rule {
                 }
                 "delete" | "skip" => {}
                 other => {
-                    log::error!("Rule {}: action {} has unknown type '{}'", self.id, i, other);
+                    log::error!(
+                        "Rule {}: action {} has unknown type '{}'",
+                        self.id,
+                        i,
+                        other
+                    );
                     return Err(RuleValidationError::InvalidAction(
                         self.id.clone(),
                         i,
@@ -146,30 +150,40 @@ impl Rule {
     }
 }
 
-
 pub fn load_rules() -> Result<RulesFile, io::Error> {
     log::debug!("Loading rules from file");
     let config = config::Config::load().expect("Failed to load configuration");
     let path = Path::new(&config.rules_file);
     if !path.exists() {
-        log::warn!("Rules file does not exist: {}, creating new one", path.display());
+        log::warn!(
+            "Rules file does not exist: {}, creating new one",
+            path.display()
+        );
         let empty = RulesFile { rules: Vec::new() };
         let content = serde_yaml::to_string(&empty)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e)).expect("Failed to serialize empty rules");
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            .expect("Failed to serialize empty rules");
         fs::write(path, content).expect("Failed to write empty rules file");
         return Ok(empty);
     }
     if !path.is_file() {
         log::error!("Rules file is not a regular file: {}", path.display());
-        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Rules file is not a regular file"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Rules file is not a regular file",
+        ));
     }
     if let Err(e) = fs::File::open(path) {
         log::error!("Rules file is not readable: {}", e);
-        return Err(io::Error::new(io::ErrorKind::PermissionDenied, format!("Rules file is not readable: {}", e)));
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!("Rules file is not readable: {}", e),
+        ));
     }
     let content = fs::read_to_string(path).expect("Failed to read rules file");
     let rules: RulesFile = serde_yaml::from_str(&content)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e)).expect("Failed to parse rules file");
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        .expect("Failed to parse rules file");
     log::debug!("Successfully loaded {} rules", rules.rules.len());
     Ok(rules)
 }
@@ -190,7 +204,9 @@ pub fn load_rules_from_ids(rule_ids: Vec<String>) -> Result<RulesFile, io::Error
         }
     }
     log::debug!("Filtered rules: {:?}", filtered_rules);
-    Ok(RulesFile { rules: filtered_rules })
+    Ok(RulesFile {
+        rules: filtered_rules,
+    })
 }
 
 pub fn save_rules(rules: &RulesFile) -> Result<(), io::Error> {
@@ -198,19 +214,24 @@ pub fn save_rules(rules: &RulesFile) -> Result<(), io::Error> {
     let config = config::Config::load().expect("Failed to load configuration");
     let path = Path::new(&config.rules_file);
     let content = serde_yaml::to_string(rules)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e)).expect("Failed to serialize rules");
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        .expect("Failed to serialize rules");
     fs::write(path, content).expect("Failed to write rules file");
-    log::debug!("Successfully saved {} rules to {}", rules.rules.len(), path.display());
+    log::debug!(
+        "Successfully saved {} rules to {}",
+        rules.rules.len(),
+        path.display()
+    );
     Ok(())
 }
 
 pub fn add_rule_from_file(file_path: &str) -> Result<(), Box<dyn Error>> {
     log::debug!("Adding rule from file: {}", file_path);
     let rules = load_rules().expect("Failed to load existing rules");
-    let new_rule: Rule = serde_yaml::from_reader(
-        fs::File::open(file_path).expect("Failed to open file")
-    ).expect("Failed to parse rule from file");
-    
+    let new_rule: Rule =
+        serde_yaml::from_reader(fs::File::open(file_path).expect("Failed to open file"))
+            .expect("Failed to parse rule from file");
+
     log::debug!("Parsed new rule: {:?}", new_rule);
     new_rule.validate().expect("Rule validation failed");
     log::debug!("Rule validation passed for rule: {}", new_rule.id);
@@ -227,8 +248,11 @@ pub fn add_rule_from_file(file_path: &str) -> Result<(), Box<dyn Error>> {
     let mut updated_rules = rules.rules;
     updated_rules.push(new_rule);
     log::debug!("Adding new rule, total rules now: {}", updated_rules.len());
-    
-    save_rules(&RulesFile { rules: updated_rules }).expect("Failed to save updated rules");
+
+    save_rules(&RulesFile {
+        rules: updated_rules,
+    })
+    .expect("Failed to save updated rules");
     Ok(())
 }
 
@@ -261,7 +285,8 @@ pub fn export_rule(rule_id: &str, out_path: &str) -> Result<(), Box<dyn Error>> 
     let rules = load_rules().expect("Failed to load existing rules");
     if let Some(rule) = rules.rules.into_iter().find(|r| r.id == rule_id) {
         let content = serde_yaml::to_string(&rule)
-            .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e))).expect("Failed to serialize rule");
+            .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+            .expect("Failed to serialize rule");
         log::debug!("Serialized rule: {:?}", rule);
         fs::write(out_path, content).expect("Failed to write rule to file");
         log::debug!("Successfully exported rule {} to {}", rule_id, out_path);

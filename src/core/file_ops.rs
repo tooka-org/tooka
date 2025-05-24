@@ -1,8 +1,8 @@
+use chrono::{Datelike, Utc};
+use flate2::Compression;
+use flate2::write::GzEncoder;
 use std::fs;
 use std::path::{Path, PathBuf};
-use chrono::{Datelike, Utc};
-use flate2::write::GzEncoder;
-use flate2::Compression;
 
 use crate::core::rules::Action;
 
@@ -19,7 +19,9 @@ pub fn execute_action(
 ) -> Result<FileOperationResult, String> {
     log::info!(
         "Executing action '{}' on file: {:?} (dry_run: {})",
-        action.r#type, file_path, dry_run
+        action.r#type,
+        file_path,
+        dry_run
     );
     match action.r#type.as_str() {
         "move" => handle_move(file_path, action, dry_run),
@@ -33,18 +35,15 @@ pub fn execute_action(
                 new_path: PathBuf::from(file_path),
                 renamed: String::from("[skipped]"),
             })
-        },
+        }
         other => {
             log::error!("Unsupported action type: {}", other);
             Err(format!("Unsupported action type: {}", other))
-        },
+        }
     }
 }
 
-fn expand_templates(
-    file_path: &Path,
-    action: &Action,
-) -> Result<(PathBuf, String), String> {
+fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, String), String> {
     log::debug!("Expanding templates for file: {:?}", file_path);
 
     let file_name = file_path
@@ -52,7 +51,10 @@ fn expand_templates(
         .and_then(|s| s.to_str())
         .ok_or("Invalid file name")?;
 
-    let ext = file_path.extension().and_then(|s| s.to_str()).unwrap_or("dat");
+    let ext = file_path
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("dat");
 
     let now = Utc::now();
     let year = now.year();
@@ -86,15 +88,16 @@ fn expand_templates(
         })
         .unwrap_or_else(|| format!("{}.{}", file_name, ext));
 
-    log::debug!(
-        "Expanded path: {:?}, renamed: {}",
-        full_path, renamed
-    );
+    log::debug!("Expanded path: {:?}, renamed: {}", full_path, renamed);
 
     Ok((full_path, renamed))
 }
 
-fn handle_move(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileOperationResult, String> {
+fn handle_move(
+    file_path: &Path,
+    action: &Action,
+    dry_run: bool,
+) -> Result<FileOperationResult, String> {
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
@@ -114,7 +117,11 @@ fn handle_move(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileO
             return Err(e.to_string());
         }
     } else {
-        log::debug!("Dry run: would move file from {:?} to {:?}", file_path, target_path);
+        log::debug!(
+            "Dry run: would move file from {:?} to {:?}",
+            file_path,
+            target_path
+        );
     }
 
     Ok(FileOperationResult {
@@ -123,7 +130,11 @@ fn handle_move(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileO
     })
 }
 
-fn handle_copy(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileOperationResult, String> {
+fn handle_copy(
+    file_path: &Path,
+    action: &Action,
+    dry_run: bool,
+) -> Result<FileOperationResult, String> {
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
@@ -143,7 +154,11 @@ fn handle_copy(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileO
             return Err(e.to_string());
         }
     } else {
-        log::debug!("Dry run: would copy file from {:?} to {:?}", file_path, target_path);
+        log::debug!(
+            "Dry run: would copy file from {:?} to {:?}",
+            file_path,
+            target_path
+        );
     }
 
     Ok(FileOperationResult {
@@ -169,7 +184,11 @@ fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult,
     })
 }
 
-fn handle_compress(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileOperationResult, String> {
+fn handle_compress(
+    file_path: &Path,
+    action: &Action,
+    dry_run: bool,
+) -> Result<FileOperationResult, String> {
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
@@ -203,7 +222,11 @@ fn handle_compress(file_path: &Path, action: &Action, dry_run: bool) -> Result<F
             e.to_string()
         })?;
     } else {
-        log::debug!("Dry run: would compress file {:?} to {:?}", file_path, target_path);
+        log::debug!(
+            "Dry run: would compress file {:?} to {:?}",
+            file_path,
+            target_path
+        );
     }
 
     Ok(FileOperationResult {
@@ -212,7 +235,11 @@ fn handle_compress(file_path: &Path, action: &Action, dry_run: bool) -> Result<F
     })
 }
 
-fn handle_rename(file_path: &Path, action: &Action, dry_run: bool) -> Result<FileOperationResult, String> {
+fn handle_rename(
+    file_path: &Path,
+    action: &Action,
+    dry_run: bool,
+) -> Result<FileOperationResult, String> {
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
@@ -232,7 +259,11 @@ fn handle_rename(file_path: &Path, action: &Action, dry_run: bool) -> Result<Fil
             return Err(e.to_string());
         }
     } else {
-        log::debug!("Dry run: would rename file from {:?} to {:?}", file_path, target_path);
+        log::debug!(
+            "Dry run: would rename file from {:?} to {:?}",
+            file_path,
+            target_path
+        );
     }
 
     Ok(FileOperationResult {

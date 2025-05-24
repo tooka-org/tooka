@@ -16,5 +16,8 @@ pub fn run(args: CompletionsArgs) {
 
     let mut cmd = crate::Cli::command();
     generate(args.shell, &mut cmd, "tooka", &mut io::stdout());
-    log::info!("Completions generated successfully for shell: {:?}", args.shell);
+    log::info!(
+        "Completions generated successfully for shell: {:?}",
+        args.shell
+    );
 }

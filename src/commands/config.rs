@@ -1,5 +1,5 @@
-use clap::Args;
 use crate::core::config;
+use clap::Args;
 
 #[derive(Args)]
 #[command(about = "Manages the Tooka configuration file")]
@@ -30,8 +30,13 @@ pub fn run(args: ConfigArgs) {
         .filter(|&&x| x)
         .count();
 
-    log::info!("Running config command with flags: locate={}, init={}, reset={}, show={}",
-               args.locate, args.init, args.reset, args.show);
+    log::info!(
+        "Running config command with flags: locate={}, init={}, reset={}, show={}",
+        args.locate,
+        args.init,
+        args.reset,
+        args.show
+    );
 
     match flag_count {
         0 => {

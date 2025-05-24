@@ -8,12 +8,12 @@ use clap::Parser;
 
 #[derive(clap::Parser)]
 #[clap(
-    name = "tooka", 
-    version, 
-    about = "Tooka CLI", 
+    name = "tooka",
+    version,
+    about = "Tooka CLI",
     long_about = "tooka is a command-line tool for managing and organizing files based on user-defined rules. 
     It allows you to add, remove, list, and sort files according to various criteria such as file extensions, 
-    MIME types, patterns, and metadata.",
+    MIME types, patterns, and metadata."
 )]
 struct Cli {
     #[clap(subcommand)]
@@ -29,7 +29,7 @@ enum Commands {
     Remove(commands::remove::RemoveArgs),
     Sort(commands::sort::SortArgs),
     Toggle(commands::toggle::ToggleArgs),
-    Completions(commands::completions::CompletionsArgs)
+    Completions(commands::completions::CompletionsArgs),
 }
 
 fn main() {
@@ -39,8 +39,7 @@ fn main() {
         eprintln!("Error loading configuration: {}", e);
         std::process::exit(1);
     }
-    init_main_logger()
-        .expect("Failed to initialize main logger");
+    init_main_logger().expect("Failed to initialize main logger");
 
     log::info!("Tooka CLI started");
 

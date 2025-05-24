@@ -1,17 +1,12 @@
+use crate::core::config;
 use flexi_logger::{
     Age, Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, Logger, Naming, WriteMode,
 };
 use log::Record;
-use crate::core::config;
 
-use std::{
-    fs,
-    io,
-    sync::Mutex
-};
+use std::{fs, io, sync::Mutex};
 
 use crate::globals::{MAIN_LOGGER_HANDLE, OPS_LOGGER_HANDLE};
-
 
 /// Initialize the main logger with daily rotation, overwrites each day
 pub fn init_main_logger() -> io::Result<()> {
@@ -22,7 +17,11 @@ pub fn init_main_logger() -> io::Result<()> {
 
     let logger = Logger::try_with_str("info")
         .map_err(map_flexi_err)?
-        .log_to_file(FileSpec::default().directory(main_log_dir).basename("main_log"))
+        .log_to_file(
+            FileSpec::default()
+                .directory(main_log_dir)
+                .basename("main_log"),
+        )
         .rotate(
             Criterion::Age(Age::Day),
             Naming::Timestamps,
@@ -34,9 +33,12 @@ pub fn init_main_logger() -> io::Result<()> {
         .start()
         .map_err(map_flexi_err)?;
 
-    MAIN_LOGGER_HANDLE
-        .set(logger)
-        .map_err(|_| io::Error::new(io::ErrorKind::AlreadyExists, "Main logger already initialized"))?;
+    MAIN_LOGGER_HANDLE.set(logger).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "Main logger already initialized",
+        )
+    })?;
 
     Ok(())
 }
@@ -69,7 +71,12 @@ pub fn init_ops_logger() -> io::Result<()> {
 
     OPS_LOGGER_HANDLE
         .set(Mutex::new(Some(logger)))
-        .map_err(|_| io::Error::new(io::ErrorKind::AlreadyExists, "Ops logger already initialized"))?;
+        .map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::AlreadyExists,
+                "Ops logger already initialized",
+            )
+        })?;
 
     Ok(())
 }

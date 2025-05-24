@@ -1,15 +1,9 @@
-use std::{
-    fs,
-    io,
-    path::PathBuf,
-};
+use std::{fs, io, path::PathBuf};
 
 use directories_next::{ProjectDirs, UserDirs};
 use serde::{Deserialize, Serialize};
 
 use crate::globals::{APP_NAME, APP_ORG, APP_QUALIFIER};
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -42,7 +36,9 @@ impl Default for Config {
             config_version: crate::globals::CONFIG_VERSION,
             source_folder: downloads_dir,
             rules_file: project_dir.data_dir().join(crate::globals::RULES_FILE_NAME),
-            logs_folder: project_dir.data_dir().join(crate::globals::DEFAULT_LOGS_FOLDER),
+            logs_folder: project_dir
+                .data_dir()
+                .join(crate::globals::DEFAULT_LOGS_FOLDER),
             first_run_complete: false,
         };
 
@@ -65,7 +61,6 @@ impl Default for Config {
 /// - `save(&self)`: Saves the current configuration to the config file, creating any
 ///   necessary directories.
 impl Config {
-
     /// Load the configuration from the config file
     pub fn load() -> io::Result<Self> {
         log::debug!("Loading configuration for Tooka");
@@ -78,13 +73,17 @@ impl Config {
             let file = fs::File::open(config_path).expect("Failed to open configuration file");
             let reader = io::BufReader::new(file);
             let config: Config = serde_yaml::from_reader(reader)
-                .map_err(io::Error::other).expect("Failed to parse configuration file");
+                .map_err(io::Error::other)
+                .expect("Failed to parse configuration file");
             log::info!("Configuration loaded successfully: {:?}", config);
             Ok(config)
         } else {
             let config = Self::default();
             config.save().expect("Failed to save default configuration");
-            log::info!("Configuration file not found, created default configuration: {:?}", config);
+            log::info!(
+                "Configuration file not found, created default configuration: {:?}",
+                config
+            );
             Ok(config)
         }
     }
@@ -97,9 +96,12 @@ impl Config {
             .config_dir()
             .join(crate::globals::CONFIG_FILE_NAME);
         log::debug!("Config file path: {:?}", config_path);
-        fs::create_dir_all(config_path.parent().unwrap()).expect("Failed to create config directory");
+        fs::create_dir_all(config_path.parent().unwrap())
+            .expect("Failed to create config directory");
         let file = fs::File::create(config_path).expect("Failed to create configuration file");
-        serde_yaml::to_writer(file, self).map_err(io::Error::other).expect("Failed to write configuration file");
+        serde_yaml::to_writer(file, self)
+            .map_err(io::Error::other)
+            .expect("Failed to write configuration file");
         log::info!("Configuration saved successfully");
         Ok(())
     }
@@ -118,7 +120,10 @@ pub fn locate_config_file() -> io::Result<PathBuf> {
         Ok(config_path)
     } else {
         log::warn!("Configuration file not found at: {:?}", config_path);
-        Err(io::Error::new(io::ErrorKind::NotFound, "Configuration file not found"))
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Configuration file not found",
+        ))
     }
 }
 
@@ -134,6 +139,7 @@ pub fn show_config() -> io::Result<String> {
     log::debug!("Showing current configuration");
     let config = Config::load().expect("Failed to load configuration");
     let yaml = serde_yaml::to_string(&config)
-        .map_err(io::Error::other).expect("Failed to serialize configuration to YAML");
+        .map_err(io::Error::other)
+        .expect("Failed to serialize configuration to YAML");
     Ok(yaml)
 }

@@ -157,7 +157,7 @@ Optional fields:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 Tooka uses a YAML configuration file stored in your system’s configuration directory. You can manage it entirely via the CLI:
 
