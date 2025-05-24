@@ -132,21 +132,21 @@ jobs:
               with:
                   path: artifacts
                   merge-multiple: true
-
-            - name: Create attestation for all builds
-              uses: actions/attest-build-provenance@v2
-              with:
-                  subject-path: |
-                      artifacts/PKGBUILD
-                      artifacts/tooka_*_aarch64.dmg
-                      artifacts/tooka_*_x64.dmg
-                      artifacts/tooka_*_amd64.deb
-                      artifacts/tooka_*_x86_64.AppImage
-                      artifacts/tooka_*_x64_en-US.msi
-                      artifacts/tooka_*_x64-setup.exe
-                      artifacts/tooka_*_arm64.deb
-                      artifacts/tooka_*_riscv64.deb
-
+#
+#            - name: Create attestation for all builds
+#              uses: actions/attest-build-provenance@v2
+#              with:
+#                  subject-path: |
+#                      artifacts/PKGBUILD
+#                      artifacts/tooka_*_aarch64.dmg
+#                      artifacts/tooka_*_x64.dmg
+#                      artifacts/tooka_*_amd64.deb
+#                      artifacts/tooka_*_x86_64.AppImage
+#                      artifacts/tooka_*_x64_en-US.msi
+#                      artifacts/tooka_*_x64-setup.exe
+#                      artifacts/tooka_*_arm64.deb
+#                      artifacts/tooka_*_riscv64.deb
+#
             - name: Release to GitHub
               uses: softprops/action-gh-release@v2
               with:
