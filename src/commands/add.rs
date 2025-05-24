@@ -1,4 +1,5 @@
 use clap::Args;
+use crate::core::rules;
 
 #[derive(Args)]
 #[command(about = "Adds a new rule by importing a YAML snippet file")]
@@ -11,5 +12,8 @@ pub struct AddArgs {
 pub fn run(args: AddArgs) {
     println!("📥 Adding rule from file: {}", args.file);
 
-    // Future logic: Read file, deserialize YAML, validate, append to rules list, etc.
+    match rules::add_rule_from_file(&args.file) {
+        Ok(_) => println!("✅ Rule added successfully!"),
+        Err(e) => eprintln!("❌ Error adding rule: {}", e),
+    }
 }

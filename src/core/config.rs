@@ -7,6 +7,8 @@ use std::{
 use directories_next::{ProjectDirs, UserDirs};
 use serde::{Deserialize, Serialize};
 
+use crate::globals::{APP_NAME, APP_ORG, APP_QUALIFIER};
+
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,7 +33,7 @@ impl Default for Config {
             .and_then(|dirs| dirs.download_dir().map(|p| p.to_path_buf()))
             .expect("Failed to get downloads directory");
 
-        let project_dir = ProjectDirs::from("io", "github.benji377", "tooka")
+        let project_dir = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
             .expect("Failed to get project directories");
 
         Self {
@@ -48,7 +50,7 @@ impl Config {
 
     /// Load the configuration from the config file
     pub fn load() -> io::Result<Self> {
-        let config_path = ProjectDirs::from("io", "github.benji377", "tooka")
+        let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
             .expect("Failed to get project directories")
             .config_dir()
             .join(crate::globals::CONFIG_FILE_NAME);
@@ -56,7 +58,7 @@ impl Config {
             let file = fs::File::open(config_path)?;
             let reader = io::BufReader::new(file);
             let config: Config = serde_yaml::from_reader(reader)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                .map_err(io::Error::other)?;
             Ok(config)
         } else {
             let config = Self::default();
@@ -67,13 +69,40 @@ impl Config {
 
     /// Save the configuration to the config file
     pub fn save(&self) -> io::Result<()> {
-        let config_path = ProjectDirs::from("io", "github.benji377", "tooka")
+        let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
             .expect("Failed to get project directories")
             .config_dir()
             .join(crate::globals::CONFIG_FILE_NAME);
         fs::create_dir_all(config_path.parent().unwrap())?;
         let file = fs::File::create(config_path)?;
-        serde_yaml::to_writer(file, self).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        serde_yaml::to_writer(file, self).map_err(io::Error::other)?;
         Ok(())
     }
+}
+
+/// Locate the configuration file
+pub fn locate_config_file() -> io::Result<PathBuf> {
+    let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
+        .expect("Failed to get project directories")
+        .config_dir()
+        .join(crate::globals::CONFIG_FILE_NAME);
+    if config_path.exists() {
+        Ok(config_path)
+    } else {
+        Err(io::Error::new(io::ErrorKind::NotFound, "Configuration file not found"))
+    }
+}
+
+/// Resets the configuration to default values
+pub fn reset_config() -> io::Result<()> {
+    let default_config = Config::default();
+    default_config.save()
+}
+
+/// Show the current configuration
+pub fn show_config() -> io::Result<String> {
+    let config = Config::load()?;
+    let yaml = serde_yaml::to_string(&config)
+        .map_err(io::Error::other)?;
+    Ok(yaml)
 }

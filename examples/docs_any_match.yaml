@@ -1,0 +1,18 @@
+rules:
+  - id: "docs-any-match"
+    name: "Match PDFs or files starting with report_"
+    enabled: true
+
+    match:
+      any:
+        - extensions: [".pdf"]
+        - pattern: "report_*"
+
+    actions:
+      - type: move
+        destination: "~/Documents/Reports"
+        path_template:
+          source: "created"
+          format: "{year}/{month}"
+        rename_template: "{filename}-{year}{month}{day}.{ext}"
+        create_dirs: true

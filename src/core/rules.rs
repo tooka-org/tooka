@@ -6,6 +6,7 @@ use std::{
     error::Error,
     fmt,
 };
+use crate::core::config;
 
 /// Top-level struct for the rules.yaml file
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -19,8 +20,7 @@ pub struct Rule {
     pub name: String,
     pub enabled: bool,
     pub matcher: Match,
-    pub actions: Vec<Action>,
-    pub flags: Flags,
+    pub actions: Vec<Action>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -79,11 +79,6 @@ pub struct Action {
 pub struct PathTemplate {
     pub source: String,
     pub format: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Flags {
-    pub dry_run: bool,
 }
 
 #[derive(Debug)]
@@ -145,60 +140,109 @@ impl Rule {
     }
 }
 
-/// Loads rules from a YAML file
-pub fn load_rules<P: AsRef<Path>>(path: P) -> io::Result<RulesFile> {
-    let data = fs::read(&path)?;
-    let rf: RulesFile = serde_yaml::from_slice(&data)
+
+pub fn load_rules() -> Result<RulesFile, io::Error> {
+    let config = config::Config::load().expect("Failed to load configuration");
+    let path = Path::new(&config.rules_file);
+    if !path.exists() {
+        return Ok(RulesFile { rules: Vec::new() });
+    }
+    if !path.is_file() {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Rules file is not a regular file"));
+    }
+    if let Err(e) = fs::File::open(path) {
+        return Err(io::Error::new(io::ErrorKind::PermissionDenied, format!("Rules file is not readable: {}", e)));
+    }
+    let content = fs::read_to_string(path)?;
+    let rules: RulesFile = serde_yaml::from_str(&content)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-    for rule in &rf.rules {
-        rule.validate().map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-    }
-    Ok(rf)
+    Ok(rules)
 }
 
-/// Saves rules to a YAML file
-pub fn save_rules<P: AsRef<Path>>(path: P, rf: &RulesFile) -> io::Result<()> {
-    let data = serde_yaml::to_string(rf)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-    fs::write(path, data.as_bytes())?;
+pub fn load_rules_from_ids(rule_ids: Vec<String>) -> Result<RulesFile, io::Error> {
+    let all_rules = load_rules()?;
+    let mut filtered_rules = Vec::new();
+    for rule_id in &rule_ids {
+        match all_rules.rules.iter().find(|rule| &rule.id == rule_id) {
+            Some(rule) => filtered_rules.push(rule.clone()),
+            None => {
+                return Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    format!("Rule with id '{}' not found", rule_id),
+                ));
+            }
+        }
+    }
+    Ok(RulesFile { rules: filtered_rules })
+}
+
+pub fn save_rules(rules: &RulesFile) -> Result<(), io::Error> {
+    let config = config::Config::load().expect("Failed to load configuration");
+    let path = Path::new(&config.rules_file);
+    let content = serde_yaml::to_string(rules)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    fs::write(path, content)?;
     Ok(())
 }
 
-/// Adds a rule ensuring unique IDs and validates it
-pub fn add_rule<P: AsRef<Path>>(path: P, new_rule: Rule) -> io::Result<()> {
-    let mut rf = load_rules(&path)?;
-    if rf.rules.iter().any(|r| r.id == new_rule.id) {
-        return Err(io::Error::new(io::ErrorKind::AlreadyExists, format!("rule with ID {} already exists", new_rule.id)));
+pub fn add_rule_from_file(file_path: &str) -> Result<(), Box<dyn Error>> {
+    let rules = load_rules()?;
+    let new_rule: Rule = serde_yaml::from_reader(fs::File::open(file_path)?)?;
+    
+    new_rule.validate()?;
+
+    if rules.rules.iter().any(|r| r.id == new_rule.id) {
+        return Err(Box::new(RuleValidationError::InvalidAction(
+            new_rule.id.clone(),
+            0,
+            "rule ID already exists".into(),
+        )));
     }
-    new_rule.validate().map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
-    rf.rules.push(new_rule);
-    save_rules(path, &rf)
-}
 
-/// Removes a rule by ID
-pub fn remove_rule<P: AsRef<Path>>(path: P, rule_id: &str) -> io::Result<()> {
-    let mut rf = load_rules(&path)?;
-    let original_len = rf.rules.len();
-    rf.rules.retain(|r| r.id != rule_id);
-    if rf.rules.len() == original_len {
-        return Err(io::Error::new(io::ErrorKind::NotFound, format!("no rule found with ID {}", rule_id)));
-    }
-    save_rules(path, &rf)
-}
-
-/// Finds a rule by ID
-pub fn find_rule<'a>(rf: &'a RulesFile, rule_id: &str) -> Option<&'a Rule> {
-    rf.rules.iter().find(|r| r.id == rule_id)
-}
-
-/// Exports a single rule by writing it to a standalone YAML file
-pub fn export_rule<P: AsRef<Path>>(rules_path: P, rule_id: &str, out_path: P) -> io::Result<()> {
-    let rf = load_rules(rules_path)?;
-    let rule = find_rule(&rf, rule_id)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "rule not found"))?;
-    let export = RulesFile { rules: vec![rule.clone()] };
-    let data = serde_yaml::to_string(&export)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-    fs::write(out_path, data.as_bytes())?;
+    let mut updated_rules = rules.rules;
+    updated_rules.push(new_rule);
+    
+    save_rules(&RulesFile { rules: updated_rules })?;
     Ok(())
+}
+
+pub fn remove_rule(rule_id: &str) -> Result<(), Box<dyn Error>> {
+    let mut rules = load_rules()?;
+    if let Some(pos) = rules.rules.iter().position(|r| r.id == rule_id) {
+        rules.rules.remove(pos);
+        save_rules(&rules)?;
+        Ok(())
+    } else {
+        Err(Box::new(RuleValidationError::InvalidAction(
+            rule_id.to_string(),
+            0,
+            "rule not found".into(),
+        )))
+    }
+}
+
+pub fn find_rule(rule_id: &str) -> Result<Option<Rule>, Box<dyn Error>> {
+    let rules = load_rules()?;
+    Ok(rules.rules.into_iter().find(|r| r.id == rule_id))
+}
+
+pub fn export_rule(rule_id: &str, out_path: &str) -> Result<(), Box<dyn Error>> {
+    let rules = load_rules()?;
+    if let Some(rule) = rules.rules.into_iter().find(|r| r.id == rule_id) {
+        let content = serde_yaml::to_string(&rule)
+            .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))?;
+        fs::write(out_path, content)?;
+        Ok(())
+    } else {
+        Err(Box::new(RuleValidationError::InvalidAction(
+            rule_id.to_string(),
+            0,
+            "rule not found".into(),
+        )))
+    }
+}
+
+pub fn list_rules() -> Result<Vec<Rule>, Box<dyn Error>> {
+    let rules = load_rules()?;
+    Ok(rules.rules)
 }

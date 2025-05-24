@@ -5,7 +5,14 @@ mod globals;
 use clap::Parser;
 
 #[derive(clap::Parser)]
-#[clap(name = "tooka", version, about = "Tooka CLI", long_about = None)]
+#[clap(
+    name = "tooka", 
+    version, 
+    about = "Tooka CLI", 
+    long_about = "tooka is a command-line tool for managing and organizing files based on user-defined rules. 
+    It allows you to add, remove, list, and sort files according to various criteria such as file extensions, 
+    MIME types, patterns, and metadata.",
+)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
@@ -19,6 +26,7 @@ enum Commands {
     List(commands::list::ListArgs),
     Remove(commands::remove::RemoveArgs),
     Sort(commands::sort::SortArgs),
+    Completions(commands::completions::CompletionsArgs)
 }
 
 fn main() {
@@ -36,6 +44,6 @@ fn main() {
         Commands::List(args) => commands::list::run(args),
         Commands::Remove(args) => commands::remove::run(args),
         Commands::Sort(args) => commands::sort::run(args),
+        Commands::Completions(args) => commands::completions::run(args),
     }
 }
-

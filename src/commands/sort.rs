@@ -1,4 +1,5 @@
 use clap::Args;
+use crate::core::sorter;
 
 #[derive(Args)]
 #[command(about = "Manually runs the sorter on the source folder")]
@@ -18,9 +19,24 @@ pub struct SortArgs {
 
 pub fn run(args: SortArgs) {
     println!("Running sort...");
-    println!("Source Folder: {:?}", args.source.unwrap_or_else(|| "<default>".to_string()));
-    println!("Rule IDs: {:?}", args.rules.unwrap_or_else(|| "<all>".to_string()));
-    println!("Dry Run: {}", args.dry_run);
 
-    // TODO: Implement sorting logic
+    let source = args.source.unwrap_or_else(|| "<default>".to_string());
+    let rules = args.rules.unwrap_or_else(|| "<all>".to_string());
+    let dry_run = args.dry_run;
+
+    let results = sorter::sort_files(source, rules, dry_run);
+    match results {
+        Ok(matches) => {
+            for match_result in matches {
+                println!("File: {}, Matched: {}, Current Path: {}, New Path: {}", 
+                         match_result.file_name, 
+                         match_result.matched_rule_id, 
+                        match_result.current_path.display(),
+                         match_result.new_path.display());
+            }
+        },
+        Err(e) => {
+            eprintln!("Error during sorting: {}", e);
+        }
+    }
 }

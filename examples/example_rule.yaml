@@ -26,5 +26,3 @@ rules:
         rename_template: "{year}-{month}_{filename}.{ext}"
         create_dirs: true
 
-    flags:
-      dry_run: false

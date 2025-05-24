@@ -1,0 +1,22 @@
+rules:
+  - id: "camera-jpgs"
+    name: "Filter Canon camera JPGs with EXIF date"
+    enabled: true
+
+    match:
+      all:
+        - extensions: [".jpg", ".jpeg"]
+        - metadata:
+            exif_date: true
+            fields:
+              - key: "EXIF:Model"
+                pattern: "Canon*"
+
+    actions:
+      - type: move
+        destination: "~/Pictures/Canon"
+        path_template:
+          source: "exif"
+          format: "{year}/{month}"
+        rename_template: "{year}-{month}-{day}_{filename}.{ext}"
+        create_dirs: true
