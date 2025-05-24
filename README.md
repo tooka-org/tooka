@@ -1,7 +1,7 @@
 # Tooka
 
 <div align="center">
-  <img src="./assets/logo-banner.png" alt="Tooka logo" style="max-width: 600px;">
+  <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
 </div>
 
 A fast, rule-based CLI tool for organizing your files.
