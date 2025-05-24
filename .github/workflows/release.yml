@@ -24,7 +24,7 @@ jobs:
               if: matrix.platform == 'ubuntu-latest'
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y build-essential curl
+                  sudo apt-get install -y build-essential curl pkg-config zlib1g-dev
 
             - name: Rust setup
               uses: dtolnay/rust-toolchain@stable
@@ -70,6 +70,11 @@ jobs:
                       apt: gcc-riscv64-linux-gnu
                       sysroot: /usr/riscv64-linux-gnu/
                       pkg_arch: riscv64
+                    - arch: armv7
+                      target: armv7-unknown-linux-gnueabihf
+                      apt: gcc-arm-linux-gnueabihf
+                      sysroot: /usr/arm-linux-gnueabihf/
+                      pkg_arch: armhf
 
         runs-on: ubuntu-latest
         steps:
@@ -79,12 +84,6 @@ jobs:
             - name: Clean install Debian packages
               run: sudo apt-get clean && sudo apt-get update && sudo apt-get upgrade -y
 
-            - name: Install cross-compile dependencies
-              uses: ryankurte/action-apt@v0.5.0
-              with:
-                  arch: ${{ matrix.pkg_arch }}
-                  packages: "libssl-dev:${{ matrix.pkg_arch }}"
-
             - name: Install system dependencies
               run: |
                   sudo apt-get update
@@ -92,8 +91,7 @@ jobs:
                     pkg-config \
                     build-essential \
                     curl \
-                    libssl-dev \
-                    libgtk-3-dev \
+                    zlib1g-dev \
                     ${{ matrix.apt }}
 
             - name: Rust setup
