@@ -1,3 +1,4 @@
+use directories_next::UserDirs;
 use std::{
     env,
     fs::{self, File},
@@ -5,7 +6,6 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-use directories_next::UserDirs;
 
 fn tooka_cmd(args: &[&str]) -> (String, String) {
     let tooka_bin = assert_cmd_bin();
@@ -18,7 +18,10 @@ fn tooka_cmd(args: &[&str]) -> (String, String) {
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
     if !output.status.success() {
-        panic!("Command {:?} failed\nstdout:\n{}\nstderr:\n{}", args, stdout, stderr);
+        panic!(
+            "Command {:?} failed\nstdout:\n{}\nstderr:\n{}",
+            args, stdout, stderr
+        );
     }
 
     (stdout, stderr)
@@ -33,18 +36,19 @@ fn assert_cmd_bin() -> PathBuf {
 
 fn create_test_rule(rule_id: &str) -> PathBuf {
     let rule_content = format!(
-    r#"
+        r#"
     id: "{rule_id}"
     name: "Test Rule"
     enabled: true
     match:
-    all:
-        - extensions: [".txt"]
+      all:
+          - extensions: [".txt"]
     actions:
-    - type: move
+      - type: move
         destination: "$HOME/Documents/Sorted"
         create_dirs: true
-    "#);
+    "#
+    );
     let path = env::temp_dir().join(format!("{rule_id}.yaml"));
     fs::write(&path, rule_content).unwrap();
     path

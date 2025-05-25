@@ -113,7 +113,7 @@ fn sort_file(
     let mut results = Vec::new();
 
     for rule in &rules_file.rules {
-        if file_match::match_rule_matcher(file_path, &rule.matcher) {
+        if file_match::match_rule_matcher(file_path, &rule.r#match) {
             log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
             // For each action in the rule, execute it and collect results
             for action in &rule.actions {

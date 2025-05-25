@@ -1,6 +1,11 @@
 use crate::core::config;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt, fs, io, path::Path};
+use std::{
+    error::Error,
+    fmt, fs,
+    io::{self, Read},
+    path::Path,
+};
 
 /// Top-level struct for the rules.yaml file
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -13,7 +18,8 @@ pub struct Rule {
     pub id: String,
     pub name: String,
     pub enabled: bool,
-    pub matcher: Match,
+    #[serde(rename = "match")]
+    pub r#match: Match,
     pub actions: Vec<Action>,
 }
 
@@ -226,33 +232,77 @@ pub fn save_rules(rules: &RulesFile) -> Result<(), io::Error> {
 }
 
 pub fn add_rule_from_file(file_path: &str) -> Result<(), Box<dyn Error>> {
-    log::debug!("Adding rule from file: {}", file_path);
-    let rules = load_rules().expect("Failed to load existing rules");
-    let new_rule: Rule =
-        serde_yaml::from_reader(fs::File::open(file_path).expect("Failed to open file"))
-            .expect("Failed to parse rule from file");
+    log::debug!("Adding rule(s) from file: {}", file_path);
 
+    let mut file = fs::File::open(file_path)
+        .map_err(|e| Box::new(io::Error::new(io::ErrorKind::NotFound, e)))
+        .expect("Failed to open rule file");
+    let mut content = String::new();
+    file.read_to_string(&mut content)
+        .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+        .expect("Failed to read rule file");
+
+    if content.trim_start().starts_with("rules:") {
+        log::debug!("Detected multiple rules in file");
+        add_multiple_rules(&content)
+    } else {
+        log::debug!("Detected single rule in file");
+        add_single_rule(&content)
+    }
+}
+
+fn add_single_rule(yaml: &str) -> Result<(), Box<dyn Error>> {
+    let mut rules = load_rules().expect("Failed to load existing rules");
+    let new_rule: Rule = serde_yaml::from_str(yaml)
+        .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+        .expect("Failed to parse rule from YAML");
     log::debug!("Parsed new rule: {:?}", new_rule);
-    new_rule.validate().expect("Rule validation failed");
-    log::debug!("Rule validation passed for rule: {}", new_rule.id);
+    new_rule
+        .validate()
+        .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+        .expect("Rule validation failed");
 
     if rules.rules.iter().any(|r| r.id == new_rule.id) {
-        log::error!("Rule with id '{}' already exists", new_rule.id);
         return Err(Box::new(RuleValidationError::InvalidAction(
             new_rule.id.clone(),
             0,
-            "rule ID already exists".into(),
+            "Rule ID already exists".into(),
         )));
     }
 
-    let mut updated_rules = rules.rules;
-    updated_rules.push(new_rule);
-    log::debug!("Adding new rule, total rules now: {}", updated_rules.len());
+    rules.rules.push(new_rule);
+    save_rules(&rules)
+        .map_err(|e| Box::new(io::Error::other(e)))
+        .expect("Failed to save updated rules");
+    Ok(())
+}
 
-    save_rules(&RulesFile {
-        rules: updated_rules,
-    })
-    .expect("Failed to save updated rules");
+fn add_multiple_rules(yaml: &str) -> Result<(), Box<dyn Error>> {
+    let mut rules = load_rules().expect("Failed to load existing rules");
+    let new_rules: RulesFile = serde_yaml::from_str(yaml)
+        .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+        .expect("Failed to parse rules from YAML");
+
+    for rule in new_rules.rules {
+        log::debug!("Parsed rule: {:?}", rule);
+        rule.validate()
+            .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
+            .expect("Rule validation failed");
+
+        if rules.rules.iter().any(|r| r.id == rule.id) {
+            return Err(Box::new(RuleValidationError::InvalidAction(
+                rule.id.clone(),
+                0,
+                "Rule ID already exists".into(),
+            )));
+        }
+
+        rules.rules.push(rule);
+    }
+
+    save_rules(&rules)
+        .map_err(|e| Box::new(io::Error::other(e)))
+        .expect("Failed to save updated rules");
     Ok(())
 }
 
