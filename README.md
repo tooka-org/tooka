@@ -1,5 +1,8 @@
 # Tooka
 
+[![Cargo-Test](https://github.com/Benji377/tooka/actions/workflows/test.yml/badge.svg)](https://github.com/Benji377/tooka/actions/workflows/test.yml)
+[![Rust-Clippy-Analyzer](https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg)](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
+
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
 </div>
