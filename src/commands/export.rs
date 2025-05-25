@@ -16,7 +16,9 @@ pub struct ExportArgs {
 pub fn run(args: ExportArgs) {
     println!("📤 Exporting rule with ID: {}", args.id);
 
-    let output_path = args.output.unwrap_or_else(|| format!("rule-{}.yaml", args.id));
+    let output_path = args
+        .output
+        .unwrap_or_else(|| format!("rule-{}.yaml", args.id));
     log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
 
     match rules::export_rule(&args.id, Some(&output_path)) {

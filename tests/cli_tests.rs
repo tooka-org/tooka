@@ -106,7 +106,13 @@ fn test_export_rule() {
     let export_path = env::temp_dir().join("exported_rule.yaml");
 
     tooka_cmd(&["add", rule_path.to_str().unwrap()]);
-    tooka_cmd(&["export", "--id", rule_id, "--output", export_path.to_str().unwrap()]);
+    tooka_cmd(&[
+        "export",
+        "--id",
+        rule_id,
+        "--output",
+        export_path.to_str().unwrap(),
+    ]);
     assert!(export_path.exists());
 
     let exported_content = fs::read_to_string(export_path).unwrap();
