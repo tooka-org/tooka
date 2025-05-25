@@ -1,0 +1,38 @@
+name: Test project
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      run: rustup update stable
+    
+    - name: Set up user environment on macOS
+      run: |
+        mkdir -p $HOME/Downloads
+        mkdir -p $HOME/Desktop
+        mkdir -p $HOME/Documents
+        echo "XDG_DOWNLOAD_DIR=$HOME/Downloads" >> $GITHUB_ENV
+        echo "XDG_DESKTOP_DIR=$HOME/Desktop" >> $GITHUB_ENV
+        echo "XDG_DOCUMENTS_DIR=$HOME/Documents" >> $GITHUB_ENV
+        echo "HOME_DIR set to $HOME"
+        ls -la $HOME  # Verify the user directories
+
+    - name: Pre-Check the code
+      run: cargo check --verbose --release
+
+    - name: Build test the app
+      run: cargo test --verbose -- --show-output
