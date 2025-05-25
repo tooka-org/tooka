@@ -111,7 +111,7 @@ fn test_export_rule() {
 
 #[test]
 fn test_config_outputs() {
-    let (out, _) = tooka_cmd(&["config"]);
+    let (out, _) = tooka_cmd(&["config", "--show"]);
     assert!(out.contains("rules_file") || out.contains("default_scan_dir"));
 }
 
