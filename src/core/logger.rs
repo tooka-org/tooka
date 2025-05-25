@@ -1,119 +1,116 @@
 use crate::core::config;
+use chrono::Local;
 use flexi_logger::{
-    Age, Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, Logger, Naming, WriteMode,
+    DeferredNow, Duplicate, Logger, WriteMode,
 };
+use lazy_static::lazy_static;
 use log::Record;
+use std::{
+    fs::{self, OpenOptions},
+    io::{self, Write},
+    path::Path,
+    sync::Mutex,
+};
 
-use std::{fs, io, sync::Mutex};
+const MAX_LOG_FILES: usize = 10;
 
-use crate::globals::{MAIN_LOGGER_HANDLE, OPS_LOGGER_HANDLE};
+lazy_static! {
+    static ref MAIN_LOG: Mutex<()> = Mutex::new(());
+    static ref OPS_LOG: Mutex<()> = Mutex::new(());
+}
 
-/// Initialize the main logger with daily rotation, overwrites each day
+/// Initializes the single global logger instance
 pub fn init_main_logger() -> io::Result<()> {
-    let logs_folder = config::Config::load()?.logs_folder;
+    let config = config::Config::load()?;
+    let logs_folder = config.logs_folder.clone();
 
-    let main_log_dir = logs_folder.join("main");
-    fs::create_dir_all(&main_log_dir)?;
+    // Create log folders
+    fs::create_dir_all(logs_folder.join("main"))?;
+    fs::create_dir_all(logs_folder.join("ops"))?;
 
-    let logger = Logger::try_with_str("info")
-        .map_err(map_flexi_err)?
-        .log_to_file(
-            FileSpec::default()
-                .directory(main_log_dir)
-                .basename("main_log"),
-        )
-        .rotate(
-            Criterion::Age(Age::Day),
-            Naming::Timestamps,
-            Cleanup::KeepLogFiles(1),
-        )
+    // Start logger (only ONE allowed in the app)
+    Logger::try_with_str("info, file_ops=info")
+        .map_err(|e| io::Error::other(format!("Logger error: {e}")))?
         .duplicate_to_stdout(Duplicate::Info)
         .write_mode(WriteMode::BufferAndFlush)
         .format(custom_format)
         .start()
-        .map_err(map_flexi_err)?;
-
-    MAIN_LOGGER_HANDLE.set(logger).map_err(|_| {
-        io::Error::new(
-            io::ErrorKind::AlreadyExists,
-            "Main logger already initialized",
-        )
-    })?;
+        .map_err(|e| io::Error::other(format!("Logger error: {e}")))?;
 
     Ok(())
 }
 
-/// Initialize the ops logger with a timestamped basename including hour & minute
-pub fn init_ops_logger() -> io::Result<()> {
-    let logs_folder = config::Config::load()?.logs_folder;
-    let ops_log_dir = logs_folder.join("ops");
-    fs::create_dir_all(&ops_log_dir)?;
-
-    let time_str = formatted_datetime()?;
-
-    let logger = Logger::try_with_str("info")
-        .map_err(map_flexi_err)?
-        .log_to_file(
-            FileSpec::default()
-                .directory(ops_log_dir)
-                .basename(&time_str) // e.g., "24-05-2025_14-30"
-                .suppress_timestamp(),
-        )
-        .rotate(
-            Criterion::Age(Age::Day),
-            Naming::Timestamps,
-            Cleanup::KeepLogFiles(10),
-        )
-        .write_mode(WriteMode::BufferAndFlush)
-        .format(custom_format)
-        .start()
-        .map_err(map_flexi_err)?;
-
-    OPS_LOGGER_HANDLE
-        .set(Mutex::new(Some(logger)))
-        .map_err(|_| {
-            io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                "Ops logger already initialized",
-            )
-        })?;
-
-    Ok(())
-}
-
-/// Logs a file operation, if the ops logger is initialized
+/// Logs a file operation to `file_ops` target
 pub fn log_file_operation(msg: &str) {
-    if let Some(mutex_logger) = OPS_LOGGER_HANDLE.get() {
-        let guard = mutex_logger.lock().unwrap();
-        if guard.is_some() {
-            log::info!(target: "file_ops", "{}", msg);
-        }
-    }
+    log::info!(target: "file_ops", "{}", msg);
 }
 
-/// Formats log output consistently
+/// Custom log formatter that writes to separate files by target
 fn custom_format(
-    w: &mut dyn std::io::Write,
+    w: &mut dyn Write,
     now: &mut DeferredNow,
     record: &Record,
-) -> std::io::Result<()> {
-    writeln!(
-        w,
+) -> io::Result<()> {
+    let timestamp = now.format("%Y-%m-%d %H:%M:%S");
+    let log_line = format!(
         "{} [{}] {} - {}\n",
-        now.format("%Y-%m-%d %H:%M:%S"),
+        timestamp,
         record.level(),
         record.target(),
-        &record.args()
-    )
+        record.args()
+    );
+
+    // Always print to stdout/stderr as usual
+    write!(w, "{}", log_line)?;
+
+    // Determine where to write based on log target
+    let config = config::Config::load().map_err(|e| {
+        io::Error::other(format!("Failed to load config in logger: {e}"))
+    })?;
+
+    let (subdir, mutex): (&str, &Mutex<()>) = match record.target() {
+        "file_ops" => ("ops", &OPS_LOG as &Mutex<()>),
+        _ => ("main", &MAIN_LOG as &Mutex<()>),
+    };
+
+    let folder = config.logs_folder.join(subdir);
+    let filename = formatted_filename();
+    let filepath = folder.join(filename);
+
+    // Rotate log files in that folder
+    rotate_logs(&folder, MAX_LOG_FILES)?;
+
+    let _guard = mutex.lock().unwrap();
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(filepath)?;
+
+    file.write_all(log_line.as_bytes())?;
+    Ok(())
 }
 
-/// Helper: Returns current datetime as "dd-mm-yyyy_HH-MM"
-fn formatted_datetime() -> io::Result<String> {
-    let now = chrono::Local::now();
-    Ok(now.format("%d-%m-%Y_%H-%M").to_string())
+/// Generate filename: "dd-mm-yyyy_HH-MM.log"
+fn formatted_filename() -> String {
+    Local::now().format("%d-%m-%Y_%H-%M.log").to_string()
 }
 
-/// Helper: Converts `flexi_logger::FlexiLoggerError` to `std::io::Error`
-fn map_flexi_err(err: flexi_logger::FlexiLoggerError) -> io::Error {
-    io::Error::other(format!("Logger error: {err}"))
+/// Keeps only the N most recent log files in a folder
+fn rotate_logs(folder: &Path, keep: usize) -> io::Result<()> {
+    let mut entries: Vec<_> = fs::read_dir(folder)?
+        .filter_map(Result::ok)
+        .filter(|e| e.path().is_file())
+        .collect();
+
+    // Sort oldest first
+    entries.sort_by_key(|e| e.metadata().and_then(|m| m.modified()).ok());
+
+    while entries.len() > keep {
+        if let Some(entry) = entries.first() {
+            let _ = fs::remove_file(entry.path());
+        }
+        entries.remove(0);
+    }
+
+    Ok(())
 }

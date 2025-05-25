@@ -330,16 +330,25 @@ pub fn find_rule(rule_id: &str) -> Result<Option<Rule>, Box<dyn Error>> {
     Ok(rules.rules.into_iter().find(|r| r.id == rule_id))
 }
 
-pub fn export_rule(rule_id: &str, out_path: &str) -> Result<(), Box<dyn Error>> {
-    log::debug!("Exporting rule with id: {} to path: {}", rule_id, out_path);
+pub fn export_rule(rule_id: &str, out_path: Option<&str>) -> Result<(), Box<dyn Error>> {
+    log::debug!(
+        "Exporting rule with id: {} to {}",
+        rule_id,
+        out_path.unwrap_or("stdout")
+    );
     let rules = load_rules().expect("Failed to load existing rules");
     if let Some(rule) = rules.rules.into_iter().find(|r| r.id == rule_id) {
         let content = serde_yaml::to_string(&rule)
             .map_err(|e| Box::new(io::Error::new(io::ErrorKind::InvalidData, e)))
             .expect("Failed to serialize rule");
         log::debug!("Serialized rule: {:?}", rule);
-        fs::write(out_path, content).expect("Failed to write rule to file");
-        log::debug!("Successfully exported rule {} to {}", rule_id, out_path);
+        if let Some(path) = out_path {
+            fs::write(path, content).expect("Failed to write rule to file");
+            log::debug!("Successfully exported rule {} to {}", rule_id, path);
+        } else {
+            println!("{}", content);
+            log::debug!("Successfully exported rule {} to stdout", rule_id);
+        }
         Ok(())
     } else {
         log::error!("Rule with id '{}' not found", rule_id);

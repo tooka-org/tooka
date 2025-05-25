@@ -1,4 +1,4 @@
-use crate::core::{logger::init_ops_logger, sorter};
+use crate::core::sorter;
 use clap::Args;
 
 #[derive(Args)]
@@ -25,8 +25,6 @@ pub fn run(args: SortArgs) {
         args.rules,
         args.dry_run
     );
-
-    init_ops_logger().expect("Failed to initialize operations logger");
 
     let source = args.source.unwrap_or_else(|| "<default>".to_string());
     let rules = args.rules.unwrap_or_else(|| "<all>".to_string());
