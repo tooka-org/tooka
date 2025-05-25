@@ -17,8 +17,6 @@ pub struct Config {
     pub rules_file: PathBuf,
     /// Path to the logs folder
     pub logs_folder: PathBuf,
-    /// Indicates if the first run setup is complete
-    pub first_run_complete: bool,
 }
 
 impl Default for Config {
@@ -38,8 +36,7 @@ impl Default for Config {
             rules_file: project_dir.data_dir().join(crate::globals::RULES_FILE_NAME),
             logs_folder: project_dir
                 .data_dir()
-                .join(crate::globals::DEFAULT_LOGS_FOLDER),
-            first_run_complete: false,
+                .join(crate::globals::DEFAULT_LOGS_FOLDER)
         };
 
         log::info!("Default configuration created: {:?}", config);

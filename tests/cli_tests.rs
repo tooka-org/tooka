@@ -108,7 +108,6 @@ fn test_export_rule() {
     tooka_cmd(&["add", rule_path.to_str().unwrap()]);
     tooka_cmd(&[
         "export",
-        "--id",
         rule_id,
         "--output",
         export_path.to_str().unwrap(),
@@ -145,10 +144,12 @@ fn test_sort_command() {
 
     // Dry run
     let (dry_out, _) = tooka_cmd(&["sort", "--dry-run"]);
+    println!("Dry Run Output: {}", dry_out);
     assert!(dry_out.contains("sort_test_file.txt"));
 
     // Real run
     let (_real_out, _) = tooka_cmd(&["sort"]);
+    println!("Real Run Output: {}", _real_out);
     let sorted_file = UserDirs::new()
         .expect("Failed to get user directories")
         .document_dir()

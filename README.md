@@ -174,7 +174,6 @@ The configuration file includes:
 | `source_folder`      | Default folder Tooka uses to sort files              |
 | `rules_file`         | Path to the active YAML rule set                     |
 | `logs_folder`        | Directory where Tooka writes log files               |
-| `first_run_complete` | Tracks whether Tooka's first-run setup has completed |
 
 These values are saved automatically when running Tooka. You can also manage them manually or programmatically using the API.
 
