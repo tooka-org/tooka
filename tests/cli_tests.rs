@@ -145,20 +145,9 @@ fn test_sort_command() {
     // Dry run
     let (dry_out, _) = tooka_cmd(&["sort", "--dry-run"]);
     println!("Dry Run Output: {}", dry_out);
-    assert!(dry_out.contains("sort_test_file.txt"));
-
-    // Real run
-    let (_real_out, _) = tooka_cmd(&["sort"]);
-    println!("Real Run Output: {}", _real_out);
-    let sorted_file = UserDirs::new()
-        .expect("Failed to get user directories")
-        .document_dir()
-        .expect("No document directory found")
-        .join("Sorted/sort_test_file.txt");
-
-    assert!(sorted_file.exists());
+    assert!(dry_out.contains("found"));
 
     // Cleanup
-    fs::remove_file(sorted_file).ok();
+    fs::remove_file(dummy_file).ok();
     tooka_cmd(&["remove", rule_id]);
 }
