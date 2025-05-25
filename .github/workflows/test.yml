@@ -19,21 +19,30 @@ jobs:
     
     - name: Install Rust
       run: rustup update stable
-    
-    - name: Set up user environment on macOS
+
+    - name: Set up XDG and user environment
       run: |
-        mkdir -p $HOME/Downloads
-        mkdir -p $HOME/Desktop
-        mkdir -p $HOME/Documents
+        # Setup XDG base directories
+        export XDG_CONFIG_HOME=$(mktemp -d)
+        export XDG_DATA_HOME=$(mktemp -d)
+        export XDG_CACHE_HOME=$(mktemp -d)
+        echo "XDG_CONFIG_HOME=$XDG_CONFIG_HOME" >> $GITHUB_ENV
+        echo "XDG_DATA_HOME=$XDG_DATA_HOME" >> $GITHUB_ENV
+        echo "XDG_CACHE_HOME=$XDG_CACHE_HOME" >> $GITHUB_ENV
+
+        # Setup fake user dirs
+        mkdir -p "$HOME/Downloads"
+        mkdir -p "$HOME/Desktop"
+        mkdir -p "$HOME/Documents"
         echo "XDG_DOWNLOAD_DIR=$HOME/Downloads" >> $GITHUB_ENV
         echo "XDG_DESKTOP_DIR=$HOME/Desktop" >> $GITHUB_ENV
         echo "XDG_DOCUMENTS_DIR=$HOME/Documents" >> $GITHUB_ENV
-        echo "XDG_CONFIG_HOME=$(mktemp -d)" >> $GITHUB_ENV
-        echo "HOME_DIR set to $HOME"
-        ls -la $HOME  # Verify the user directories
+
+        echo "Environment setup complete."
+        ls -la "$HOME"
 
     - name: Pre-Check the code
       run: cargo check --verbose --release
 
-    - name: Build test the app
+    - name: Build and test the app
       run: cargo test --verbose -- --show-output

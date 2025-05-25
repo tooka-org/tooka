@@ -31,7 +31,6 @@ pub fn init_logger() -> io::Result<()> {
 
     let logger = Logger::with(log_spec)
         .log_to_writer(Box::new(DualWriter::new(logs_folder)))
-        .duplicate_to_stdout(Duplicate::Info)
         .write_mode(WriteMode::BufferAndFlush)
         .format(custom_format)
         .start()
