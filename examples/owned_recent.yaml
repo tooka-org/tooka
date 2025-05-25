@@ -20,6 +20,3 @@ rules:
           format: "{year}/{month}/{day}"
         rename_template: "{filename}-{day}.{ext}"
         create_dirs: true
-
-    flags:
-      dry_run: false

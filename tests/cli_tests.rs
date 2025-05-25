@@ -33,21 +33,18 @@ fn assert_cmd_bin() -> PathBuf {
 
 fn create_test_rule(rule_id: &str) -> PathBuf {
     let rule_content = format!(
-        r#"
-rules:
-  - id: "{rule_id}"
+    r#"
+    id: "{rule_id}"
     name: "Test Rule"
     enabled: true
     match:
-      all:
+    all:
         - extensions: [".txt"]
     actions:
-      - type: move
+    - type: move
         destination: "$HOME/Documents/Sorted"
         create_dirs: true
-    flags:
-      dry_run: false
-"#);
+    "#);
     let path = env::temp_dir().join(format!("{rule_id}.yaml"));
     fs::write(&path, rule_content).unwrap();
     path
