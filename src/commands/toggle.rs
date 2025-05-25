@@ -21,21 +21,21 @@ pub fn run(args: &ToggleArgs) {
             );
             match rules::toggle_rule(&args.rule_id) {
                 Ok(()) => {
-                    println!("✅ Rule toggled successfully!");
+                    println!("Rule toggled successfully!");
                     log::info!("Rule with ID '{}' toggled successfully.", args.rule_id);
                 }
                 Err(e) => {
-                    println!("❌ Error toggling rule: {e}");
+                    println!("Error toggling rule: {e}");
                     log::error!("Error toggling rule with ID '{}': {}", args.rule_id, e);
                 }
             }
         }
         Some(_) => {
-            println!("❌ Rule found, but ID does not match '{}'.", args.rule_id);
+            println!("Rule found, but ID does not match '{}'.", args.rule_id);
             log::warn!("Rule found, but ID does not match '{}'.", args.rule_id);
         }
         None => {
-            println!("❌ Rule with ID '{}' not found.", args.rule_id);
+            println!("Rule with ID '{}' not found.", args.rule_id);
             log::warn!("Rule with ID '{}' not found.", args.rule_id);
         }
     }

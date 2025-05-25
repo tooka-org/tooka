@@ -6,7 +6,7 @@ use core::logger::init_logger;
 
 use clap::Parser;
 
-#[derive(clap::Parser)]
+#[derive(Parser)]
 #[clap(
     name = "tooka",
     version,
@@ -22,21 +22,21 @@ struct Cli {
 
 #[derive(clap::Subcommand)]
 enum Commands {
-    Config(commands::config::ConfigArgs),
     Add(commands::add::AddArgs),
+    Completions(commands::completions::CompletionsArgs),
+    Config(commands::config::ConfigArgs),
     Export(commands::export::ExportArgs),
     List(commands::list::ListArgs),
     Remove(commands::remove::RemoveArgs),
     Sort(commands::sort::SortArgs),
     Toggle(commands::toggle::ToggleArgs),
-    Completions(commands::completions::CompletionsArgs),
 }
 
 fn main() {
     let cli = Cli::parse();
     core::config::Config::load();
 
-    init_logger().expect("Failed to initialize main logger");
+    init_logger().expect("Failed to initialize logger");
 
     log::info!("Tooka CLI started");
 

@@ -14,7 +14,7 @@ pub struct ExportArgs {
 }
 
 pub fn run(args: ExportArgs) {
-    println!("📤 Exporting rule with ID: {}", args.id);
+    println!("Exporting rule with ID: {}", args.id);
 
     let output_path = args
         .output
@@ -23,11 +23,11 @@ pub fn run(args: ExportArgs) {
 
     match rules::export_rule(&args.id, Some(&output_path)) {
         Ok(()) => {
-            println!("✅ Rule exported successfully!");
+            println!("Rule exported successfully!");
             log::info!("Rule exported successfully to: {output_path}");
         }
         Err(e) => {
-            println!("❌ Error exporting rule: {e}");
+            println!("Error exporting rule: {e}");
             log::error!("Error exporting rule with ID {}: {}", args.id, e);
         }
     }

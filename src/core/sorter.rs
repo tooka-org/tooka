@@ -79,7 +79,7 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
         .collect();
     log::debug!(
         "File sorting completed with {} results.",
-        results.as_ref().map_or(0, std::vec::Vec::len)
+        results.as_ref().map_or(0, Vec::len)
     );
 
     // Flatten Vec<Vec<MatchResult>> into Vec<MatchResult>
@@ -100,8 +100,9 @@ fn sort_file(
                 "Failed to get file name from path '{}'",
                 file_path.display()
             )
-        })?
-        .to_string();
+        })
+        .expect("Failed to get file name from path")
+        .to_owned();
 
     let mut results = Vec::new();
 
@@ -110,7 +111,9 @@ fn sort_file(
             log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
             // For each action in the rule, execute it and collect results
             for action in &rule.actions {
-                let op_result = file_ops::execute_action(file_path, action, dry_run)?;
+                let op_result = file_ops::execute_action(file_path, action, dry_run)
+                    .map_err(|e| format!("Failed to execute action: {}", e))
+                    .expect("Failed to execute action");
                 if dry_run {
                     log_file_operation(&format!(
                         "DRY-{}] '{}' to '{}'",

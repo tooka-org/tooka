@@ -45,18 +45,6 @@ impl Default for Config {
     }
 }
 
-/// Implementation of configuration loading and saving for the `Config` struct.
-///
-/// Provides methods to load the configuration from a YAML file located in the user's
-/// configuration directory, and to save the current configuration back to that file.
-/// If the configuration file does not exist, a default configuration is created and saved.
-///
-/// # Methods
-///
-/// - `load()`: Loads the configuration from the config file. If the file does not exist,
-///   creates a default configuration, saves it, and returns it.
-/// - `save(&self)`: Saves the current configuration to the config file, creating any
-///   necessary directories.
 impl Config {
     /// Load the configuration from the config file
     pub fn load() -> Self {

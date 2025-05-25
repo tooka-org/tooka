@@ -21,16 +21,16 @@ pub fn run(args: &RemoveArgs) {
         );
         match rules::remove_rule(&args.rule_id) {
             Ok(()) => {
-                println!("✅ Rule removed successfully!");
+                println!("Rule removed successfully!");
                 log::info!("Rule with ID '{}' removed successfully.", args.rule_id);
             }
             Err(e) => {
-                println!("❌ Error removing rule: {e}");
+                println!("Error removing rule: {e}");
                 log::error!("Error removing rule with ID '{}': {}", args.rule_id, e);
             }
         }
     } else {
-        println!("❌ Rule with ID '{}' not found.", args.rule_id);
+        println!("Rule with ID '{}' not found.", args.rule_id);
         log::warn!("Rule with ID '{}' not found.", args.rule_id);
     }
 }
