@@ -29,7 +29,6 @@ jobs:
         echo "XDG_DESKTOP_DIR=$HOME/Desktop" >> $GITHUB_ENV
         echo "XDG_DOCUMENTS_DIR=$HOME/Documents" >> $GITHUB_ENV
         echo "XDG_CONFIG_HOME=$(mktemp -d)" >> $GITHUB_ENV
-        echo "XDG_DATA_HOME=$(mktemp -d)" >> $GITHUB_ENV
         echo "HOME_DIR set to $HOME"
         ls -la $HOME  # Verify the user directories
 
