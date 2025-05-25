@@ -30,11 +30,11 @@ pub fn run(args: SortArgs) {
     let rules = args.rules.unwrap_or_else(|| "<all>".to_string());
     let dry_run = args.dry_run;
 
-    let results = sorter::sort_files(source, rules, dry_run);
+    let results = sorter::sort_files(source, &rules, dry_run);
     println!("Sorting completed. Results:");
     log::info!(
         "Sorting completed, found {} matches",
-        results.as_ref().map_or(0, |r| r.len())
+        results.as_ref().map_or(0, std::vec::Vec::len)
     );
     match results {
         Ok(matches) => {
@@ -49,8 +49,8 @@ pub fn run(args: SortArgs) {
             }
         }
         Err(e) => {
-            log::error!("Error during sorting: {}", e);
-            println!("Error during sorting: {}", e);
+            log::error!("Error during sorting: {e}");
+            println!("Error during sorting: {e}");
         }
     }
 }

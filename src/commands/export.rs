@@ -22,12 +22,12 @@ pub fn run(args: ExportArgs) {
     log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
 
     match rules::export_rule(&args.id, Some(&output_path)) {
-        Ok(_) => {
+        Ok(()) => {
             println!("✅ Rule exported successfully!");
-            log::info!("Rule exported successfully to: {}", output_path);
+            log::info!("Rule exported successfully to: {output_path}");
         }
         Err(e) => {
-            println!("❌ Error exporting rule: {}", e);
+            println!("❌ Error exporting rule: {e}");
             log::error!("Error exporting rule with ID {}: {}", args.id, e);
         }
     }

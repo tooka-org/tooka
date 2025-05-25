@@ -9,17 +9,17 @@ pub struct AddArgs {
     pub file: String,
 }
 
-pub fn run(args: AddArgs) {
+pub fn run(args: &AddArgs) {
     println!("📥 Adding rule from file: {}", args.file);
     log::info!("Adding rule from file: {}", args.file);
 
     match rules::add_rule_from_file(&args.file) {
-        Ok(_) => {
+        Ok(()) => {
             println!("✅ Rule added successfully!");
             log::info!("Rule added successfully from file: {}", args.file);
         }
         Err(e) => {
-            eprintln!("❌ Error adding rule: {}", e);
+            eprintln!("❌ Error adding rule: {e}");
             log::error!("Error adding rule from file {}: {}", args.file, e);
         }
     }

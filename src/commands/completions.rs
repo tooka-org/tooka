@@ -11,7 +11,7 @@ pub struct CompletionsArgs {
     pub shell: Shell,
 }
 
-pub fn run(args: CompletionsArgs) {
+pub fn run(args: &CompletionsArgs) {
     log::info!("Generating completions for shell: {:?}", args.shell);
 
     let mut cmd = crate::Cli::command();

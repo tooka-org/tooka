@@ -34,23 +34,20 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let config = core::config::Config::load();
-    if let Err(e) = config {
-        eprintln!("Error loading configuration: {}", e);
-        std::process::exit(1);
-    }
+    core::config::Config::load();
+
     init_logger().expect("Failed to initialize main logger");
 
     log::info!("Tooka CLI started");
 
     match cli.command {
-        Commands::Config(args) => commands::config::run(args),
-        Commands::Add(args) => commands::add::run(args),
+        Commands::Config(args) => commands::config::run(&args),
+        Commands::Add(args) => commands::add::run(&args),
         Commands::Export(args) => commands::export::run(args),
         Commands::List(args) => commands::list::run(args),
-        Commands::Remove(args) => commands::remove::run(args),
+        Commands::Remove(args) => commands::remove::run(&args),
         Commands::Sort(args) => commands::sort::run(args),
-        Commands::Toggle(args) => commands::toggle::run(args),
-        Commands::Completions(args) => commands::completions::run(args),
+        Commands::Toggle(args) => commands::toggle::run(&args),
+        Commands::Completions(args) => commands::completions::run(&args),
     }
 }

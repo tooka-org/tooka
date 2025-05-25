@@ -17,12 +17,10 @@ fn tooka_cmd(args: &[&str]) -> (String, String) {
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
-    if !output.status.success() {
-        panic!(
-            "Command {:?} failed\nstdout:\n{}\nstderr:\n{}",
-            args, stdout, stderr
-        );
-    }
+    assert!(
+        output.status.success(),
+        "Command {args:?} failed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
 
     (stdout, stderr)
 }
@@ -61,12 +59,12 @@ fn test_add_and_remove_rule() {
 
     // Add rule
     let (out, _) = tooka_cmd(&["add", rule_path.to_str().unwrap()]);
-    println!("Add Output: {}", out);
+    println!("Add Output: {out}");
     assert!(out.contains("✅"));
 
     // Remove rule
     let (out, _) = tooka_cmd(&["remove", rule_id]);
-    println!("Remove Output: {}", out);
+    println!("Remove Output: {out}");
     assert!(out.contains("✅"));
 }
 
@@ -77,7 +75,7 @@ fn test_list_rules() {
 
     tooka_cmd(&["add", rule_path.to_str().unwrap()]);
     let (out, _) = tooka_cmd(&["list"]);
-    println!("List Output: {}", out);
+    println!("List Output: {out}");
     assert!(out.contains(rule_id));
     tooka_cmd(&["remove", rule_id]);
 }
@@ -89,11 +87,11 @@ fn test_toggle_rule() {
 
     tooka_cmd(&["add", rule_path.to_str().unwrap()]);
     let (out1, _) = tooka_cmd(&["toggle", rule_id]);
-    println!("Toggle-1 Output: {}", out1);
+    println!("Toggle-1 Output: {out1}");
     assert!(out1.contains("✅"));
 
     let (out2, _) = tooka_cmd(&["toggle", rule_id]);
-    println!("Toggle-2 Output: {}", out2);
+    println!("Toggle-2 Output: {out2}");
     assert!(out2.contains("✅"));
 
     tooka_cmd(&["remove", rule_id]);
@@ -106,12 +104,7 @@ fn test_export_rule() {
     let export_path = env::temp_dir().join("exported_rule.yaml");
 
     tooka_cmd(&["add", rule_path.to_str().unwrap()]);
-    tooka_cmd(&[
-        "export",
-        rule_id,
-        "--output",
-        export_path.to_str().unwrap(),
-    ]);
+    tooka_cmd(&["export", rule_id, "--output", export_path.to_str().unwrap()]);
     assert!(export_path.exists());
 
     let exported_content = fs::read_to_string(export_path).unwrap();
@@ -144,7 +137,7 @@ fn test_sort_command() {
 
     // Dry run
     let (dry_out, _) = tooka_cmd(&["sort", "--dry-run"]);
-    println!("Dry Run Output: {}", dry_out);
+    println!("Dry Run Output: {dry_out}");
     assert!(dry_out.contains("found"));
 
     // Cleanup

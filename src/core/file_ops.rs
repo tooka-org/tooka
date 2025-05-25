@@ -18,9 +18,9 @@ pub fn execute_action(
     dry_run: bool,
 ) -> Result<FileOperationResult, String> {
     log::info!(
-        "Executing action '{}' on file: {:?} (dry_run: {})",
+        "Executing action '{}' on file: {} (dry_run: {})",
         action.r#type,
-        file_path,
+        file_path.display(),
         dry_run
     );
     match action.r#type.as_str() {
@@ -30,21 +30,21 @@ pub fn execute_action(
         "rename" => handle_rename(file_path, action, dry_run),
         "compress" => handle_compress(file_path, action, dry_run),
         "skip" => {
-            log::info!("Skipping file: {:?}", file_path);
+            log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
                 new_path: PathBuf::from(file_path),
                 renamed: String::from("[skipped]"),
             })
         }
         other => {
-            log::error!("Unsupported action type: {}", other);
-            Err(format!("Unsupported action type: {}", other))
+            log::error!("Unsupported action type: {other}");
+            Err(format!("Unsupported action type: {other}"))
         }
     }
 }
 
 fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, String), String> {
-    log::debug!("Expanding templates for file: {:?}", file_path);
+    log::debug!("Expanding templates for file: {}", file_path.display());
 
     let file_name = file_path
         .file_stem()
@@ -67,28 +67,31 @@ fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, Strin
     let sub_path = if let Some(ref template) = action.path_template {
         template
             .format
-            .replace("{year}", &format!("{:04}", year))
-            .replace("{month}", &format!("{:02}", month))
-            .replace("{day}", &format!("{:02}", day))
+            .replace("{year}", &format!("{year:04}"))
+            .replace("{month}", &format!("{month:02}"))
+            .replace("{day}", &format!("{day:02}"))
     } else {
-        "".into()
+        String::new()
     };
 
     let full_path = Path::new(&expanded_base).join(sub_path);
 
-    let renamed = action
-        .rename_template
-        .as_ref()
-        .map(|t| {
+    let renamed = action.rename_template.as_ref().map_or_else(
+        || format!("{file_name}.{ext}"),
+        |t| {
             t.replace("{filename}", file_name)
-                .replace("{year}", &format!("{:04}", year))
-                .replace("{month}", &format!("{:02}", month))
-                .replace("{day}", &format!("{:02}", day))
+                .replace("{year}", &format!("{year:04}"))
+                .replace("{month}", &format!("{month:02}"))
+                .replace("{day}", &format!("{day:02}"))
                 .replace("{ext}", ext)
-        })
-        .unwrap_or_else(|| format!("{}.{}", file_name, ext));
+        },
+    );
 
-    log::debug!("Expanded path: {:?}, renamed: {}", full_path, renamed);
+    log::debug!(
+        "Expanded path: {}, renamed: {}",
+        full_path.display(),
+        renamed
+    );
 
     Ok((full_path, renamed))
 }
@@ -101,27 +104,31 @@ fn handle_move(
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
-        log::info!("Creating directories: {:?}", dir_path);
+        log::info!("Creating directories: {}", dir_path.display());
         if let Err(e) = fs::create_dir_all(&dir_path) {
-            log::error!("Failed to create directories: {}", e);
+            log::error!("Failed to create directories: {e}");
             return Err(e.to_string());
         }
     }
 
     let target_path = dir_path.join(&renamed);
 
-    if !dry_run {
-        log::info!("Moving file from {:?} to {:?}", file_path, target_path);
+    if dry_run {
+        log::debug!(
+            "Dry run: would move file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
+    } else {
+        log::info!(
+            "Moving file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
         if let Err(e) = fs::rename(file_path, &target_path) {
-            log::error!("Failed to move file: {}", e);
+            log::error!("Failed to move file: {e}");
             return Err(e.to_string());
         }
-    } else {
-        log::debug!(
-            "Dry run: would move file from {:?} to {:?}",
-            file_path,
-            target_path
-        );
     }
 
     Ok(FileOperationResult {
@@ -138,27 +145,31 @@ fn handle_copy(
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
-        log::info!("Creating directories: {:?}", dir_path);
+        log::info!("Creating directories: {}", dir_path.display());
         if let Err(e) = fs::create_dir_all(&dir_path) {
-            log::error!("Failed to create directories: {}", e);
+            log::error!("Failed to create directories: {e}");
             return Err(e.to_string());
         }
     }
 
     let target_path = dir_path.join(&renamed);
 
-    if !dry_run {
-        log::info!("Copying file from {:?} to {:?}", file_path, target_path);
+    if dry_run {
+        log::debug!(
+            "Dry run: would copy file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
+    } else {
+        log::info!(
+            "Copying file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
         if let Err(e) = fs::copy(file_path, &target_path) {
-            log::error!("Failed to copy file: {}", e);
+            log::error!("Failed to copy file: {e}");
             return Err(e.to_string());
         }
-    } else {
-        log::debug!(
-            "Dry run: would copy file from {:?} to {:?}",
-            file_path,
-            target_path
-        );
     }
 
     Ok(FileOperationResult {
@@ -168,14 +179,14 @@ fn handle_copy(
 }
 
 fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult, String> {
-    if !dry_run {
-        log::info!("Deleting file: {:?}", file_path);
+    if dry_run {
+        log::debug!("Dry run: would delete file: {}", file_path.display());
+    } else {
+        log::info!("Deleting file: {}", file_path.display());
         if let Err(e) = fs::remove_file(file_path) {
-            log::error!("Failed to delete file: {}", e);
+            log::error!("Failed to delete file: {e}");
             return Err(e.to_string());
         }
-    } else {
-        log::debug!("Dry run: would delete file: {:?}", file_path);
     }
 
     Ok(FileOperationResult {
@@ -192,46 +203,50 @@ fn handle_compress(
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
-        log::info!("Creating directories: {:?}", dir_path);
+        log::info!("Creating directories: {}", dir_path.display());
         if let Err(e) = fs::create_dir_all(&dir_path) {
-            log::error!("Failed to create directories: {}", e);
+            log::error!("Failed to create directories: {e}");
             return Err(e.to_string());
         }
     }
 
-    let target_path = dir_path.join(format!("{}.gz", renamed));
+    let target_path = dir_path.join(format!("{renamed}.gz"));
 
-    if !dry_run {
-        log::info!("Compressing file {:?} to {:?}", file_path, target_path);
+    if dry_run {
+        log::debug!(
+            "Dry run: would compress file {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
+    } else {
+        log::info!(
+            "Compressing file {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
         let mut input = fs::File::open(file_path).map_err(|e| {
-            log::error!("Failed to open input file: {}", e);
+            log::error!("Failed to open input file: {e}");
             e.to_string()
         })?;
         let mut output = fs::File::create(&target_path).map_err(|e| {
-            log::error!("Failed to create output file: {}", e);
+            log::error!("Failed to create output file: {e}");
             e.to_string()
         })?;
         let mut encoder = GzEncoder::new(&mut output, Compression::default());
 
         std::io::copy(&mut input, &mut encoder).map_err(|e| {
-            log::error!("Failed to compress file: {}", e);
+            log::error!("Failed to compress file: {e}");
             e.to_string()
         })?;
         encoder.finish().map_err(|e| {
-            log::error!("Failed to finish compression: {}", e);
+            log::error!("Failed to finish compression: {e}");
             e.to_string()
         })?;
-    } else {
-        log::debug!(
-            "Dry run: would compress file {:?} to {:?}",
-            file_path,
-            target_path
-        );
     }
 
     Ok(FileOperationResult {
         new_path: target_path,
-        renamed: format!("{}.gz", renamed),
+        renamed: format!("{renamed}.gz"),
     })
 }
 
@@ -243,27 +258,31 @@ fn handle_rename(
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
     if action.create_dirs.unwrap_or(false) && !dry_run {
-        log::info!("Creating directories: {:?}", dir_path);
+        log::info!("Creating directories: {}", dir_path.display());
         if let Err(e) = fs::create_dir_all(&dir_path) {
-            log::error!("Failed to create directories: {}", e);
+            log::error!("Failed to create directories: {e}");
             return Err(e.to_string());
         }
     }
 
     let target_path = dir_path.join(&renamed);
 
-    if !dry_run {
-        log::info!("Renaming file from {:?} to {:?}", file_path, target_path);
+    if dry_run {
+        log::debug!(
+            "Dry run: would rename file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
+    } else {
+        log::info!(
+            "Renaming file from {} to {}",
+            file_path.display(),
+            target_path.display()
+        );
         if let Err(e) = fs::rename(file_path, &target_path) {
-            log::error!("Failed to rename file: {}", e);
+            log::error!("Failed to rename file: {e}");
             return Err(e.to_string());
         }
-    } else {
-        log::debug!(
-            "Dry run: would rename file from {:?} to {:?}",
-            file_path,
-            target_path
-        );
     }
 
     Ok(FileOperationResult {

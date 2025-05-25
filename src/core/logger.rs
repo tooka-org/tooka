@@ -1,9 +1,10 @@
 use crate::core::config;
 use chrono::Local;
 use flexi_logger::writers::LogWriter;
-use flexi_logger::{Duplicate, LogSpecification, Logger, Record, WriteMode};
+use flexi_logger::{LogSpecification, Logger, Record, WriteMode};
 use log::Record as LogRecord;
 use once_cell::sync::OnceCell;
+use std::path::Path;
 use std::{
     fs::{OpenOptions, create_dir_all},
     io::{self, Write},
@@ -18,7 +19,7 @@ const MAX_LOG_FILES: usize = 10;
 
 /// Initialize the logger once
 pub fn init_logger() -> io::Result<()> {
-    let config = config::Config::load()?;
+    let config = config::Config::load();
     let logs_folder = config.logs_folder;
 
     // Ensure folders exist
@@ -30,7 +31,7 @@ pub fn init_logger() -> io::Result<()> {
         .expect("Failed to parse log specification");
 
     let logger = Logger::with(log_spec)
-        .log_to_writer(Box::new(DualWriter::new(logs_folder)))
+        .log_to_writer(Box::new(DualWriter::new(&logs_folder)))
         .write_mode(WriteMode::BufferAndFlush)
         .format(custom_format)
         .start()
@@ -47,7 +48,7 @@ pub fn init_logger() -> io::Result<()> {
 
 /// Logs a file operation using the `file_ops` target
 pub fn log_file_operation(msg: &str) {
-    log::info!(target: "file_ops", "{}", msg);
+    log::info!(target: "file_ops", "{msg}");
 }
 
 /// Custom formatter
@@ -73,7 +74,7 @@ struct DualWriter {
 }
 
 impl DualWriter {
-    fn new(base: PathBuf) -> Self {
+    fn new(base: &Path) -> Self {
         Self {
             main_dir: base.join("main"),
             ops_dir: base.join("ops"),
@@ -98,12 +99,10 @@ impl LogWriter for DualWriter {
         record: &Record,
     ) -> Result<(), std::io::Error> {
         // Try to acquire the lock, but avoid indefinite waiting
-        let _guard = match LOG_MUTEX.try_lock() {
-            Ok(g) => g,
-            Err(_) => {
-                // If the lock is poisoned or already held, skip logging to avoid deadlock
-                return Ok(());
-            }
+
+        let Ok(_guard) = LOG_MUTEX.try_lock() else {
+            // If the lock is poisoned or already held, skip logging to avoid deadlock
+            return Ok(());
         };
 
         let path = self.get_log_path(record.target());
@@ -111,7 +110,7 @@ impl LogWriter for DualWriter {
 
         // Log rotation: keep only MAX_LOG_FILES most recent logs
         let mut log_files: Vec<_> = std::fs::read_dir(dir)
-            .map_err(|e| io::Error::other(format!("Failed to read dir: {}", e)))?
+            .map_err(|e| io::Error::other(format!("Failed to read dir: {e}")))?
             .filter_map(|entry| {
                 let entry = entry.expect("Failed to read directory entry");
                 let path = entry.path();
@@ -134,17 +133,20 @@ impl LogWriter for DualWriter {
             }
         }
 
-        let mut file = OpenOptions::new().create(true).append(true).open(&path)
-            .map_err(|e| io::Error::other(format!("Failed to open log file: {}", e)))
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+            .map_err(|e| io::Error::other(format!("Failed to open log file: {e}")))
             .expect("Failed to open log file");
 
         let mut buf = Vec::new();
         // Use the custom_format function to format the log entry
         custom_format(&mut buf, now, record)
-            .map_err(|e| io::Error::other(format!("Failed to format log entry: {}", e)))
+            .map_err(|e| io::Error::other(format!("Failed to format log entry: {e}")))
             .expect("Failed to format log entry");
         file.write_all(&buf)
-            .map_err(|e| io::Error::other(format!("Failed to write to log file: {}", e)))
+            .map_err(|e| io::Error::other(format!("Failed to write to log file: {e}")))
             .expect("Failed to write to log file");
         Ok(())
     }

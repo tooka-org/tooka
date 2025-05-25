@@ -24,7 +24,7 @@ pub struct ConfigArgs {
     pub show: bool,
 }
 
-pub fn run(args: ConfigArgs) {
+pub fn run(args: &ConfigArgs) {
     let flag_count = [args.locate, args.init, args.reset, args.show]
         .iter()
         .filter(|&&x| x)
@@ -53,49 +53,28 @@ pub fn run(args: ConfigArgs) {
                         println!("Config file found at: {}", path.display());
                     }
                     Err(e) => {
-                        log::error!("Error locating config file: {}", e);
-                        eprintln!("❌ Error locating config file: {}", e);
+                        log::error!("Error locating config file: {e}");
+                        eprintln!("❌ Error locating config file: {e}");
                     }
                 }
             } else if args.init {
                 log::info!("Initializing config file...");
                 println!("🛠️ Initializing config file...");
-                match config::Config::load() {
-                    Ok(_) => {
-                        log::info!("Config file initialized successfully!");
-                        println!("✅ Config file initialized successfully!");
-                    }
-                    Err(e) => {
-                        log::error!("Error initializing config file: {}", e);
-                        eprintln!("❌ Error initializing config file: {}", e);
-                    }
-                }
+                config::Config::load();
+                log::info!("Config file initialized successfully!");
+                println!("✅ Config file initialized successfully!");
             } else if args.reset {
                 log::info!("Resetting config to default...");
                 println!("🔄 Resetting config to default...");
-                match config::reset_config() {
-                    Ok(_) => {
-                        log::info!("Config reset to default successfully!");
-                        println!("✅ Config reset to default successfully!");
-                    }
-                    Err(e) => {
-                        log::error!("Error resetting config: {}", e);
-                        eprintln!("❌ Error resetting config: {}", e);
-                    }
-                }
+                config::reset_config();
+                log::info!("Config reset to default values.");
+                println!("✅ Config reset to default values.");
             } else if args.show {
                 log::info!("Showing current config...");
                 println!("📄 Current config contents:\n---\n<YAML output here>");
-                match config::show_config() {
-                    Ok(contents) => {
-                        log::info!("Config contents displayed.");
-                        println!("{}", contents);
-                    }
-                    Err(e) => {
-                        log::error!("Error showing config: {}", e);
-                        eprintln!("❌ Error showing config: {}", e);
-                    }
-                }
+                let config = config::show_config();
+                log::info!("Current config displayed successfully.");
+                println!("{config}");
             }
         }
         _ => {

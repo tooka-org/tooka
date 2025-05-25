@@ -14,19 +14,12 @@ pub struct MatchResult {
     pub new_path: PathBuf,
 }
 
-pub fn sort_files(
-    source: String,
-    rules: String,
-    dry_run: bool,
-) -> Result<Vec<MatchResult>, String> {
+pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<MatchResult>, String> {
     log::debug!(
-        "Starting file sorting with source: '{}', rules: '{}', dry_run: {}",
-        source,
-        rules,
-        dry_run
+        "Starting file sorting with source: '{source}', rules: '{rules}', dry_run: {dry_run}"
     );
     let source_path = if source == "<default>" {
-        config::Config::load().unwrap().source_folder
+        config::Config::load().source_folder
     } else {
         PathBuf::from(source)
     };
@@ -59,7 +52,7 @@ pub fn sort_files(
             log::error!("No valid rule IDs provided.");
             return Err("No valid rule IDs provided.".to_string());
         }
-        rules::load_rules_from_ids(rule_ids)
+        rules::load_rules_from_ids(&rule_ids)
             .map_err(|e| e.to_string())
             .expect("Failed to load rules from IDs")
     };
@@ -86,7 +79,7 @@ pub fn sort_files(
         .collect();
     log::debug!(
         "File sorting completed with {} results.",
-        results.as_ref().map_or(0, |r| r.len())
+        results.as_ref().map_or(0, std::vec::Vec::len)
     );
 
     // Flatten Vec<Vec<MatchResult>> into Vec<MatchResult>
@@ -136,15 +129,12 @@ fn sort_file(
                 results.push(MatchResult {
                     file_name: file_name.clone(),
                     matched_rule_id: rule.id.clone(),
-                    current_path: file_path.to_path_buf(),
+                    current_path: file_path.clone(),
                     new_path: op_result.new_path.join(&op_result.renamed),
                 });
             }
             // Stops after the first matching rule
-            log::debug!(
-                "Stopping after first matching rule for file '{}'",
-                file_name
-            );
+            log::debug!("Stopping after first matching rule for file '{file_name}'");
             break;
         }
     }

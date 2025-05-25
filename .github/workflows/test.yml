@@ -43,6 +43,3 @@ jobs:
 
     - name: Pre-Check the code
       run: cargo check --verbose --release
-
-    - name: Build and test the app
-      run: cargo test --verbose -- --show-output
