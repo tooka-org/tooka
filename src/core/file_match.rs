@@ -380,58 +380,6 @@ pub fn match_rule_matcher(file_path: &PathBuf, matcher: &RuleMatch) -> bool {
         );
     }
 
-    // Match ALL sub-matchers
-    if let Some(ref all_matchers) = matcher.all {
-        log::debug!(
-            "Checking ALL sub-matchers for file: {}",
-            file_path.display()
-        );
-        for (i, sub_matcher) in all_matchers.iter().enumerate() {
-            log::debug!(
-                "Checking ALL sub-matcher {i} for file: {}",
-                file_path.display()
-            );
-            if !match_rule_matcher(file_path, sub_matcher) {
-                log::debug!(
-                    "ALL sub-matcher {i} failed for file: {}",
-                    file_path.display()
-                );
-                return false;
-            }
-            log::debug!(
-                "ALL sub-matcher {i} succeeded for file: {}",
-                file_path.display()
-            );
-        }
-        log::debug!(
-            "ALL sub-matchers succeeded for file: {}",
-            file_path.display()
-        );
-    }
-
-    // Match ANY sub-matchers
-    if let Some(ref any_matchers) = matcher.any {
-        log::debug!(
-            "Checking ANY sub-matchers for file: {}",
-            file_path.display()
-        );
-        if !any_matchers.iter().enumerate().any(|(i, sub)| {
-            let res = match_rule_matcher(file_path, sub);
-            log::debug!(
-                "ANY sub-matcher {i} result: {res} for file: {}",
-                file_path.display()
-            );
-            res
-        }) {
-            log::debug!("ANY sub-matchers failed for file: {}", file_path.display());
-            return false;
-        }
-        log::debug!(
-            "ANY sub-matchers succeeded for file: {}",
-            file_path.display()
-        );
-    }
-
     log::debug!("All matchers succeeded for file: {}", file_path.display());
     true
 }

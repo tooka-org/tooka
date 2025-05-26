@@ -15,11 +15,17 @@ pub struct RulesFile {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rule {
+    /// Unique identifier for the rule
     pub id: String,
+    /// Human-readable name for the rule
     pub name: String,
+    /// If the rule is enabled or not
     pub enabled: bool,
-    #[serde(rename = "match")]
-    pub r#match: Match,
+    /// List of matches that this rule applies to
+    pub matches: Vec<Match>,
+    /// If true, all matches must match for the rule to apply
+    pub match_all: bool,
+    /// One or more actions to perform if the rule matches
     pub actions: Vec<Action>,
 }
 
@@ -30,8 +36,6 @@ pub struct Match {
     pub pattern: Option<String>,
     pub metadata: Option<MetadataMatch>,
     pub conditions: Option<Conditions>,
-    pub any: Option<Vec<Match>>,
-    pub all: Option<Vec<Match>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -65,14 +69,19 @@ pub struct DateRange {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Action {
+    /// Action type: move, copy, rename, compress, delete, skip
     #[serde(rename = "type")]
     pub r#type: String,
+    /// Destination path for move/copy/compress actions
     pub destination: Option<String>,
+    /// Optional path template for move/copy actions
     pub path_template: Option<PathTemplate>,
+    /// Optional rename template for rename actions
     pub rename_template: Option<String>,
+    /// If true, create directories if they do not exist
     pub create_dirs: Option<bool>,
+    /// Compression format (e.g., zip, tar.gz) for compress actions
     pub format: Option<String>,
-    pub target: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

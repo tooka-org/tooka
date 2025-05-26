@@ -107,7 +107,24 @@ fn sort_file(
     let mut results = Vec::new();
 
     for rule in &rules_file.rules {
-        if file_match::match_rule_matcher(file_path, &rule.r#match) {
+        log::debug!(
+            "Checking if file '{}' matches rule '{}'",
+            file_name,
+            rule.id
+        );
+        let is_match = if rule.match_all {
+            log::debug!("Rule '{}' requires all matchers to match", rule.id);
+            rule.matches
+                .iter()
+                .all(|matcher| file_match::match_rule_matcher(file_path, matcher))
+        } else {
+            log::debug!("Rule '{}' requires any matcher to match", rule.id);
+            rule.matches
+                .iter()
+                .any(|matcher| file_match::match_rule_matcher(file_path, matcher))
+        };
+
+        if is_match {
             log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
             // For each action in the rule, execute it and collect results
             for action in &rule.actions {

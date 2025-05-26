@@ -7,7 +7,7 @@
 A fast, rule-based CLI tool for organizing your files.
 
 > [!WARNING]
-> Tooka lacks tests and is currently in early beta. Do **not** use it in production environments!
+> Tooka lacks tests and is currently in early beta. Do **not** use it in production environments for now!
 
 ---
 
@@ -18,6 +18,14 @@ A fast, rule-based CLI tool for organizing your files.
 You write the rules. Tooka does the sorting.
 
 With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.
+
+---
+
+## 🌐 Website
+
+Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
+
+👉 Try the **interactive rule builder** at [https://tooka.deno.dev/builder](https://tooka.deno.dev/builder) — generate a YAML rule and download it directly for use with Tooka!
 
 ---
 
@@ -44,9 +52,9 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 
 4. Run a dry-run to test your rules:
 
-   ```bash
+  ```bash
    tooka sort --dry-run ~/Downloads
-    ```
+  ```
 
 > [!IMPORTANT]
 > **Always run a dry-run first** to see what files would be moved, renamed, or deleted. Tooka **cannot recover lost or changed files**. Proceed carefully!
@@ -85,31 +93,37 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 Here's an example rule:
 
 ```yaml
-id: "img-date-001"
-name: "Organize Images by Date"
+id: "img-organize-2025"
+name: "Organize Recent iPhone Images"
 enabled: true
+match_all: true
 
-match:
-  extensions: [".jpg", ".jpeg", ".png"]
-  mime_type: "image/*"
-  pattern: "IMG_*"
-  metadata:
-    exif_date: true
-    fields:
-      - key: "EXIF:Model"
-        pattern: "iPhone*"
-  conditions:
-    older_than_days: 7
-    size_greater_than_kb: 100
-    filename_regex: "^IMG_.*"
+matches:
+  - extensions: [".jpg", ".jpeg", ".png"]
+    mime_type: "image/*"
+    pattern: "IMG_*"
+    metadata:
+      exif_date: true
+      fields:
+        - key: "EXIF:Model"
+          pattern: "iPhone.*"
+    conditions:
+      older_than_days: 3
+      size_greater_than_kb: 200
+      filename_regex: "^IMG_\\d+"
+      is_symlink: false
 
 actions:
   - type: move
-    destination: "~/Pictures/Organized"
+    destination: "~/Pictures/Sorted"
     path_template:
       source: "exif"
       format: "{year}/{month}/{day}"
-    rename_template: "{year}-{month}_{filename}.{ext}"
+    rename_template: "{year}-{month}-{day}_{filename}.{ext}"
+    create_dirs: true
+  - type: compress
+    destination: "~/Archives"
+    format: "zip"
     create_dirs: true
 ```
 
@@ -117,15 +131,21 @@ actions:
 
 ### Match Fields
 
-| Field                | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| `extensions`         | File extension filter (e.g., `.jpg`, `.pdf`)                |
-| `mime_type`          | Match MIME types like `image/*`                             |
-| `pattern`            | Simple filename prefix matching (e.g., `IMG_`)              |
-| `filename_regex`     | Advanced regex pattern matching on filenames                |
-| `metadata.exif_date` | Use EXIF date (e.g., for images)                            |
-| `metadata.fields`    | Match EXIF or custom metadata by key/pattern                |
-| `conditions`         | Add constraints: age, size, symlink status, ownership, etc. |
+| Field                                | Description                                                   |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `extensions`                         | File extension filter (e.g., `.jpg`, `.pdf`)                  |
+| `mime_type`                          | Match MIME types like `image/*`                               |
+| `pattern`                            | Simple filename prefix matching (e.g., `IMG_`)                |
+| `metadata.exif_date`                 | Use EXIF date for date-based matching                         |
+| `metadata.fields[].key`              | Metadata field key (e.g., `EXIF:Model`)                       |
+| `metadata.fields[].value`            | Exact match on metadata value (optional)                      |
+| `metadata.fields[].pattern`          | Pattern match on metadata value (optional)                    |
+| `conditions.older_than_days`         | Match files older than N days                                 |
+| `conditions.size_greater_than_kb`    | Match files larger than N kilobytes                           |
+| `conditions.created_between.from/to` | Match files created within a specific date range (ISO format) |
+| `conditions.filename_regex`          | Regex match against the filename                              |
+| `conditions.is_symlink`              | Match whether the file is a symbolic link                     |
+| `conditions.owner`                   | Match files by owner username                                 |
 
 ---
 
@@ -139,20 +159,26 @@ actions:
 
 ## Actions
 
-| Action Type    | Description                         |
-| -------------- | ----------------------------------- |
-| `move`, `copy` | Move or duplicate the file          |
-| `rename`       | Rename file using a template        |
-| `compress`     | Compress the file using GZIP        |
-| `delete`       | Delete the file                     |
-| `skip`         | Skip file without taking any action |
+| Action Type | Description                                   |
+| ----------- | --------------------------------------------- |
+| `move`      | Move the file to a new location               |
+| `copy`      | Copy the file to a new location               |
+| `rename`    | Rename the file based on a template           |
+| `compress`  | Archive the file (e.g., `zip`, `tar.gz`)      |
+| `delete`    | Permanently delete the file                   |
+| `skip`      | Ignore the file without performing any action |
 
-Optional fields:
+### Optional Action Fields
 
-* `destination`: Target directory
-* `path_template`: Dynamic folder structure, e.g., based on date
-* `rename_template`: Use variables like `{filename}`, `{year}`, `{ext}`
-* `create_dirs`: Automatically create missing folders
+| Field                  | Description                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `destination`          | Target folder for `move`, `copy`, or `compress`                               |
+| `path_template`        | Controls dynamic folder structure using date or metadata                      |
+| `path_template.source` | Source for template values: `exif`, `created`, etc.                           |
+| `path_template.format` | Format string with placeholders like `{year}/{month}`                         |
+| `rename_template`      | Template to rename files using variables like `{filename}`, `{ext}`, `{year}` |
+| `create_dirs`          | Whether to automatically create missing destination folders                   |
+| `format`               | Compression format used with `compress` (e.g., `zip`, `tar.gz`)               |
 
 ---
 
@@ -168,12 +194,12 @@ tooka config --help
 
 The configuration file includes:
 
-| Field                | Description                                          |
-| -------------------- | ---------------------------------------------------- |
-| `config_version`     | Internal version tracking for config migrations      |
-| `source_folder`      | Default folder Tooka uses to sort files              |
-| `rules_file`         | Path to the active YAML rule set                     |
-| `logs_folder`        | Directory where Tooka writes log files               |
+| Field            | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `config_version` | Internal version tracking for config migrations |
+| `source_folder`  | Default folder Tooka uses to sort files         |
+| `rules_file`     | Path to the active YAML rule set                |
+| `logs_folder`    | Directory where Tooka writes log files          |
 
 These values are saved automatically when running Tooka. You can also manage them manually or programmatically using the API.
 
