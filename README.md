@@ -1,4 +1,4 @@
-# Tooka
+# 🗂️ Tooka
 
 [![Cargo-Test](https://github.com/Benji377/tooka/actions/workflows/test.yml/badge.svg)](https://github.com/Benji377/tooka/actions/workflows/test.yml)
 [![Rust-Clippy-Analyzer](https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg)](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
@@ -14,7 +14,7 @@ A fast, rule-based CLI tool for organizing your files.
 
 ---
 
-## Introduction
+## 🧭 Introduction
 
 **Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
 
@@ -32,7 +32,7 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ---
 
-## Features
+## ✨ Features
 
 * Define custom file rules in YAML
 * Match by attributes like name, extension, size, metadata, and age
@@ -43,7 +43,7 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 1. **Download Tooka** from the [releases page](https://github.com/Benji377/tooka/releases)
 2. Run `tooka` in your terminal to verify it's installed
@@ -76,7 +76,7 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ---
 
-## CLI Commands
+## 🛠️ CLI Commands
 
 | Command               | Description                                        |
 | --------------------- | -------------------------------------------------- |
@@ -91,7 +91,7 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ---
 
-## Rule Structure
+## 🧾 Rule Structure
 
 Here's an example rule:
 
@@ -160,7 +160,7 @@ actions:
 
 ---
 
-## Actions
+## 🧰 Actions
 
 | Action Type | Description                                   |
 | ----------- | --------------------------------------------- |
@@ -185,7 +185,7 @@ actions:
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 Tooka uses a YAML configuration file stored in your system’s configuration directory. You can manage it entirely via the CLI:
 
@@ -224,12 +224,12 @@ Tooka handles config loading and saving automatically:
 
 ---
 
-## License
+## 📜 License
 
 Tooka is open source and available under the [GPLv3 License](LICENSE).
 
 ---
 
-## Support
+## 💬 Support
 
 Have a bug, idea, or question? Join the conversation in [GitHub Discussions](https://github.com/Benji377/tooka/discussions).
