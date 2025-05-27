@@ -1,12 +1,12 @@
 [package]
 name = "tooka"
-version = "0.1.0"
+version = "0.1.1"
 description = "A fast, rule-based CLI tool for organizing your files"
 authors = ["Benjamin Demetz"]
 license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/Benji377/tooka"
-# homepage = "https://tooka.deno.dev"
+homepage = "https://tooka.deno.dev"
 keywords = ["tooka", "filesystem", "cli", "utility", "automation"]
 categories = ["command-line-utilities", "filesystem", "utilities", "productivity"]
 default-run = "tooka"
