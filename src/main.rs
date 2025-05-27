@@ -1,6 +1,6 @@
 mod commands;
+mod context;
 mod core;
-mod globals;
 
 use core::logger::init_logger;
 
@@ -30,16 +30,17 @@ enum Commands {
     Remove(commands::remove::RemoveArgs),
     Sort(commands::sort::SortArgs),
     Toggle(commands::toggle::ToggleArgs),
+    Template(commands::template::TemplateArgs),
 }
 
 fn main() {
     let cli = Cli::parse();
     // Init everything
-    if let Err(e) = globals::init_config() {
+    if let Err(e) = context::init_config() {
         eprintln!("Failed to initialize config: {}", e);
         std::process::exit(1);
     }
-    if let Err(e) = globals::init_rules_file() {
+    if let Err(e) = context::init_rules_file() {
         eprintln!("Failed to initialize rules file: {}", e);
         std::process::exit(1);
     }
@@ -59,5 +60,6 @@ fn main() {
         Commands::Sort(args) => commands::sort::run(args),
         Commands::Toggle(args) => commands::toggle::run(&args),
         Commands::Completions(args) => commands::completions::run(&args),
+        Commands::Template(args) => commands::template::run(args),
     }
 }

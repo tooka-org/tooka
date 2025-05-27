@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::globals;
+use crate::context;
 
 #[derive(Args)]
 #[command(about = "Toggles the state of a rule by its ID")]
@@ -11,7 +11,7 @@ pub struct ToggleArgs {
 
 pub fn run(args: &ToggleArgs) {
     log::info!("Toggling rule with ID: {}", args.rule_id);
-    let rf = globals::get_rules_file();
+    let rf = context::get_rules_file();
     let mut rf = match rf.lock() {
         Ok(guard) => guard,
         Err(_) => {

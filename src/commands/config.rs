@@ -1,4 +1,4 @@
-use crate::globals;
+use crate::context;
 use clap::Args;
 
 #[derive(Args)]
@@ -26,7 +26,7 @@ pub fn run(args: &ConfigArgs) {
         args.reset,
         args.show
     );
-    let conf = globals::get_config();
+    let conf = context::get_config();
     let mut conf = match conf.lock() {
         Ok(guard) => guard,
         Err(_) => {

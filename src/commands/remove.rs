@@ -1,4 +1,4 @@
-use crate::globals;
+use crate::context;
 use clap::Args;
 
 #[derive(Args)]
@@ -10,7 +10,7 @@ pub struct RemoveArgs {
 
 pub fn run(args: &RemoveArgs) {
     log::info!("Removing rule with ID: {}", args.rule_id);
-    let rf = globals::get_rules_file();
+    let rf = context::get_rules_file();
     let mut rf = match rf.lock() {
         Ok(guard) => guard,
         Err(_) => {

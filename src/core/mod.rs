@@ -5,3 +5,4 @@ pub mod logger;
 pub mod rule;
 pub mod rules_file;
 pub mod sorter;
+pub mod template;

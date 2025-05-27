@@ -3,7 +3,7 @@ use std::{fs, io, path::PathBuf};
 use directories_next::{ProjectDirs, UserDirs};
 use serde::{Deserialize, Serialize};
 
-use crate::globals::{APP_NAME, APP_ORG, APP_QUALIFIER};
+use crate::context::{APP_NAME, APP_ORG, APP_QUALIFIER};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -31,12 +31,12 @@ impl Default for Config {
             .expect("Failed to get project directories");
 
         let config = Self {
-            version: crate::globals::CONFIG_VERSION,
+            version: crate::context::CONFIG_VERSION,
             source_folder: downloads_dir,
-            rules_file: project_dir.data_dir().join(crate::globals::RULES_FILE_NAME),
+            rules_file: project_dir.data_dir().join(crate::context::RULES_FILE_NAME),
             logs_folder: project_dir
                 .data_dir()
-                .join(crate::globals::DEFAULT_LOGS_FOLDER),
+                .join(crate::context::DEFAULT_LOGS_FOLDER),
         };
 
         log::info!("Default configuration created: {config:?}");
@@ -83,7 +83,7 @@ impl Config {
         ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
             .expect("Failed to get project directories")
             .config_dir()
-            .join(crate::globals::CONFIG_FILE_NAME)
+            .join(crate::context::CONFIG_FILE_NAME)
     }
 
     /// Locate the configuration file

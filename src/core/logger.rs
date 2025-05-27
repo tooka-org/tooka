@@ -1,4 +1,4 @@
-use crate::globals;
+use crate::context;
 use chrono::Local;
 use flexi_logger::writers::LogWriter;
 use flexi_logger::{LogSpecification, Logger, Record, WriteMode};
@@ -18,7 +18,7 @@ const MAX_LOG_FILES: usize = 10;
 
 /// Initialize the logger once
 pub fn init_logger() -> io::Result<()> {
-    let config = globals::get_config();
+    let config = context::get_config();
     let config = config.lock().expect("Failed to lock config");
     let logs_folder = &config.logs_folder;
 

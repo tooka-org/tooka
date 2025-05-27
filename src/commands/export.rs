@@ -1,4 +1,4 @@
-use crate::globals;
+use crate::context;
 use clap::Args;
 
 #[derive(Args)]
@@ -19,7 +19,7 @@ pub fn run(args: ExportArgs) {
         .output
         .unwrap_or_else(|| format!("rule-{}.yaml", args.id));
     log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
-    let rf = globals::get_rules_file();
+    let rf = context::get_rules_file();
     let rf = match rf.lock() {
         Ok(guard) => guard,
         Err(_) => {

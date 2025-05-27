@@ -1,4 +1,4 @@
-use crate::globals;
+use crate::context;
 use clap::Args;
 
 #[derive(Args)]
@@ -7,7 +7,7 @@ pub struct ListArgs;
 
 pub fn run(_args: ListArgs) {
     log::info!("Listing all rules...");
-    let rf = globals::get_rules_file();
+    let rf = context::get_rules_file();
     let rf = match rf.lock() {
         Ok(guard) => guard,
         Err(_) => {
