@@ -9,6 +9,7 @@
 ### 📝 Additional Notes
 - Any extra info, upgrade tips, known issues, etc.
 
-🔗 **Full Changelog:** [link-to-changelog]
+---
 
-✅ **Attestations:** [link-to-attestations]
+🔗 **Full Changelog:** [View Changelog](URL)
+✅ **Attestations:** [View Attestations](URL)
