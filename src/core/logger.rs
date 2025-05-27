@@ -26,7 +26,7 @@ pub fn init_logger() -> io::Result<()> {
     create_dir_all(logs_folder.join("main"))?;
     create_dir_all(logs_folder.join("ops"))?;
 
-    let log_spec = LogSpecification::parse("info, file_ops=info")
+    let log_spec = LogSpecification::parse("debug, file_ops=info")
         .map_err(io::Error::other)
         .expect("Failed to parse log specification");
 
