@@ -34,9 +34,19 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    core::config::Config::load();
-
-    init_logger().expect("Failed to initialize logger");
+    // Init everything
+    if let Err(e) = globals::init_config() {
+        eprintln!("Failed to initialize config: {}", e);
+        std::process::exit(1);
+    }
+    if let Err(e) = globals::init_rules_file() {
+        eprintln!("Failed to initialize rules file: {}", e);
+        std::process::exit(1);
+    }
+    if let Err(e) = init_logger() {
+        eprintln!("Failed to initialize logger: {}", e);
+        std::process::exit(1);
+    }
 
     log::info!("Tooka CLI started");
 

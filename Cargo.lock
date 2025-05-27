@@ -809,7 +809,6 @@ dependencies = [
  "lazy_static",
  "log",
  "mime_guess",
- "once_cell",
  "rayon",
  "regex",
  "serde",

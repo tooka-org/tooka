@@ -1,26 +1,26 @@
-use crate::core::config;
+use crate::globals;
 use chrono::Local;
 use flexi_logger::writers::LogWriter;
 use flexi_logger::{LogSpecification, Logger, Record, WriteMode};
 use log::Record as LogRecord;
-use once_cell::sync::OnceCell;
 use std::path::Path;
 use std::{
     fs::{OpenOptions, create_dir_all},
     io::{self, Write},
     path::PathBuf,
-    sync::Mutex,
+    sync::{Mutex, OnceLock},
 };
 
 static LOG_MUTEX: Mutex<()> = Mutex::new(());
-static LOGGER_HANDLE: OnceCell<flexi_logger::LoggerHandle> = OnceCell::new();
+static LOGGER_HANDLE: OnceLock<flexi_logger::LoggerHandle> = OnceLock::new();
 
 const MAX_LOG_FILES: usize = 10;
 
 /// Initialize the logger once
 pub fn init_logger() -> io::Result<()> {
-    let config = config::Config::load();
-    let logs_folder = config.logs_folder;
+    let config = globals::get_config();
+    let config = config.lock().expect("Failed to lock config");
+    let logs_folder = &config.logs_folder;
 
     // Ensure folders exist
     create_dir_all(logs_folder.join("main"))?;
@@ -31,7 +31,7 @@ pub fn init_logger() -> io::Result<()> {
         .expect("Failed to parse log specification");
 
     let logger = Logger::with(log_spec)
-        .log_to_writer(Box::new(DualWriter::new(&logs_folder)))
+        .log_to_writer(Box::new(DualWriter::new(logs_folder)))
         .write_mode(WriteMode::BufferAndFlush)
         .format(custom_format)
         .start()

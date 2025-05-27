@@ -1,10 +1,9 @@
+use crate::core::rule::Action;
 use chrono::{Datelike, Utc};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use std::fs;
 use std::path::{Path, PathBuf};
-
-use crate::core::rules::Action;
 
 pub struct FileOperationResult {
     pub new_path: PathBuf,

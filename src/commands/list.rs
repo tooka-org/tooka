@@ -1,4 +1,4 @@
-use crate::core::rules;
+use crate::globals;
 use clap::Args;
 
 #[derive(Args)]
@@ -7,8 +7,17 @@ pub struct ListArgs;
 
 pub fn run(_args: ListArgs) {
     log::info!("Listing all rules...");
+    let rf = globals::get_rules_file();
+    let rf = match rf.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            println!("Failed to lock rules file");
+            log::error!("Failed to lock rules file");
+            return;
+        }
+    };
 
-    let rules_list = rules::list_rules();
+    let rules_list = rf.list_rules();
 
     if rules_list.is_empty() {
         log::info!("No rules found.");

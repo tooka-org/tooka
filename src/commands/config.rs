@@ -1,4 +1,4 @@
-use crate::core::config;
+use crate::globals;
 use clap::Args;
 
 #[derive(Args)]
@@ -8,9 +8,6 @@ pub struct ConfigArgs {
     pub locate: bool,
 
     #[arg(long)]
-    pub init: bool,
-
-    #[arg(long)]
     pub reset: bool,
 
     #[arg(long)]
@@ -18,18 +15,26 @@ pub struct ConfigArgs {
 }
 
 pub fn run(args: &ConfigArgs) {
-    let flag_count = [args.locate, args.init, args.reset, args.show]
+    let flag_count = [args.locate, args.reset, args.show]
         .iter()
         .filter(|&&x| x)
         .count();
 
     log::info!(
-        "Running config command with flags: locate={}, init={}, reset={}, show={}",
+        "Running config command with flags: locate={}, reset={}, show={}",
         args.locate,
-        args.init,
         args.reset,
         args.show
     );
+    let conf = globals::get_config();
+    let mut conf = match conf.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            println!("Failed to lock rules file");
+            log::error!("Failed to lock rules file");
+            return;
+        }
+    };
 
     match flag_count {
         0 => {
@@ -40,7 +45,7 @@ pub fn run(args: &ConfigArgs) {
             if args.locate {
                 log::info!("Locating config file...");
                 println!("Locating config file...");
-                match config::locate_config_file() {
+                match conf.locate_config_file() {
                     Ok(path) => {
                         log::info!("Config file found at: {}", path.display());
                         println!("Config file found at: {}", path.display());
@@ -50,24 +55,18 @@ pub fn run(args: &ConfigArgs) {
                         eprintln!("Error locating config file: {e}");
                     }
                 }
-            } else if args.init {
-                log::info!("Initializing config file...");
-                println!("Initializing config file...");
-                config::Config::load();
-                log::info!("Config file initialized successfully!");
-                println!("Config file initialized successfully!");
             } else if args.reset {
                 log::info!("Resetting config to default...");
                 println!("Resetting config to default...");
-                config::reset_config();
+                conf.reset_config();
                 log::info!("Config reset to default values.");
                 println!("Config reset to default values.");
             } else if args.show {
                 log::info!("Showing current config...");
                 println!("Current config contents:\n---\n");
-                let config = config::show_config();
+                let config_str = conf.show_config();
                 log::info!("Current config displayed successfully.");
-                println!("{config}");
+                println!("{config_str}");
             }
         }
         _ => {

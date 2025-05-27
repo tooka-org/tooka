@@ -47,36 +47,28 @@ impl Default for Config {
 
 impl Config {
     /// Load the configuration from the config file
-    pub fn load() -> Self {
+    pub fn load() -> io::Result<Self> {
         log::debug!("Loading configuration for Tooka");
-        let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
-            .expect("Failed to get project directories")
-            .config_dir()
-            .join(crate::globals::CONFIG_FILE_NAME);
+        let config_path = Self::config_path();
         log::debug!("Config file path: {}", config_path.display());
         if config_path.exists() {
-            let file = fs::File::open(config_path).expect("Failed to open configuration file");
+            let file = fs::File::open(&config_path)?;
             let reader = io::BufReader::new(file);
-            let config: Config = serde_yaml::from_reader(reader)
-                .map_err(io::Error::other)
-                .expect("Failed to parse configuration file");
+            let config: Config = serde_yaml::from_reader(reader).map_err(io::Error::other)?;
             log::info!("Configuration loaded successfully: {config:?}");
-            config
+            Ok(config)
         } else {
             let config = Self::default();
             config.save();
             log::info!("Configuration file not found, created default configuration: {config:?}");
-            config
+            Ok(config)
         }
     }
 
     /// Save the configuration to the config file
     pub fn save(&self) {
         log::debug!("Saving configuration file");
-        let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
-            .expect("Failed to get project directories")
-            .config_dir()
-            .join(crate::globals::CONFIG_FILE_NAME);
+        let config_path = Self::config_path();
         log::debug!("Config file path: {}", config_path.display());
         fs::create_dir_all(config_path.parent().unwrap())
             .expect("Failed to create config directory");
@@ -86,40 +78,40 @@ impl Config {
             .expect("Failed to write configuration file");
         log::info!("Configuration saved successfully");
     }
-}
-
-/// Locate the configuration file
-pub fn locate_config_file() -> io::Result<PathBuf> {
-    log::debug!("Locating configuration file");
-    let config_path = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
-        .expect("Failed to get project directories")
-        .config_dir()
-        .join(crate::globals::CONFIG_FILE_NAME);
-    log::debug!("Config file path: {}", config_path.display());
-    if config_path.exists() {
-        log::info!("Configuration file found at: {}", config_path.display());
-        Ok(config_path)
-    } else {
-        log::warn!("Configuration file not found at: {}", config_path.display());
-        Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "Configuration file not found",
-        ))
+    /// Get the path to the configuration file
+    fn config_path() -> PathBuf {
+        ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME)
+            .expect("Failed to get project directories")
+            .config_dir()
+            .join(crate::globals::CONFIG_FILE_NAME)
     }
-}
 
-/// Resets the configuration to default values
-pub fn reset_config() {
-    log::debug!("Resetting configuration to default values");
-    let default_config = Config::default();
-    default_config.save();
-}
+    /// Locate the configuration file
+    pub fn locate_config_file(&self) -> io::Result<PathBuf> {
+        let config_path = Self::config_path();
+        log::debug!("Config file path: {}", config_path.display());
+        if config_path.exists() {
+            log::info!("Configuration file found at: {}", config_path.display());
+            Ok(config_path)
+        } else {
+            log::warn!("Configuration file not found at: {}", config_path.display());
+            Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Configuration file not found",
+            ))
+        }
+    }
 
-/// Show the current configuration
-pub fn show_config() -> std::string::String {
-    log::debug!("Showing current configuration");
-    let config = Config::load();
-    serde_yaml::to_string(&config)
-        .map_err(io::Error::other)
-        .expect("Failed to serialize configuration to YAML")
+    /// Resets the configuration to default values
+    pub fn reset_config(&mut self) {
+        log::debug!("Resetting configuration to default values");
+        *self = Config::default();
+        self.save();
+    }
+
+    /// Show the current configuration
+    pub fn show_config(&self) -> std::string::String {
+        log::debug!("Showing current configuration");
+        serde_yaml::to_string(self).expect("Failed to serialize configuration to YAML")
+    }
 }

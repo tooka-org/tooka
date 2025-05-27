@@ -1,11 +1,11 @@
 use rayon::prelude::*;
 use std::path::PathBuf;
 
-use crate::core::config;
 use crate::core::file_match;
 use crate::core::file_ops;
 use crate::core::logger::log_file_operation;
-use crate::core::rules::{self, RulesFile};
+use crate::core::rules_file::RulesFile;
+use crate::globals;
 
 pub struct MatchResult {
     pub file_name: String,
@@ -18,8 +18,10 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
     log::debug!(
         "Starting file sorting with source: '{source}', rules: '{rules}', dry_run: {dry_run}"
     );
-    let source_path = if source == "<default>" {
-        config::Config::load().source_folder
+    let config = globals::get_config();
+    let source_path: PathBuf = if source == "<default>" {
+        let config_guard = config.lock().map_err(|_| "Failed to lock config")?;
+        config_guard.source_folder.clone()
     } else {
         PathBuf::from(source)
     };
@@ -37,26 +39,29 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
     }
     log::debug!("Source path '{}' is valid.", source_path.display());
 
-    let rules_file = if rules == "<all>" {
-        let rf = rules::load_rules()
-            .map_err(|e| e.to_string())
-            .expect("Failed to load rules");
-        if rf.rules.is_empty() {
+    if rules == "<all>" {
+        let rf = globals::get_rules_file();
+        let rf_guard = rf.lock().expect("Failed to lock rules file");
+
+        if rf_guard.rules.is_empty() {
             log::error!("No rules found to apply.");
             return Err("No rules found to apply.".to_string());
         }
-        rf
+        drop(rf_guard); // Release the lock before passing to sort_file
     } else {
         let rule_ids: Vec<String> = rules.split(',').map(|s| s.trim().to_string()).collect();
         if rule_ids.is_empty() {
             log::error!("No valid rule IDs provided.");
             return Err("No valid rule IDs provided.".to_string());
         }
-        rules::load_rules_from_ids(&rule_ids)
-            .map_err(|e| e.to_string())
-            .expect("Failed to load rules from IDs")
-    };
-    log::debug!("Loaded {:?} rules", rules_file.rules.len());
+        globals::set_filtered_rules_file(&rule_ids)
+            .map_err(|e| format!("Failed to set filtered rules: {}", e))?;
+    }
+
+    let rf = globals::get_rules_file();
+    let rf = rf.lock().map_err(|_| "Failed to lock rules file")?;
+
+    log::debug!("Loaded {:?} rules", rf.rules.len());
 
     let entries: Vec<PathBuf> = source_path
         .read_dir()
@@ -75,7 +80,7 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
     // Use Rayon to process files in parallel
     let results: Result<Vec<_>, _> = entries
         .par_iter()
-        .map(|file_path| sort_file(file_path, &rules_file, dry_run))
+        .map(|file_path| sort_file(file_path, &rf, dry_run))
         .collect();
     log::debug!(
         "File sorting completed with {} results.",

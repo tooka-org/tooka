@@ -1,5 +1,5 @@
-use crate::core::rules;
-use crate::core::rules::Match as RuleMatch;
+use crate::core::rule;
+use crate::core::rule::Match as RuleMatch;
 use chrono::Utc;
 use glob;
 use std::fs;
@@ -61,7 +61,7 @@ fn match_pattern(file_path: &Path, pattern: &str) -> bool {
     res
 }
 
-fn match_metadata(file_path: &PathBuf, metadata_match: &rules::MetadataMatch) -> bool {
+fn match_metadata(file_path: &PathBuf, metadata_match: &rule::MetadataMatch) -> bool {
     // Check EXIF date if requested
     log::debug!("Matching metadata for file: {}", file_path.display());
     if metadata_match.exif_date {
@@ -115,7 +115,7 @@ fn match_metadata(file_path: &PathBuf, metadata_match: &rules::MetadataMatch) ->
     true
 }
 
-fn match_metadata_field(file_path: &PathBuf, field: &rules::MetadataField) -> bool {
+fn match_metadata_field(file_path: &PathBuf, field: &rule::MetadataField) -> bool {
     log::debug!(
         "Matching metadata field '{}' for file: {}",
         field.key,
@@ -159,7 +159,7 @@ fn match_metadata_field(file_path: &PathBuf, field: &rules::MetadataField) -> bo
     false
 }
 
-fn match_conditions(file_path: &PathBuf, conditions: &rules::Conditions) -> bool {
+fn match_conditions(file_path: &PathBuf, conditions: &rule::Conditions) -> bool {
     log::debug!("Matching conditions for file: {}", file_path.display());
     let metadata = match fs::symlink_metadata(file_path) {
         Ok(m) => m,

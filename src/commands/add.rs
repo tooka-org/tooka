@@ -1,4 +1,4 @@
-use crate::core::rules;
+use crate::globals;
 use clap::Args;
 
 #[derive(Args)]
@@ -12,8 +12,17 @@ pub struct AddArgs {
 pub fn run(args: &AddArgs) {
     println!("Adding rule from file: {}", args.file);
     log::info!("Adding rule from file: {}", args.file);
+    let rf = globals::get_rules_file();
+    let mut rf = match rf.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            println!("Failed to lock rules file");
+            log::error!("Failed to lock rules file");
+            return;
+        }
+    };
 
-    match rules::add_rule_from_file(&args.file) {
+    match rf.add_rule_from_file(&args.file) {
         Ok(()) => {
             println!("Rule added successfully!");
             log::info!("Rule added successfully from file: {}", args.file);

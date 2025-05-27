@@ -1,5 +1,6 @@
-use crate::core::rules;
 use clap::Args;
+
+use crate::globals;
 
 #[derive(Args)]
 #[command(about = "Toggles the state of a rule by its ID")]
@@ -10,8 +11,17 @@ pub struct ToggleArgs {
 
 pub fn run(args: &ToggleArgs) {
     log::info!("Toggling rule with ID: {}", args.rule_id);
+    let rf = globals::get_rules_file();
+    let mut rf = match rf.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            println!("Failed to lock rules file");
+            log::error!("Failed to lock rules file");
+            return;
+        }
+    };
 
-    match rules::find_rule(&args.rule_id) {
+    match rf.find_rule(&args.rule_id) {
         Some(rule) if rule.id == args.rule_id => {
             log::debug!(
                 "Found rule: ID={}, Name={}, Enabled={}",
@@ -19,7 +29,7 @@ pub fn run(args: &ToggleArgs) {
                 rule.name,
                 rule.enabled
             );
-            match rules::toggle_rule(&args.rule_id) {
+            match rf.toggle_rule(&args.rule_id) {
                 Ok(()) => {
                     println!("Rule toggled successfully!");
                     log::info!("Rule with ID '{}' toggled successfully.", args.rule_id);

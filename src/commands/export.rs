@@ -1,4 +1,4 @@
-use crate::core::rules;
+use crate::globals;
 use clap::Args;
 
 #[derive(Args)]
@@ -15,13 +15,21 @@ pub struct ExportArgs {
 
 pub fn run(args: ExportArgs) {
     println!("Exporting rule with ID: {}", args.id);
-
     let output_path = args
         .output
         .unwrap_or_else(|| format!("rule-{}.yaml", args.id));
     log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
+    let rf = globals::get_rules_file();
+    let rf = match rf.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            println!("Failed to lock rules file");
+            log::error!("Failed to lock rules file");
+            return;
+        }
+    };
 
-    match rules::export_rule(&args.id, Some(&output_path)) {
+    match rf.export_rule(&args.id, Some(&output_path)) {
         Ok(()) => {
             println!("Rule exported successfully!");
             log::info!("Rule exported successfully to: {output_path}");
