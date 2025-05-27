@@ -229,8 +229,13 @@ impl RulesFile {
     }
 
     fn write_to_file(path: &Path, rules: &Self) -> Result<(), io::Error> {
-        let content = serde_yaml::to_string(rules)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        fs::write(path, content)
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
     }
+
+    let content = serde_yaml::to_string(rules)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    fs::write(path, content)
+}
+
 }
