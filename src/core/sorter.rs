@@ -146,12 +146,17 @@ fn sort_file(
                     file_path.display(),
                     op_result.new_path.display()
                 ));
+                let new_path = if op_result.renamed.is_empty() || op_result.renamed == file_name {
+                    op_result.new_path.clone()
+                } else {
+                    file_path.with_file_name(op_result.renamed)
+                };
 
                 results.push(MatchResult {
                     file_name: file_name.clone(),
                     matched_rule_id: rule.id.clone(),
                     current_path: file_path.to_path_buf(),
-                    new_path: op_result.new_path.join(&op_result.renamed),
+                    new_path: new_path,
                 });
             }
 

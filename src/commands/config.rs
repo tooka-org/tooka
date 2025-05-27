@@ -39,7 +39,7 @@ pub fn run(args: &ConfigArgs) {
     match flag_count {
         0 => {
             log::error!("No action specified");
-            println!("No action specified. Use one of: --locate, --init, --reset, --show");
+            println!("No action specified. Use one of: --locate, --reset, --show");
         }
         1 => {
             if args.locate {
@@ -63,7 +63,6 @@ pub fn run(args: &ConfigArgs) {
                 println!("Config reset to default values.");
             } else if args.show {
                 log::info!("Showing current config...");
-                println!("Current config contents:\n---\n");
                 let config_str = conf.show_config();
                 log::info!("Current config displayed successfully.");
                 println!("{config_str}");

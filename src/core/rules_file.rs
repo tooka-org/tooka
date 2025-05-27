@@ -80,30 +80,36 @@ impl RulesFile {
     }
 
     /// Add rule(s) from a YAML file (single or multiple)
-    pub fn add_rule_from_file(&mut self, file_path: &str) -> Result<(), Box<dyn Error>> {
+    pub fn add_rule_from_file(&mut self, file_path: &str, overwrite: bool) -> Result<(), Box<dyn Error>> {
         log::debug!("Adding rule(s) from file: {file_path}");
 
         let mut content = String::new();
         fs::File::open(file_path)?.read_to_string(&mut content)?;
 
         if content.trim_start().starts_with("rules:") {
-            self.add_multiple_rules(&content)
+            self.add_multiple_rules(&content, overwrite)
         } else {
-            self.add_single_rule(&content)
+            self.add_single_rule(&content, overwrite)
         }
     }
 
-    fn add_single_rule(&mut self, yaml: &str) -> Result<(), Box<dyn Error>> {
+    fn add_single_rule(&mut self, yaml: &str, overwrite: bool) -> Result<(), Box<dyn Error>> {
         let rule: Rule = serde_yaml::from_str(yaml)?;
         log::debug!("Parsed new rule: {rule:?}");
         rule.validate()?;
 
-        if self.rules.iter().any(|r| r.id == rule.id) {
-            return Err(Box::new(RuleValidationError::InvalidAction(
-                rule.id.clone(),
-                0,
-                "Rule ID already exists".into(),
-            )));
+        if let Some(pos) = self.rules.iter().position(|r| r.id == rule.id) {
+            if overwrite {
+                self.rules[pos] = rule;
+                self.save()?;
+                return Ok(());
+            } else {
+                return Err(Box::new(RuleValidationError::InvalidAction(
+                    rule.id.clone(),
+                    0,
+                    "Rule ID already exists".into(),
+                )));
+            }
         }
 
         self.rules.push(rule);
@@ -111,22 +117,26 @@ impl RulesFile {
         Ok(())
     }
 
-    fn add_multiple_rules(&mut self, yaml: &str) -> Result<(), Box<dyn Error>> {
+    fn add_multiple_rules(&mut self, yaml: &str, overwrite: bool) -> Result<(), Box<dyn Error>> {
         let parsed: RulesFile = serde_yaml::from_str(yaml)?;
 
         for rule in parsed.rules {
             log::debug!("Parsed rule: {rule:?}");
             rule.validate()?;
 
-            if self.rules.iter().any(|r| r.id == rule.id) {
-                return Err(Box::new(RuleValidationError::InvalidAction(
-                    rule.id.clone(),
-                    0,
-                    "Rule ID already exists".into(),
-                )));
+            if let Some(pos) = self.rules.iter().position(|r| r.id == rule.id) {
+                if overwrite {
+                    self.rules[pos] = rule;
+                } else {
+                    return Err(Box::new(RuleValidationError::InvalidAction(
+                        rule.id.clone(),
+                        0,
+                        "Rule ID already exists".into(),
+                    )));
+                }
+            } else {
+                self.rules.push(rule);
             }
-
-            self.rules.push(rule);
         }
 
         self.save()?;

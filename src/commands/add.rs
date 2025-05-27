@@ -7,6 +7,10 @@ pub struct AddArgs {
     /// Path to the rule YAML file
     #[arg(value_name = "FILE")]
     pub file: String,
+
+    /// Optional flag to overwrite existing rules
+    #[arg(long, default_value_t = false)]
+    pub overwrite: bool,
 }
 
 pub fn run(args: &AddArgs) {
@@ -22,7 +26,7 @@ pub fn run(args: &AddArgs) {
         }
     };
 
-    match rf.add_rule_from_file(&args.file) {
+    match rf.add_rule_from_file(&args.file, args.overwrite) {
         Ok(()) => {
             println!("Rule added successfully!");
             log::info!("Rule added successfully from file: {}", args.file);

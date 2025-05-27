@@ -32,5 +32,9 @@ pub fn run(_args: ListArgs) {
             rule.name,
             rule.enabled
         );
+        println!(
+            "Rule ID: {}, Name: {}, Enabled: {}",
+            rule.id, rule.name, rule.enabled
+        );
     }
 }
