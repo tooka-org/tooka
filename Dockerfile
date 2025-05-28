@@ -5,11 +5,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     sudo \
+    jq \
     ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Download and install Tooka
-RUN wget -O tooka.deb https://github.com/Benji377/tooka/releases/download/v0.1.1/tooka_0.1.1_amd64.deb && \
+# Fetch latest Tooka release and install
+RUN LATEST_URL=$(curl -s https://api.github.com/repos/Benji377/tooka/releases/latest | \
+    jq -r '.assets[] | select(.name | endswith("_amd64.deb")) | .browser_download_url') && \
+    wget -O tooka.deb "$LATEST_URL" && \
     sudo dpkg -i tooka.deb && \
     rm tooka.deb
 
