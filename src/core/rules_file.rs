@@ -236,9 +236,11 @@ impl RulesFile {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(io::Error::other)?;
         }
+        let file = fs::File::create(path)
+            .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e))?;
 
-        let content = serde_yaml::to_string(rules)
+        serde_yaml::to_writer(file, rules)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        fs::write(path, content)
+        Ok(())
     }
 }

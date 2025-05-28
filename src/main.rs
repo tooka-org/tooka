@@ -40,12 +40,12 @@ fn main() {
         eprintln!("Failed to initialize config: {}", e);
         std::process::exit(1);
     }
-    if let Err(e) = context::init_rules_file() {
-        eprintln!("Failed to initialize rules file: {}", e);
-        std::process::exit(1);
-    }
     if let Err(e) = init_logger() {
         eprintln!("Failed to initialize logger: {}", e);
+        std::process::exit(1);
+    }
+    if let Err(e) = context::init_rules_file() {
+        eprintln!("Failed to initialize rules file: {}", e);
         std::process::exit(1);
     }
 

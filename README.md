@@ -34,12 +34,12 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ## ✨ Features
 
-* Define custom file rules in YAML
-* Match by attributes like name, extension, size, metadata, and age
-* Perform actions: move, copy, rename, delete, compress, skip
-* Dry-run mode for safe previews
-* Cross-platform: Windows, macOS, and Linux
-* Shell autocompletion support
+- Define custom file rules in YAML
+- Match by attributes like name, extension, size, metadata, and age
+- Perform actions: move, copy, rename, delete, compress, skip
+- Dry-run mode for safe previews
+- Cross-platform: Windows, macOS, and Linux
+- Shell autocompletion support
 
 ---
 
@@ -47,17 +47,17 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 1. **Download Tooka** from the [releases page](https://github.com/Benji377/tooka/releases)
 2. Run `tooka` in your terminal to verify it's installed
-3. Add rules via `tooka add` or place `.yaml` files in the rules directory:
+3. Create a new rule using the online builder or CLI:
 
-   * **Linux**: `/home/<user>/.local/share/tooka`
-   * **Windows**: `C:\Users\<user>\AppData\Roaming\github.benji377\tooka\data`
-   * **macOS**: `/Users/<user>/Library/Application Support/io.github.benji377.tooka`
+   ```bash
+   tooka template --help
+   ```
 
 4. Run a dry-run to test your rules:
 
-  ```bash
+   ```bash
    tooka sort --dry-run ~/Downloads
-  ```
+   ```
 
 > [!IMPORTANT]
 > **Always run a dry-run first** to see what files would be moved, renamed, or deleted. Tooka **cannot recover lost or changed files**. Proceed carefully!
@@ -76,6 +76,64 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 
 ---
 
+## 🐳 Try Tooka in Docker
+
+Run Tooka inside a lightweight Debian container — perfect for testing rules in
+isolation.
+
+### Build the Docker Image
+
+```bash
+docker build -t tooka-playground .
+```
+
+### Start a Bash Session with Tooka Preinstalled
+
+```bash
+docker run --rm -it tooka-playground
+```
+
+Once inside the container, you can explore Tooka freely:
+
+```bash
+tooka --help
+tooka config
+tooka template > sample_rule.yaml
+```
+
+You can mount volumes to access your real files and rules:
+
+```bash
+docker run --rm -it \
+  -v "$HOME/Downloads:/input" \
+  -v "$PWD/rules:/rules" \
+  tooka-playground
+```
+
+> 💡 Use `/input` as your working directory or test folder, and reference rules from `/rules`.
+
+---
+
+## ⚙️ Environment Variables
+
+Tooka uses environment variables to override its default directories:
+
+| Variable              | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `TOOKA_CONFIG_DIR`    | Custom path for Tooka’s config file              |
+| `TOOKA_DATA_DIR`      | Custom path for data storage (e.g., rules, logs) |
+| `TOOKA_SOURCE_FOLDER` | Custom path used by the sort command             |
+
+Example usage:
+
+```bash
+export TOOKA_CONFIG_DIR="$HOME/.config/custom-tooka"
+export TOOKA_DATA_DIR="$HOME/.local/share/custom-tooka"
+export TOOKA_SOURCE_FOLDER="$HOME/downloads"
+```
+
+---
+
 ## 🛠️ CLI Commands
 
 | Command               | Description                                        |
@@ -86,102 +144,9 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 | `list`                | List all available rules                           |
 | `export <ID> <path>`  | Export a rule to file                              |
 | `sort [OPTIONS]`      | Apply active rules to sort files                   |
+| `template [OPTIONS]`  | Generate rule templates from predefined logic      |
 | `config [OPTIONS]`    | View or modify Tooka’s configuration               |
 | `completions <shell>` | Generate autocompletions for bash, zsh, fish, etc. |
-
----
-
-## 🧾 Rule Structure
-
-Here's an example rule:
-
-```yaml
-id: "img-organize-2025"
-name: "Organize Recent iPhone Images"
-enabled: true
-match_all: true
-
-matches:
-  - extensions: [".jpg", ".jpeg", ".png"]
-    mime_type: "image/*"
-    pattern: "IMG_*"
-    metadata:
-      exif_date: true
-      fields:
-        - key: "EXIF:Model"
-          pattern: "iPhone.*"
-    conditions:
-      older_than_days: 3
-      size_greater_than_kb: 200
-      filename_regex: "^IMG_\\d+"
-      is_symlink: false
-
-actions:
-  - type: move
-    destination: "~/Pictures/Sorted"
-    path_template:
-      source: "exif"
-      format: "{year}/{month}/{day}"
-    rename_template: "{year}-{month}-{day}_{filename}.{ext}"
-    create_dirs: true
-  - type: compress
-    destination: "~/Archives"
-    format: "zip"
-    create_dirs: true
-```
-
----
-
-### Match Fields
-
-| Field                                | Description                                                   |
-| ------------------------------------ | ------------------------------------------------------------- |
-| `extensions`                         | File extension filter (e.g., `.jpg`, `.pdf`)                  |
-| `mime_type`                          | Match MIME types like `image/*`                               |
-| `pattern`                            | Simple filename prefix matching (e.g., `IMG_`)                |
-| `metadata.exif_date`                 | Use EXIF date for date-based matching                         |
-| `metadata.fields[].key`              | Metadata field key (e.g., `EXIF:Model`)                       |
-| `metadata.fields[].value`            | Exact match on metadata value (optional)                      |
-| `metadata.fields[].pattern`          | Pattern match on metadata value (optional)                    |
-| `conditions.older_than_days`         | Match files older than N days                                 |
-| `conditions.size_greater_than_kb`    | Match files larger than N kilobytes                           |
-| `conditions.created_between.from/to` | Match files created within a specific date range (ISO format) |
-| `conditions.filename_regex`          | Regex match against the filename                              |
-| `conditions.is_symlink`              | Match whether the file is a symbolic link                     |
-| `conditions.owner`                   | Match files by owner username                                 |
-
----
-
-### Matching Logic
-
-* The **first** matching rule is applied
-* If no rule matches, the file is left untouched
-* Use `enabled: false` to temporarily disable rules without deleting them
-
----
-
-## 🧰 Actions
-
-| Action Type | Description                                   |
-| ----------- | --------------------------------------------- |
-| `move`      | Move the file to a new location               |
-| `copy`      | Copy the file to a new location               |
-| `rename`    | Rename the file based on a template           |
-| `compress`  | Archive the file (e.g., `zip`, `tar.gz`)      |
-| `delete`    | Permanently delete the file                   |
-| `skip`      | Ignore the file without performing any action |
-
-### Optional Action Fields
-
-| Field                  | Description                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| `destination`          | Target folder for `move`, `copy`, or `compress`                               |
-| `path_template`        | Controls dynamic folder structure using date or metadata                      |
-| `path_template.source` | Source for template values: `exif`, `created`, etc.                           |
-| `path_template.format` | Format string with placeholders like `{year}/{month}`                         |
-| `rename_template`      | Template to rename files using variables like `{filename}`, `{ext}`, `{year}` |
-| `create_dirs`          | Whether to automatically create missing destination folders                   |
-| `format`               | Compression format used with `compress` (e.g., `zip`, `tar.gz`)               |
 
 ---
 
@@ -195,8 +160,6 @@ tooka config --help
 
 ### What You Can Configure
 
-The configuration file includes:
-
 | Field            | Description                                     |
 | ---------------- | ----------------------------------------------- |
 | `config_version` | Internal version tracking for config migrations |
@@ -204,23 +167,11 @@ The configuration file includes:
 | `rules_file`     | Path to the active YAML rule set                |
 | `logs_folder`    | Directory where Tooka writes log files          |
 
-These values are saved automatically when running Tooka. You can also manage them manually or programmatically using the API.
+### Config File Locations
 
-> 💡 Default values are initialized based on platform-specific directories like `~/Downloads` and system data paths (via `ProjectDirs` and `UserDirs`).
-
----
-
-### Config File Behavior
-
-Tooka handles config loading and saving automatically:
-
-* On first run, if no config file exists, a default is created and saved
-* All config values are serialized/deserialized as YAML
-* Config location:
-
-  * **Linux**: `~/.config/github.benji377/tooka/config.yaml`
-  * **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
-  * **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
+- **Linux**: `~/.config/github.benji377/tooka/config.yaml`
+- **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
+- **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
 
 ---
 
