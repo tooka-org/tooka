@@ -146,11 +146,12 @@ fn sort_file(
                     file_path.display(),
                     op_result.new_path.display()
                 ));
-                let compound_path = if op_result.renamed.is_empty() || op_result.renamed == file_name {
-                    op_result.new_path.clone()
-                } else {
-                    file_path.with_file_name(op_result.renamed)
-                };
+                let compound_path =
+                    if op_result.renamed.is_empty() || op_result.renamed == file_name {
+                        op_result.new_path.clone()
+                    } else {
+                        file_path.with_file_name(op_result.renamed)
+                    };
 
                 results.push(MatchResult {
                     file_name: file_name.clone(),

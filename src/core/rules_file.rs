@@ -80,7 +80,11 @@ impl RulesFile {
     }
 
     /// Add rule(s) from a YAML file (single or multiple)
-    pub fn add_rule_from_file(&mut self, file_path: &str, overwrite: bool) -> Result<(), Box<dyn Error>> {
+    pub fn add_rule_from_file(
+        &mut self,
+        file_path: &str,
+        overwrite: bool,
+    ) -> Result<(), Box<dyn Error>> {
         log::debug!("Adding rule(s) from file: {file_path}");
 
         let mut content = String::new();
@@ -230,7 +234,7 @@ impl RulesFile {
 
     fn write_to_file(path: &Path, rules: &Self) -> Result<(), io::Error> {
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
+            fs::create_dir_all(parent).map_err(io::Error::other)?;
         }
 
         let content = serde_yaml::to_string(rules)
