@@ -1,4 +1,5 @@
 use crate::context;
+use anyhow::{anyhow, Result};
 use clap::Args;
 
 #[derive(Args)]
@@ -13,30 +14,20 @@ pub struct ExportArgs {
     pub output: Option<String>,
 }
 
-pub fn run(args: ExportArgs) {
-    println!("Exporting rule with ID: {}", args.id);
+pub fn run(args: ExportArgs) -> Result<()> {
     let output_path = args
         .output
         .unwrap_or_else(|| format!("rule-{}.yaml", args.id));
-    log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
-    let rf = context::get_rules_file();
-    let rf = match rf.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            println!("Failed to lock rules file");
-            log::error!("Failed to lock rules file");
-            return;
-        }
-    };
 
-    match rf.export_rule(&args.id, Some(&output_path)) {
-        Ok(()) => {
-            println!("Rule exported successfully!");
-            log::info!("Rule exported successfully to: {output_path}");
-        }
-        Err(e) => {
-            println!("Error exporting rule: {e}");
-            log::error!("Error exporting rule with ID {}: {}", args.id, e);
-        }
-    }
+    log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
+    
+    let rf = context::get_locked_rules_file()?;
+
+    rf.export_rule(&args.id, Some(&output_path))
+        .map_err(|e| anyhow!("Failed to export rule with ID {}: {}", args.id, e))?;
+
+    println!("Rule exported successfully!");
+    log::info!("Rule exported successfully to: {output_path}");
+
+    Ok(())
 }

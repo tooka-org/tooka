@@ -1,6 +1,6 @@
-use clap::Args;
-
 use crate::context;
+use anyhow::{anyhow, Result};
+use clap::Args;
 
 #[derive(Args)]
 #[command(about = "Toggles the state of a rule by its ID")]
@@ -9,44 +9,22 @@ pub struct ToggleArgs {
     pub rule_id: String,
 }
 
-pub fn run(args: &ToggleArgs) {
+pub fn run(args: &ToggleArgs) -> Result<()> {
     log::info!("Toggling rule with ID: {}", args.rule_id);
-    let rf = context::get_rules_file();
-    let mut rf = match rf.lock() {
-        Ok(guard) => guard,
-        Err(_) => {
-            println!("Failed to lock rules file");
-            log::error!("Failed to lock rules file");
-            return;
-        }
-    };
 
-    match rf.find_rule(&args.rule_id) {
-        Some(rule) if rule.id == args.rule_id => {
-            log::debug!(
-                "Found rule: ID={}, Name={}, Enabled={}",
-                rule.id,
-                rule.name,
-                rule.enabled
-            );
-            match rf.toggle_rule(&args.rule_id) {
-                Ok(()) => {
-                    println!("Rule toggled successfully!");
-                    log::info!("Rule with ID '{}' toggled successfully.", args.rule_id);
-                }
-                Err(e) => {
-                    println!("Error toggling rule: {e}");
-                    log::error!("Error toggling rule with ID '{}': {}", args.rule_id, e);
-                }
-            }
-        }
-        Some(_) => {
-            println!("Rule found, but ID does not match '{}'.", args.rule_id);
-            log::warn!("Rule found, but ID does not match '{}'.", args.rule_id);
-        }
-        None => {
-            println!("Rule with ID '{}' not found.", args.rule_id);
-            log::warn!("Rule with ID '{}' not found.", args.rule_id);
-        }
+    let mut rf = context::get_locked_rules_file()?;
+
+    let rule = rf.find_rule(&args.rule_id);
+
+    if rule.is_none() {
+        log::warn!("Rule with ID '{}' not found.", args.rule_id);
+        return Err(anyhow!("Rule with ID '{}' not found.", args.rule_id));
     }
+
+    rf.toggle_rule(&args.rule_id)
+        .map_err(|e| anyhow!("Failed to toggle rule with ID '{}': {}", args.rule_id, e))?;
+
+    println!("Rule with ID '{}' toggled successfully.", args.rule_id);
+
+    Ok(())
 }

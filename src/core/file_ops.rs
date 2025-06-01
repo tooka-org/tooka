@@ -1,4 +1,5 @@
 use crate::core::rule::{Action, PathTemplate};
+use crate::error::TookaError;
 use chrono::{Datelike, Utc};
 use flate2::{Compression, write::GzEncoder};
 use std::{
@@ -15,7 +16,7 @@ pub fn execute_action(
     file_path: &Path,
     action: &Action,
     dry_run: bool,
-) -> Result<FileOperationResult, String> {
+) -> Result<FileOperationResult, TookaError> {
     log::info!(
         "Executing action '{:?}' on file: {} (dry_run: {})",
         action,
@@ -27,12 +28,8 @@ pub fn execute_action(
         Action::Move { .. } => handle_with_templates(file_path, action, dry_run, Operation::Move),
         Action::Copy { .. } => handle_with_templates(file_path, action, dry_run, Operation::Copy),
         Action::Delete => handle_delete(file_path, dry_run),
-        Action::Rename { .. } => {
-            handle_with_templates(file_path, action, dry_run, Operation::Rename)
-        }
-        Action::Compress { .. } => {
-            handle_with_templates(file_path, action, dry_run, Operation::Compress)
-        }
+        Action::Rename { .. } => handle_with_templates(file_path, action, dry_run, Operation::Rename),
+        Action::Compress { .. } => handle_with_templates(file_path, action, dry_run, Operation::Compress),
         Action::Skip => {
             log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
@@ -56,28 +53,23 @@ fn handle_with_templates(
     action: &Action,
     dry_run: bool,
     op: Operation,
-) -> Result<FileOperationResult, String> {
+) -> Result<FileOperationResult, TookaError> {
     let (dir_path, renamed) = expand_templates(file_path, action)?;
 
-    // Build target path differently for compress operation
     let target_path = match op {
         Operation::Compress => dir_path.join(format!("{renamed}.gz")),
         _ => dir_path.join(&renamed),
     };
 
-    // Extract create_dirs flag from the action variants that have it
     let create_dirs = match action {
         Action::Move { create_dirs, .. }
         | Action::Copy { create_dirs, .. }
         | Action::Compress { create_dirs, .. } => *create_dirs,
-        Action::Rename { .. } | Action::Delete | Action::Skip => false,
+        _ => false,
     };
 
     if create_dirs && !dry_run {
-        fs::create_dir_all(&dir_path).map_err(|e| {
-            log::error!("Failed to create directories: {e}");
-            e.to_string()
-        })?;
+        fs::create_dir_all(&dir_path)?;
     }
 
     match op {
@@ -135,7 +127,7 @@ fn run_fs_op<F, R>(
     dry_run: bool,
     op: F,
     op_name: &str,
-) -> Result<(), String>
+) -> Result<(), TookaError>
 where
     F: Fn(&Path, &Path) -> io::Result<R>,
 {
@@ -154,23 +146,17 @@ where
             src.display(),
             dest.display()
         );
-        op(src, dest).map_err(|e| {
-            log::error!("Failed to {} file: {e}", op_name);
-            e.to_string()
-        })?;
+        op(src, dest)?;
         Ok(())
     }
 }
 
-fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult, String> {
+fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult, TookaError> {
     if dry_run {
         log::debug!("Dry run: would delete file: {}", file_path.display());
     } else {
         log::info!("Deleting file: {}", file_path.display());
-        fs::remove_file(file_path).map_err(|e| {
-            log::error!("Failed to delete file: {e}");
-            e.to_string()
-        })?;
+        fs::remove_file(file_path)?;
     }
 
     Ok(FileOperationResult {
@@ -179,21 +165,21 @@ fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult,
     })
 }
 
-fn compress_file(input_path: &Path, output_path: &Path) -> Result<(), String> {
-    let mut input = fs::File::open(input_path).map_err(|e| e.to_string())?;
-    let mut output = fs::File::create(output_path).map_err(|e| e.to_string())?;
+fn compress_file(input_path: &Path, output_path: &Path) -> Result<(), TookaError> {
+    let mut input = fs::File::open(input_path)?;
+    let mut output = fs::File::create(output_path)?;
     let mut encoder = GzEncoder::new(&mut output, Compression::default());
 
-    std::io::copy(&mut input, &mut encoder).map_err(|e| e.to_string())?;
-    encoder.finish().map_err(|e| e.to_string())?;
+    std::io::copy(&mut input, &mut encoder)?;
+    encoder.finish()?;
     Ok(())
 }
 
-fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, String), String> {
+fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, String), TookaError> {
     let file_name = file_path
         .file_stem()
         .and_then(|s| s.to_str())
-        .ok_or("Invalid file name")?;
+        .ok_or_else(|| TookaError::InvalidTemplate("Invalid file name".into()))?;
 
     let ext = file_path
         .extension()
@@ -205,7 +191,6 @@ fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, Strin
     let month = now.month();
     let day = now.day();
 
-    // Extract destination and optional path_template and rename_template based on Action variant
     let (base, path_template, rename_template): (&String, Option<&PathTemplate>, Option<&String>) =
         match action {
             Action::Move {
@@ -220,24 +205,21 @@ fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, Strin
             } => (destination, path_template.as_ref(), None),
             Action::Compress {
                 destination,
-                format: _,
-                create_dirs: _,
+                ..
             } => (destination, None, None),
             Action::Rename { rename_template } => {
-                // Use empty string for base, None for path_template, Some(&rename_template) for rename_template
                 static EMPTY: String = String::new();
                 (&EMPTY, None, Some(rename_template))
             }
             Action::Delete | Action::Skip => {
-                return Err("No templates for Delete/Skip actions".into());
+                return Err(TookaError::InvalidTemplate("No templates for Delete/Skip actions".into()));
             }
         };
 
     if base.is_empty() && rename_template.is_none() {
-        return Err("Missing destination or rename_template".into());
+        return Err(TookaError::InvalidTemplate("Missing destination or rename_template".into()));
     }
 
-    // Expand tilde in base path, if any
     let expanded_base = shellexpand::tilde(base).into_owned();
 
     let sub_path = path_template

@@ -1,7 +1,8 @@
 use crate::core::rule::{Action, Match, MetadataMatch, Rule};
+use crate::error::TookaError;
 use serde_yaml;
 
-pub fn generate_rule_template_yaml() -> Result<String, serde_yaml::Error> {
+pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
     let rule = Rule {
         id: "example_rule".to_string(),
         name: "Example Rule".to_string(),
@@ -30,5 +31,5 @@ pub fn generate_rule_template_yaml() -> Result<String, serde_yaml::Error> {
         }],
     };
 
-    serde_yaml::to_string(&rule)
+    Ok(serde_yaml::to_string(&rule)?)
 }

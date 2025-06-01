@@ -1,4 +1,5 @@
 use crate::core::sorter;
+use anyhow::Result;
 use clap::Args;
 
 #[derive(Args)]
@@ -17,7 +18,7 @@ pub struct SortArgs {
     pub dry_run: bool,
 }
 
-pub fn run(args: SortArgs) {
+pub fn run(args: SortArgs) -> Result<()> {
     println!("Running sort...");
     log::info!(
         "Running sort with source: {:?}, rules: {:?}, dry_run: {}",
@@ -30,27 +31,22 @@ pub fn run(args: SortArgs) {
     let rules = args.rules.unwrap_or_else(|| "<all>".to_string());
     let dry_run = args.dry_run;
 
-    let results = sorter::sort_files(source, &rules, dry_run);
+    let results = sorter::sort_files(source.clone(), &rules, dry_run)
+        .map_err(|e| anyhow::anyhow!("{}: {}", format!("Failed to sort files from source: {source}"), e))?;
+
+
     println!("Sorting completed. Results:");
-    log::info!(
-        "Sorting completed, found {} matches",
-        results.as_ref().map_or(0, std::vec::Vec::len)
-    );
-    match results {
-        Ok(matches) => {
-            for match_result in matches {
-                println!(
-                    "File: {}, Matched: {}, Current Path: {}, New Path: {}",
-                    match_result.file_name,
-                    match_result.matched_rule_id,
-                    match_result.current_path.display(),
-                    match_result.new_path.display()
-                );
-            }
-        }
-        Err(e) => {
-            log::error!("Error during sorting: {e}");
-            println!("Error during sorting: {e}");
-        }
+    log::info!("Sorting completed, found {} matches", results.len());
+
+    for match_result in results {
+        println!(
+            "File: {}, Matched: {}, Current Path: {}, New Path: {}",
+            match_result.file_name,
+            match_result.matched_rule_id,
+            match_result.current_path.display(),
+            match_result.new_path.display()
+        );
     }
+
+    Ok(())
 }

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt};
+
+use crate::error::RuleValidationError;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rule {
@@ -96,31 +97,6 @@ pub struct PathTemplate {
     pub source: String,
     pub format: String,
 }
-
-#[derive(Debug)]
-pub enum RuleValidationError {
-    MissingId,
-    MissingName(String),
-    NoActions(String),
-    InvalidAction(String, usize, String),
-}
-
-impl fmt::Display for RuleValidationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            RuleValidationError::MissingId => write!(f, "rule id is required"),
-            RuleValidationError::MissingName(id) => write!(f, "rule {id}: name is required"),
-            RuleValidationError::NoActions(id) => {
-                write!(f, "rule {id}: at least one action is required")
-            }
-            RuleValidationError::InvalidAction(id, idx, msg) => {
-                write!(f, "rule {id}: action {idx} invalid: {msg}")
-            }
-        }
-    }
-}
-
-impl Error for RuleValidationError {}
 
 impl Rule {
     pub fn validate(&self) -> Result<(), RuleValidationError> {

@@ -1,4 +1,5 @@
 use crate::context;
+use crate::error::TookaError;
 use chrono::Local;
 use flexi_logger::writers::LogWriter;
 use flexi_logger::{LogSpecification, Logger, Record, WriteMode};
@@ -17,31 +18,26 @@ static LOGGER_HANDLE: OnceLock<flexi_logger::LoggerHandle> = OnceLock::new();
 const MAX_LOG_FILES: usize = 10;
 
 /// Initialize the logger once
-pub fn init_logger() -> io::Result<()> {
-    let config = context::get_config();
-    let config = config.lock().expect("Failed to lock config");
+pub fn init_logger() -> Result<(), TookaError> {
+    let config = context::get_locked_config()
+        .map_err(|e| TookaError::ConfigError(format!("Failed to get config: {e}")))?;
     let logs_folder = &config.logs_folder;
 
     // Ensure folders exist
     create_dir_all(logs_folder.join("main"))?;
     create_dir_all(logs_folder.join("ops"))?;
 
-    let log_spec = LogSpecification::parse("debug, file_ops=info")
-        .map_err(io::Error::other)
-        .expect("Failed to parse log specification");
+    let log_spec = LogSpecification::parse("debug, file_ops=info")?;
 
     let logger = Logger::with(log_spec)
         .log_to_writer(Box::new(DualWriter::new(logs_folder)))
         .write_mode(WriteMode::BufferAndFlush)
         .format(custom_format)
-        .start()
-        .map_err(io::Error::other)
-        .expect("Failed to start logger");
+        .start()?;
 
     LOGGER_HANDLE
         .set(logger)
-        .map_err(|_| io::Error::new(io::ErrorKind::AlreadyExists, "Logger already initialized"))
-        .expect("Logger handle already set");
+        .map_err(|_| TookaError::ConfigError("Logger already initialized".into()))?;
 
     Ok(())
 }

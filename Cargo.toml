@@ -14,6 +14,7 @@ edition = "2024"
 rust-version = "1.87"
 
 [dependencies]
+anyhow = "1.0.98"
 chrono = "0.4.41"
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4.5.50"
@@ -31,6 +32,7 @@ serde = {version = "1.0.219", features = ["derive"]}
 serde_yaml = "0.9.34"
 shellexpand = "3.1.1"
 simplelog = "0.12.2"
+thiserror = "2.0.12"
 walkdir = "2.5.0"
 
 [target.'cfg(unix)'.dependencies]

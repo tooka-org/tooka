@@ -1,6 +1,8 @@
 use crate::core::config::Config;
 use crate::core::rules_file::RulesFile;
+use crate::error::TookaError;
 use std::sync::{Arc, Mutex, OnceLock};
+use anyhow::{Result, Context};
 
 pub static CONFIG_VERSION: usize = 0;
 pub static CONFIG_FILE_NAME: &str = "tooka.yaml";
@@ -13,34 +15,42 @@ pub const APP_NAME: &str = "tooka";
 static CONFIG: OnceLock<Arc<Mutex<Config>>> = OnceLock::new();
 static RULES_FILE: OnceLock<Arc<Mutex<RulesFile>>> = OnceLock::new();
 
-pub fn get_config() -> Arc<Mutex<Config>> {
-    CONFIG.get().expect("Config not initialized").clone()
+pub fn init_config() -> Result<()> {
+    let config = Config::load().context("Failed to load configuration")?;
+    CONFIG.set(Arc::new(Mutex::new(config)))
+        .map_err(|_| TookaError::ConfigAlreadyInitialized.into())
 }
 
-pub fn get_rules_file() -> Arc<Mutex<RulesFile>> {
-    RULES_FILE
+pub fn init_rules_file() -> Result<()> {
+    let rules_file = RulesFile::load().context("Failed to load rules file")?;
+    RULES_FILE.set(Arc::new(Mutex::new(rules_file)))
+        .map_err(|_| TookaError::RulesFileAlreadyInitialized.into())
+}
+
+pub fn set_filtered_rules_file(rule_ids: &[String]) -> Result<()> {
+    let rules_file = RulesFile::load_from_ids(rule_ids)
+        .context("Failed to load rules from provided IDs")?;
+    RULES_FILE.set(Arc::new(Mutex::new(rules_file)))
+        .map_err(|_| TookaError::RulesFileAlreadyInitialized.into())
+}
+
+/// Helper to lock the global rules file with context-aware error handling
+pub fn get_locked_rules_file() -> Result<std::sync::MutexGuard<'static, RulesFile>> {
+    let rules_file = RULES_FILE
         .get()
-        .expect("Rules file not initialized")
-        .clone()
+        .ok_or_else(|| anyhow::anyhow!("Rules file not initialized"))?;
+    rules_file
+        .lock()
+        .map_err(|e| anyhow::anyhow!("Failed to acquire lock on rules file: {}", e))
 }
 
-pub fn init_config() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::load()?;
-    CONFIG
-        .set(Arc::new(Mutex::new(config)))
-        .map_err(|_| "Config already initialized".into())
-}
+/// Helper to lock the global config with context-aware error handling
+pub fn get_locked_config() -> Result<std::sync::MutexGuard<'static, Config>> {
+    let config = CONFIG
+        .get()
+        .ok_or_else(|| anyhow::anyhow!("Config not initialized"))?;
+    config
+        .lock()
+        .map_err(|e| anyhow::anyhow!("Failed to acquire lock on config: {}", e))
 
-pub fn init_rules_file() -> Result<(), Box<dyn std::error::Error>> {
-    let rules_file = RulesFile::load()?;
-    RULES_FILE
-        .set(Arc::new(Mutex::new(rules_file)))
-        .map_err(|_| "Rules file already initialized".into())
-}
-
-pub fn set_filtered_rules_file(rule_ids: &[String]) -> Result<(), Box<dyn std::error::Error>> {
-    let rules_file = RulesFile::load_from_ids(rule_ids)?;
-    RULES_FILE
-        .set(Arc::new(Mutex::new(rules_file)))
-        .map_err(|_| "Rules file already initialized".into())
 }
