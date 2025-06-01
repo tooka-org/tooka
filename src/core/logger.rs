@@ -12,10 +12,20 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
+/// Mutex to ensure thread-safe logging
 static LOG_MUTEX: Mutex<()> = Mutex::new(());
+/// Static logger handle to ensure logger is initialized only once
 static LOGGER_HANDLE: OnceLock<flexi_logger::LoggerHandle> = OnceLock::new();
-
+/// Maximum number of log files to keep
 const MAX_LOG_FILES: usize = 10;
+
+/// Writer that routes logs based on target
+struct DualWriter {
+    /// Directory for main logs
+    main_dir: PathBuf,
+    /// Directory for file operation logs
+    ops_dir: PathBuf,
+}
 
 /// Initialize the logger once
 pub fn init_logger() -> Result<(), TookaError> {
@@ -63,13 +73,9 @@ fn custom_format(
     )
 }
 
-/// Writer that routes logs based on target
-struct DualWriter {
-    main_dir: PathBuf,
-    ops_dir: PathBuf,
-}
-
+/// Implementation of the DualWriter
 impl DualWriter {
+    /// Creates a new DualWriter with the specified base path
     fn new(base: &Path) -> Self {
         Self {
             main_dir: base.join("main"),
@@ -77,6 +83,7 @@ impl DualWriter {
         }
     }
 
+    /// Returns the log file path based on the target
     fn get_log_path(&self, target: &str) -> PathBuf {
         let timestamp = Local::now().format("%d-%m-%Y").to_string();
         let dir = if target == "file_ops" {
@@ -88,7 +95,9 @@ impl DualWriter {
     }
 }
 
+/// Implementation of the LogWriter trait for DualWriter
 impl LogWriter for DualWriter {
+    /// Writes a log record to the appropriate file based on its target
     fn write(
         &self,
         now: &mut flexi_logger::DeferredNow,
@@ -147,6 +156,7 @@ impl LogWriter for DualWriter {
         Ok(())
     }
 
+    /// Flushes the log writer
     fn flush(&self) -> std::io::Result<()> {
         Ok(())
     }

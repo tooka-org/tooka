@@ -7,11 +7,23 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// Result of a file operation, containing the new path and renamed file name
 pub struct FileOperationResult {
     pub new_path: PathBuf,
     pub renamed: String,
 }
 
+/// Represents the type of file operation being performed
+#[derive(Clone, Copy)]
+enum Operation {
+    Move,
+    Copy,
+    Rename,
+    Compress,
+}
+
+/// Executes a file operation based on the provided action and file path.
+/// If `dry_run` is true, it simulates the operation without making changes.
 pub fn execute_action(
     file_path: &Path,
     action: &Action,
@@ -40,14 +52,7 @@ pub fn execute_action(
     }
 }
 
-#[derive(Clone, Copy)]
-enum Operation {
-    Move,
-    Copy,
-    Rename,
-    Compress,
-}
-
+/// Handles file operations that involve templates for paths and renaming.
 fn handle_with_templates(
     file_path: &Path,
     action: &Action,
@@ -121,6 +126,7 @@ fn handle_with_templates(
     })
 }
 
+/// Runs a file system operation (move, copy, rename) and logs the action.
 fn run_fs_op<F, R>(
     src: &Path,
     dest: &Path,
@@ -151,6 +157,7 @@ where
     }
 }
 
+/// Handles the delete action for a file, either performing the deletion or simulating it in dry run mode.
 fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult, TookaError> {
     if dry_run {
         log::debug!("Dry run: would delete file: {}", file_path.display());
@@ -165,6 +172,7 @@ fn handle_delete(file_path: &Path, dry_run: bool) -> Result<FileOperationResult,
     })
 }
 
+/// Compresses a file using Gzip compression.
 fn compress_file(input_path: &Path, output_path: &Path) -> Result<(), TookaError> {
     let mut input = fs::File::open(input_path)?;
     let mut output = fs::File::create(output_path)?;
@@ -175,6 +183,7 @@ fn compress_file(input_path: &Path, output_path: &Path) -> Result<(), TookaError
     Ok(())
 }
 
+/// Expands templates in the file path and returns the new path and renamed file name.
 fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, String), TookaError> {
     let file_name = file_path
         .file_stem()
@@ -247,6 +256,7 @@ fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, Strin
     Ok((full_path, renamed))
 }
 
+/// Helper function to capitalize the first character of a string.
 fn capitalize(s: &str) -> String {
     let mut c = s.chars();
     match c.next() {

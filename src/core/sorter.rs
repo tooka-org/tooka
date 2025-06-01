@@ -5,6 +5,7 @@ use crate::context;
 use crate::core::{file_match, file_ops, logger::log_file_operation, rules_file::RulesFile};
 use crate::error::TookaError;
 
+/// Represents the result of a file matching operation
 pub struct MatchResult {
     pub file_name: String,
     pub matched_rule_id: String,
@@ -12,6 +13,7 @@ pub struct MatchResult {
     pub new_path: PathBuf,
 }
 
+/// Sorts files in the specified source directory according to the provided rules.
 pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<MatchResult>, TookaError> {
     log::debug!(
         "Starting file sorting with source: '{source}', rules: '{rules}', dry_run: {dry_run}"
@@ -90,6 +92,7 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
     results.map(|v| v.into_iter().flatten().collect())
 }
 
+/// Processes a single file against the rules and returns the match results.
 fn sort_file(
     file_path: &Path,
     rules_file: &RulesFile,

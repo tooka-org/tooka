@@ -7,6 +7,7 @@ use glob;
 use std::fs;
 use std::path::Path;
 
+/// Matches a file against a given vector of file extensions
 fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
     file_path
         .extension()
@@ -15,6 +16,7 @@ fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
         .unwrap_or(false)
 }
 
+/// Matches a file's MIME type against a given MIME type string
 fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
     mime_guess::from_path(file_path)
         .first()
@@ -28,12 +30,14 @@ fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
         })
 }
 
+/// Matches a file path against a glob pattern
 fn match_pattern(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
     let file_path_str = file_path.to_string_lossy();
     let glob_pattern = glob::Pattern::new(pattern)?;
     Ok(glob_pattern.matches(&file_path_str))
 }
 
+/// Matches a file's metadata against a set of metadata rules
 fn match_metadata(file_path: &Path, metadata_match: &rule::MetadataMatch) -> bool {
     (
         if metadata_match.exif_date {
@@ -52,6 +56,7 @@ fn match_metadata(file_path: &Path, metadata_match: &rule::MetadataMatch) -> boo
     ) && metadata_match.fields.iter().all(|field| match_metadata_field(file_path, field))
 }
 
+/// Matches a specific metadata field against the file's EXIF data
 fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
     let file = match fs::File::open(file_path) {
         Ok(f) => f,
@@ -78,6 +83,7 @@ fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
     })
 }
 
+/// Matches a file's metadata against a rule that checks if the file is older than a certain number of days
 fn match_older_than_days(metadata: &fs::Metadata, days: u32) -> bool {
     metadata.modified().map_or(false, |modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
@@ -86,10 +92,12 @@ fn match_older_than_days(metadata: &fs::Metadata, days: u32) -> bool {
     })
 }
 
+/// Matches a file's size against a minimum size in kilobytes
 fn match_size_greater_than_kb(metadata: &fs::Metadata, min_kb: u64) -> bool {
     metadata.len() >= min_kb * 1024
 }
 
+/// Matches a file's creation date against a date range
 fn match_created_between(metadata: &fs::Metadata, range: &rule::DateRange) -> bool {
     metadata.created().map_or(false, |created| {
         let created_date = chrono::DateTime::<Utc>::from(created).date_naive();
@@ -101,16 +109,19 @@ fn match_created_between(metadata: &fs::Metadata, range: &rule::DateRange) -> bo
     })
 }
 
+/// Matches a file's name against a regular expression pattern
 fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
     let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
     let regex = regex::Regex::new(pattern)?;
     Ok(regex.is_match(file_name))
 }
 
+/// Matches a file's symlink status against a boolean value
 fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
     metadata.file_type().is_symlink() == is_symlink
 }
 
+/// Matches a file's owner against a specified owner name (Only implemented for Unix)
 fn match_file_owner(metadata: &fs::Metadata, owner: &str) -> bool {
     #[cfg(unix)]
     {
@@ -128,6 +139,7 @@ fn match_file_owner(metadata: &fs::Metadata, owner: &str) -> bool {
     }
 }
 
+/// Matches a file against a set of rules defined in a RuleMatch struct
 pub fn match_rule_matcher(file_path: &Path, matcher: &RuleMatch) -> bool {
     let metadata = match fs::symlink_metadata(file_path) {
         Ok(m) => m,

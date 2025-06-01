@@ -32,7 +32,6 @@ where
 }
 
 /// Returns the source folder, usually Downloads, or a fallback.
-/// Returns an error only if `UserDirs` is completely unavailable and no fallback is possible.
 pub fn get_source_folder(home: &Path) -> Result<PathBuf, TookaError> {
     if let Ok(path) = env::var("TOOKA_SOURCE_FOLDER").map(PathBuf::from) {
         return Ok(path);

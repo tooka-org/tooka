@@ -5,12 +5,15 @@ use clap::Args;
 #[derive(Args)]
 #[command(about = "Manages the Tooka configuration file")]
 pub struct ConfigArgs {
+    /// Flag to locate the configuration file
     #[arg(long)]
     pub locate: bool,
 
+    /// Flag to reset the configuration file to default values
     #[arg(long)]
     pub reset: bool,
 
+    /// Flag to show the current configuration
     #[arg(long)]
     pub show: bool,
 }

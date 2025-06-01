@@ -5,17 +5,23 @@ use crate::context::{CONFIG_FILE_NAME, CONFIG_VERSION, DEFAULT_LOGS_FOLDER, RULE
 use crate::core::environment::{get_dir_with_env, get_source_folder};
 use anyhow::Result;
 
+/// Configuration structure for Tooka
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-/// Configuration structure for Tooka
 pub struct Config {
+    /// Version of the configuration file
     pub version: usize,
+    /// Folder that Tooka will sort files in
     pub source_folder: PathBuf,
+    /// Path to the file containing all rules
     pub rules_file: PathBuf,
+    /// Folder where Tooka will store logs
     pub logs_folder: PathBuf,
 }
 
+/// Default values for the configuration
 impl Default for Config {
+    /// Creates a default configuration for Tooka using fallback folder paths
     fn default() -> Self {
         log::debug!("Creating default configuration for Tooka");
 
@@ -32,7 +38,9 @@ impl Default for Config {
     }
 }
 
+/// Implementation of the Config struct
 impl Config {
+    /// Creates a new configuration with fallback paths
     fn new_with_fallbacks() -> Result<Self, TookaError> {
         let home_dir = env::var("HOME")
             .map(PathBuf::from)
@@ -52,6 +60,7 @@ impl Config {
         })
     }
 
+    /// Attempts to load the configuration from the default path, creating it if it does not exist.
     pub fn load() -> Result<Self, TookaError> {
         log::debug!("Loading configuration for Tooka");
         let config_path = Self::config_path()?;
@@ -68,6 +77,7 @@ impl Config {
         }
     }
 
+    /// Saves the current configuration to the default path
     pub fn save(&self) -> Result<(), TookaError> {
         let config_path = Self::config_path()?;
         if let Some(parent) = config_path.parent() {
@@ -78,6 +88,7 @@ impl Config {
         Ok(())
     }
 
+    /// Locates the configuration file in the expected directory
     pub fn locate_config_file(&self) -> Result<PathBuf, TookaError> {
         let config_path = Self::config_path()?;
         if config_path.exists() {
@@ -87,15 +98,17 @@ impl Config {
         }
     }
 
+    /// Resets the configuration to default values and saves it
     pub fn reset_config(&mut self) -> Result<(), TookaError> {
         *self = Config::new_with_fallbacks()?;
         self.save()
     }
-
+    /// Displays the current configuration in a human-readable format
     pub fn show_config(&self) -> String {
         serde_yaml::to_string(self).unwrap_or_else(|_| "Failed to serialize config".into())
     }
 
+    /// Returns the path to the configuration file, creating it if necessary
     fn config_path() -> Result<PathBuf, TookaError> {
         let home_dir = env::var("HOME")
             .map(PathBuf::from)

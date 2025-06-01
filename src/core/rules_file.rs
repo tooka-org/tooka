@@ -14,6 +14,7 @@ pub struct RulesFile {
     pub rules: Vec<Rule>,
 }
 
+/// Represents the rules file, providing methods to load, save, and manipulate rules
 impl RulesFile {
     /// Load rules from the default file path
     pub fn load() -> Result<Self, TookaError> {
@@ -95,6 +96,7 @@ impl RulesFile {
         }
     }
 
+    /// Add a single rule from a YAML string, optionally overwriting existing rules
     fn add_single_rule(&mut self, yaml: &str, overwrite: bool) -> Result<(), TookaError> {
         let rule: Rule = serde_yaml::from_str(yaml)?;
         log::debug!("Parsed new rule: {rule:?}");
@@ -117,6 +119,7 @@ impl RulesFile {
         Ok(())
     }
 
+    /// Add multiple rules from a YAML string, optionally overwriting existing rules
     fn add_multiple_rules(&mut self, yaml: &str, overwrite: bool) -> Result<(), TookaError> {
         let parsed: RulesFile = serde_yaml::from_str(yaml)?;
 
@@ -210,8 +213,7 @@ impl RulesFile {
         }
     }
 
-    // Helpers
-
+    /// Helper function to get the path to the rules file
     fn rules_file_path() -> Result<PathBuf, TookaError> {
         let config = context::get_locked_config()
             .map_err(|e| TookaError::ConfigError(format!("Failed to get config: {}", e)))?;
@@ -219,6 +221,7 @@ impl RulesFile {
         Ok(Path::new(&config.rules_file).to_path_buf())
     }
 
+    /// Helper function to write rules to a file
     fn write_to_file(path: &Path, rules: &Self) -> Result<(), TookaError> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;

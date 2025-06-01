@@ -2,6 +2,7 @@ use crate::core::rule::{Action, Match, MetadataMatch, Rule};
 use crate::error::TookaError;
 use serde_yaml;
 
+/// Generates a YAML template for a Tooka rule.
 pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
     let rule = Rule {
         id: "example_rule".to_string(),
