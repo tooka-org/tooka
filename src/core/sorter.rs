@@ -1,6 +1,7 @@
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
-
+use std::sync::Arc;
+use indicatif::{ProgressBar, ProgressStyle};
 use crate::context;
 use crate::core::{file_match, file_ops, logger::log_file_operation, rules_file::RulesFile};
 use crate::error::TookaError;
@@ -65,6 +66,7 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
 
     log::debug!("Loaded {} rules", rf.rules.len());
 
+    // Count all files in the source directory
     let entries: Vec<PathBuf> = source_path
         .read_dir()?
         .filter_map(|res| match res {
@@ -79,10 +81,23 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
 
     log::debug!("Found {} files in source directory.", entries.len());
 
+    let total_files = entries.len();
+    let progress_bar = Arc::new(
+        ProgressBar::new(total_files as u64)
+            .with_style(ProgressStyle::with_template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} files sorted").unwrap())
+    );
+
     let results: Result<Vec<_>, TookaError> = entries
         .par_iter()
-        .map(|file_path| sort_file(file_path, &rf, dry_run))
+        .map(|file_path| {
+            let res = sort_file(file_path, &rf, dry_run);
+            progress_bar.inc(1); // update bar from each thread
+            res
+        })
         .collect();
+
+    progress_bar.finish_with_message("Sorting complete");
+
 
     log::debug!(
         "File sorting completed with {} results.",
