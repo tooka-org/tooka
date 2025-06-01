@@ -1,5 +1,5 @@
 use crate::context;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
@@ -31,7 +31,6 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
         args.show
     );
 
-
     if flag_count == 0 {
         log::warn!("No action specified. Use one of: --locate, --reset, --show");
         return Err(anyhow!(
@@ -57,7 +56,8 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
         log::info!("Config file found at: {}", path.display());
     } else if args.reset {
         log::info!("Resetting config to default...");
-        conf.reset_config().context("Failed to reset config to default")?;
+        conf.reset_config()
+            .context("Failed to reset config to default")?;
         println!("Config reset to default values.");
         log::info!("Config reset complete.");
     } else if args.show {

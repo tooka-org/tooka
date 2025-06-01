@@ -1,4 +1,4 @@
-use crate::core::rule::{Action, PathTemplate};
+use crate::core::rules::rule::{Action, PathTemplate};
 use crate::error::TookaError;
 use chrono::{Datelike, Utc};
 use flate2::{Compression, write::GzEncoder};
@@ -40,8 +40,12 @@ pub fn execute_action(
         Action::Move { .. } => handle_with_templates(file_path, action, dry_run, Operation::Move),
         Action::Copy { .. } => handle_with_templates(file_path, action, dry_run, Operation::Copy),
         Action::Delete => handle_delete(file_path, dry_run),
-        Action::Rename { .. } => handle_with_templates(file_path, action, dry_run, Operation::Rename),
-        Action::Compress { .. } => handle_with_templates(file_path, action, dry_run, Operation::Compress),
+        Action::Rename { .. } => {
+            handle_with_templates(file_path, action, dry_run, Operation::Rename)
+        }
+        Action::Compress { .. } => {
+            handle_with_templates(file_path, action, dry_run, Operation::Compress)
+        }
         Action::Skip => {
             log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
@@ -212,21 +216,22 @@ fn expand_templates(file_path: &Path, action: &Action) -> Result<(PathBuf, Strin
                 path_template,
                 ..
             } => (destination, path_template.as_ref(), None),
-            Action::Compress {
-                destination,
-                ..
-            } => (destination, None, None),
+            Action::Compress { destination, .. } => (destination, None, None),
             Action::Rename { rename_template } => {
                 static EMPTY: String = String::new();
                 (&EMPTY, None, Some(rename_template))
             }
             Action::Delete | Action::Skip => {
-                return Err(TookaError::InvalidTemplate("No templates for Delete/Skip actions".into()));
+                return Err(TookaError::InvalidTemplate(
+                    "No templates for Delete/Skip actions".into(),
+                ));
             }
         };
 
     if base.is_empty() && rename_template.is_none() {
-        return Err(TookaError::InvalidTemplate("Missing destination or rename_template".into()));
+        return Err(TookaError::InvalidTemplate(
+            "Missing destination or rename_template".into(),
+        ));
     }
 
     let expanded_base = shellexpand::tilde(base).into_owned();

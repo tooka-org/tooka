@@ -1,9 +1,9 @@
-use std::{env, fs, path::PathBuf};
-use serde::{Deserialize, Serialize};
-use crate::error::TookaError;
+use super::environment::{get_dir_with_env, get_source_folder};
 use crate::context::{CONFIG_FILE_NAME, CONFIG_VERSION, DEFAULT_LOGS_FOLDER, RULES_FILE_NAME};
-use crate::core::environment::{get_dir_with_env, get_source_folder};
+use crate::error::TookaError;
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::{env, fs, path::PathBuf};
 
 /// Configuration structure for Tooka
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,15 +42,18 @@ impl Default for Config {
 impl Config {
     /// Creates a new configuration with fallback paths
     fn new_with_fallbacks() -> Result<Self, TookaError> {
-        let home_dir = env::var("HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                log::warn!("$HOME not set; using current directory as fallback.");
-                PathBuf::from(".")
-            });
+        let home_dir = env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| {
+            log::warn!("$HOME not set; using current directory as fallback.");
+            PathBuf::from(".")
+        });
 
         let source_folder = get_source_folder(&home_dir)?;
-        let data_dir = get_dir_with_env("TOOKA_DATA_DIR", |d| d.data_dir(), &home_dir, ".local/share")?;
+        let data_dir = get_dir_with_env(
+            "TOOKA_DATA_DIR",
+            |d| d.data_dir(),
+            &home_dir,
+            ".local/share",
+        )?;
 
         Ok(Self {
             version: CONFIG_VERSION,
@@ -114,12 +117,8 @@ impl Config {
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("."));
 
-        let config_dir = get_dir_with_env(
-            "TOOKA_CONFIG_DIR",
-            |d| d.config_dir(),
-            &home_dir,
-            ".config",
-        )?;
+        let config_dir =
+            get_dir_with_env("TOOKA_CONFIG_DIR", |d| d.config_dir(), &home_dir, ".config")?;
 
         Ok(config_dir.join(CONFIG_FILE_NAME))
     }

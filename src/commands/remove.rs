@@ -1,5 +1,5 @@
 use crate::context;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
@@ -18,11 +18,11 @@ pub fn run(args: &RemoveArgs) -> Result<()> {
         return Err(anyhow!("Rule with ID '{}' not found.", args.rule_id));
     }
     log::debug!(
-            "Found rule: ID={}, Name={}, Enabled={}",
-            rule.as_ref().unwrap().id,
-            rule.as_ref().unwrap().name,
-            rule.as_ref().unwrap().enabled
-        );
+        "Found rule: ID={}, Name={}, Enabled={}",
+        rule.as_ref().unwrap().id,
+        rule.as_ref().unwrap().name,
+        rule.as_ref().unwrap().enabled
+    );
 
     rf.remove_rule(&args.rule_id)
         .map_err(|e| anyhow!("Failed to remove rule with ID '{}': {}", args.rule_id, e))?;

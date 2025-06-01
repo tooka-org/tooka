@@ -1,12 +1,16 @@
+use crate::context;
+use crate::core::common::logger::log_file_operation;
+use crate::core::file::{file_match, file_ops};
+use crate::error::TookaError;
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use indicatif::{ProgressBar, ProgressStyle};
-use crate::context;
-use crate::core::{file_match, file_ops, logger::log_file_operation, rules_file::RulesFile};
-use crate::error::TookaError;
+
+use super::rules::rules_file::RulesFile;
 
 /// Represents the result of a file matching operation
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct MatchResult {
     pub file_name: String,
     pub matched_rule_id: String,
@@ -15,7 +19,11 @@ pub struct MatchResult {
 }
 
 /// Sorts files in the specified source directory according to the provided rules.
-pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<MatchResult>, TookaError> {
+pub fn sort_files(
+    source: String,
+    rules: &str,
+    dry_run: bool,
+) -> Result<Vec<MatchResult>, TookaError> {
     log::debug!(
         "Starting file sorting with source: '{source}', rules: '{rules}', dry_run: {dry_run}"
     );
@@ -46,19 +54,23 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
 
         if rf.rules.is_empty() {
             log::error!("No rules found to apply.");
-            return Err(TookaError::RuleNotFound("No rules found to apply.".to_string()));
+            return Err(TookaError::RuleNotFound(
+                "No rules found to apply.".to_string(),
+            ));
         }
-
     } else {
         let rule_ids: Vec<String> = rules.split(',').map(|s| s.trim().to_string()).collect();
 
         if rule_ids.is_empty() {
             log::error!("No valid rule IDs provided.");
-            return Err(TookaError::RuleNotFound("No valid rule IDs provided.".to_string()));
+            return Err(TookaError::RuleNotFound(
+                "No valid rule IDs provided.".to_string(),
+            ));
         }
 
-        context::set_filtered_rules_file(&rule_ids)
-            .map_err(|e| TookaError::RulesFileError(format!("Failed to set filtered rules: {e}")))?;
+        context::set_filtered_rules_file(&rule_ids).map_err(|e| {
+            TookaError::RulesFileError(format!("Failed to set filtered rules: {e}"))
+        })?;
     }
 
     let rf = context::get_locked_rules_file()
@@ -83,8 +95,12 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
 
     let total_files = entries.len();
     let progress_bar = Arc::new(
-        ProgressBar::new(total_files as u64)
-            .with_style(ProgressStyle::with_template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} files sorted").unwrap())
+        ProgressBar::new(total_files as u64).with_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} files sorted",
+            )
+            .unwrap(),
+        ),
     );
 
     let results: Result<Vec<_>, TookaError> = entries
@@ -97,7 +113,6 @@ pub fn sort_files(source: String, rules: &str, dry_run: bool) -> Result<Vec<Matc
         .collect();
 
     progress_bar.finish_with_message("Sorting complete");
-
 
     log::debug!(
         "File sorting completed with {} results.",
@@ -151,8 +166,10 @@ fn sort_file(
             log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
 
             for action in &rule.actions {
-                let op_result = file_ops::execute_action(file_path, action, dry_run)
-                    .map_err(|e| TookaError::FileOperationError(format!("Failed to execute action: {e}")))?;
+                let op_result =
+                    file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
+                        TookaError::FileOperationError(format!("Failed to execute action: {e}"))
+                    })?;
 
                 let log_prefix = if dry_run { "DRY" } else { "" };
                 log_file_operation(&format!(

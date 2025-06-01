@@ -1,6 +1,6 @@
 use glob::PatternError;
-use thiserror::Error;
 use std::io;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TookaError {

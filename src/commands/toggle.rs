@@ -1,5 +1,5 @@
 use crate::context;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]

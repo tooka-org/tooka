@@ -1,8 +1,8 @@
+use anyhow::Result;
 use clap::Args;
 use clap::CommandFactory;
 use clap_complete::{generate, shells::Shell};
 use std::io;
-use anyhow::Result;
 
 #[derive(Args)]
 #[command(about = "Generate shell completions")]
@@ -27,7 +27,8 @@ pub fn run(args: &CompletionsArgs) -> Result<()> {
     if !supported_shells.contains(&args.shell) {
         log::warn!(
             "Unsupported shell: {:?}. Supported shells are: {:?}",
-            args.shell, supported_shells
+            args.shell,
+            supported_shells
         );
         return Err(anyhow::anyhow!(
             "Unsupported shell: {:?}. Supported shells are: {:?}",

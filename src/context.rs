@@ -1,8 +1,9 @@
-use crate::core::config::Config;
-use crate::core::rules_file::RulesFile;
-use crate::error::TookaError;
+use crate::{
+    core::{common::config::Config, rules::rules_file::RulesFile},
+    error::TookaError,
+};
+use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex, OnceLock};
-use anyhow::{Result, Context};
 
 /// Constants for Tooka application
 /// These constants define the configuration version, file names, and application metadata.
@@ -21,22 +22,25 @@ static RULES_FILE: OnceLock<Arc<Mutex<RulesFile>>> = OnceLock::new();
 /// Initializes the global configuration.
 pub fn init_config() -> Result<()> {
     let config = Config::load().context("Failed to load configuration")?;
-    CONFIG.set(Arc::new(Mutex::new(config)))
+    CONFIG
+        .set(Arc::new(Mutex::new(config)))
         .map_err(|_| TookaError::ConfigAlreadyInitialized.into())
 }
 
 /// Initializes the global rules file.
 pub fn init_rules_file() -> Result<()> {
     let rules_file = RulesFile::load().context("Failed to load rules file")?;
-    RULES_FILE.set(Arc::new(Mutex::new(rules_file)))
+    RULES_FILE
+        .set(Arc::new(Mutex::new(rules_file)))
         .map_err(|_| TookaError::RulesFileAlreadyInitialized.into())
 }
 
 /// Sets the global configuration with a new instance.
 pub fn set_filtered_rules_file(rule_ids: &[String]) -> Result<()> {
-    let rules_file = RulesFile::load_from_ids(rule_ids)
-        .context("Failed to load rules from provided IDs")?;
-    RULES_FILE.set(Arc::new(Mutex::new(rules_file)))
+    let rules_file =
+        RulesFile::load_from_ids(rule_ids).context("Failed to load rules from provided IDs")?;
+    RULES_FILE
+        .set(Arc::new(Mutex::new(rules_file)))
         .map_err(|_| TookaError::RulesFileAlreadyInitialized.into())
 }
 
@@ -58,5 +62,4 @@ pub fn get_locked_config() -> Result<std::sync::MutexGuard<'static, Config>> {
     config
         .lock()
         .map_err(|e| anyhow::anyhow!("Failed to acquire lock on config: {}", e))
-
 }

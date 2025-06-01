@@ -1,5 +1,5 @@
 use crate::context;
-use crate::core::rule::Rule;
+use crate::core::rules::rule::Rule;
 use crate::error::TookaError;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -109,7 +109,8 @@ impl RulesFile {
                 return Ok(());
             } else {
                 return Err(TookaError::InvalidRule(format!(
-                    "Rule ID '{}' already exists", rule.id
+                    "Rule ID '{}' already exists",
+                    rule.id
                 )));
             }
         }
@@ -132,7 +133,8 @@ impl RulesFile {
                     self.rules[pos] = rule;
                 } else {
                     return Err(TookaError::InvalidRule(format!(
-                        "Rule ID '{}' already exists", rule.id
+                        "Rule ID '{}' already exists",
+                        rule.id
                     )));
                 }
             } else {
@@ -155,7 +157,8 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found", rule_id
+                "Rule with id '{}' not found",
+                rule_id
             )))
         }
     }
@@ -186,7 +189,8 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found", rule_id
+                "Rule with id '{}' not found",
+                rule_id
             )))
         }
     }
@@ -208,7 +212,8 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found", rule_id
+                "Rule with id '{}' not found",
+                rule_id
             )))
         }
     }

@@ -1,5 +1,5 @@
-use crate::core::template::generate_rule_template_yaml;
-use anyhow::{anyhow, Result};
+use crate::core::rules::template::generate_rule_template_yaml;
+use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
@@ -14,7 +14,7 @@ pub fn run(args: TemplateArgs) -> Result<()> {
     let output_path = args
         .output
         .unwrap_or_else(|| "rule_template.yaml".to_string());
-    
+
     log::info!("Generating rule template YAML to {}", output_path);
 
     let rule_template = generate_rule_template_yaml()
@@ -23,7 +23,10 @@ pub fn run(args: TemplateArgs) -> Result<()> {
     std::fs::write(&output_path, rule_template)
         .map_err(|e| anyhow!("Failed to write rule template to file: {}", e))?;
 
-    println!("Rule template YAML generated successfully at {}", output_path);
+    println!(
+        "Rule template YAML generated successfully at {}",
+        output_path
+    );
 
     Ok(())
 }

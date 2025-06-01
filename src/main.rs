@@ -5,7 +5,7 @@ mod error;
 
 use anyhow::Result;
 use clap::Parser;
-use core::logger::init_logger;
+use core::common::logger::init_logger;
 
 #[derive(Parser)]
 #[clap(

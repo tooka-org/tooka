@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::RuleValidationError;
+use serde::{Deserialize, Serialize};
 
 /// Represents a rule for file operations in Tooka
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -93,9 +93,7 @@ pub enum Action {
         create_dirs: bool,
     },
     /// Rename the file using a template for the new name
-    Rename {
-        rename_template: String,
-    },
+    Rename { rename_template: String },
     /// Compress the file to a new location using a path template to create the destination path
     /// Optionally specify the compression format and create directories if they do not exist
     Compress {

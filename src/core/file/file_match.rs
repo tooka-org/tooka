@@ -1,5 +1,4 @@
-use crate::core::rule;
-use crate::core::rule::Match as RuleMatch;
+use crate::core::rules::{rule, rule::Match as RuleMatch};
 use crate::error::TookaError;
 
 use chrono::{NaiveDate, Utc};
@@ -39,21 +38,24 @@ fn match_pattern(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
 
 /// Matches a file's metadata against a set of metadata rules
 fn match_metadata(file_path: &Path, metadata_match: &rule::MetadataMatch) -> bool {
-    (
-        if metadata_match.exif_date {
-            let file = match fs::File::open(file_path) {
-                Ok(f) => f,
-                Err(_) => return false,
-            };
-            let mut reader = std::io::BufReader::new(file);
-            match exif::Reader::new().read_from_container(&mut reader) {
-                Ok(exif) => exif.get_field(exif::Tag::DateTime, exif::In::PRIMARY).is_some(),
-                Err(_) => false,
-            }
-        } else {
-            true
+    (if metadata_match.exif_date {
+        let file = match fs::File::open(file_path) {
+            Ok(f) => f,
+            Err(_) => return false,
+        };
+        let mut reader = std::io::BufReader::new(file);
+        match exif::Reader::new().read_from_container(&mut reader) {
+            Ok(exif) => exif
+                .get_field(exif::Tag::DateTime, exif::In::PRIMARY)
+                .is_some(),
+            Err(_) => false,
         }
-    ) && metadata_match.fields.iter().all(|field| match_metadata_field(file_path, field))
+    } else {
+        true
+    }) && metadata_match
+        .fields
+        .iter()
+        .all(|field| match_metadata_field(file_path, field))
 }
 
 /// Matches a specific metadata field against the file's EXIF data
@@ -85,7 +87,7 @@ fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
 
 /// Matches a file's metadata against a rule that checks if the file is older than a certain number of days
 fn match_older_than_days(metadata: &fs::Metadata, days: u32) -> bool {
-    metadata.modified().map_or(false, |modified| {
+    metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
         let age = Utc::now().signed_duration_since(modified_datetime);
         age.num_days() >= i64::from(days)
@@ -99,7 +101,7 @@ fn match_size_greater_than_kb(metadata: &fs::Metadata, min_kb: u64) -> bool {
 
 /// Matches a file's creation date against a date range
 fn match_created_between(metadata: &fs::Metadata, range: &rule::DateRange) -> bool {
-    metadata.created().map_or(false, |created| {
+    metadata.created().is_ok_and(|created| {
         let created_date = chrono::DateTime::<Utc>::from(created).date_naive();
         let from = NaiveDate::parse_from_str(&range.from, "%Y-%m-%d")
             .unwrap_or_else(|_| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
@@ -150,23 +152,51 @@ pub fn match_rule_matcher(file_path: &Path, matcher: &RuleMatch) -> bool {
     };
 
     let matches = [
-        matcher.extensions.as_ref().map(|exts| match_extensions(file_path, exts)),
-        matcher.mime_type.as_ref().map(|m| match_mime_type(file_path, m)),
-        matcher.pattern.as_ref().map(|p| match_pattern(file_path, p).unwrap_or(false)),
-        matcher.metadata.as_ref().map(|m| match_metadata(file_path, m)),
-        matcher.older_than_days.map(|d| match_older_than_days(&metadata, d)),
-        matcher.size_greater_than_kb.map(|s| match_size_greater_than_kb(&metadata, s)),
-        matcher.created_between.as_ref().map(|r| match_created_between(&metadata, r)),
-        matcher.filename_regex.as_ref().map(|r| match_filename_regex(file_path, r).unwrap_or(false)),
+        matcher
+            .extensions
+            .as_ref()
+            .map(|exts| match_extensions(file_path, exts)),
+        matcher
+            .mime_type
+            .as_ref()
+            .map(|m| match_mime_type(file_path, m)),
+        matcher
+            .pattern
+            .as_ref()
+            .map(|p| match_pattern(file_path, p).unwrap_or(false)),
+        matcher
+            .metadata
+            .as_ref()
+            .map(|m| match_metadata(file_path, m)),
+        matcher
+            .older_than_days
+            .map(|d| match_older_than_days(&metadata, d)),
+        matcher
+            .size_greater_than_kb
+            .map(|s| match_size_greater_than_kb(&metadata, s)),
+        matcher
+            .created_between
+            .as_ref()
+            .map(|r| match_created_between(&metadata, r)),
+        matcher
+            .filename_regex
+            .as_ref()
+            .map(|r| match_filename_regex(file_path, r).unwrap_or(false)),
         matcher.is_symlink.map(|b| match_is_symlink(&metadata, b)),
-        matcher.owner.as_ref().map(|o| match_file_owner(&metadata, o)),
+        matcher
+            .owner
+            .as_ref()
+            .map(|o| match_file_owner(&metadata, o)),
     ];
 
     if matches.iter().all(|res| res.unwrap_or(true)) {
         log::debug!("File '{}' matched all conditions", file_path.display());
         true
     } else {
-        log::info!("File '{}' did not match one or more conditions", file_path.display());
+        log::info!(
+            "File '{}' did not match one or more conditions",
+            file_path.display()
+        );
         false
     }
 }

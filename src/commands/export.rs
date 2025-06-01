@@ -1,5 +1,5 @@
 use crate::context;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
@@ -20,7 +20,7 @@ pub fn run(args: ExportArgs) -> Result<()> {
         .unwrap_or_else(|| format!("rule-{}.yaml", args.id));
 
     log::info!("Exporting rule with ID: {} to {}", args.id, output_path);
-    
+
     let rf = context::get_locked_rules_file()?;
 
     rf.export_rule(&args.id, Some(&output_path))

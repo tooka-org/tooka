@@ -3,9 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use directories_next::{ProjectDirs, UserDirs};
 use crate::context::{APP_NAME, APP_ORG, APP_QUALIFIER};
 use crate::error::TookaError;
+use directories_next::{ProjectDirs, UserDirs};
 
 /// Returns a directory path from an env var or project dir fallback.
 pub fn get_dir_with_env<F>(

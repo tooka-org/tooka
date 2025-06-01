@@ -1,4 +1,4 @@
-use crate::core::rule::{Action, Match, MetadataMatch, Rule};
+use crate::core::rules::rule::{Action, Match, MetadataMatch, Rule};
 use crate::error::TookaError;
 use serde_yaml;
 
