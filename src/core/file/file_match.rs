@@ -9,6 +9,11 @@ use std::path::Path;
 
 /// Matches a file's name against a regular expression pattern
 fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
+    log::debug!(
+        "Matching file: {} against pattern: {}",
+        file_path.display(),
+        pattern
+    );
     let file_name = file_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
     let regex = regex::Regex::new(pattern)?;
     Ok(regex.is_match(file_name))
@@ -16,6 +21,11 @@ fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaEr
 
 /// Matches a file against a given vector of file extensions
 fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
+    log::debug!(
+        "Matching file: {} against extensions: {:?}",
+        file_path.display(),
+        extensions
+    );
     file_path
         .extension()
         .and_then(|ext| ext.to_str())
@@ -25,6 +35,11 @@ fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
 
 /// Matches a file path against a glob pattern
 fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
+    log::debug!(
+        "Matching file: {} against glob pattern: {}",
+        file_path.display(),
+        pattern
+    );
     let file_path_str = file_path.to_string_lossy();
     let glob_pattern = glob::Pattern::new(pattern)?;
     Ok(glob_pattern.matches(&file_path_str))
@@ -32,6 +47,11 @@ fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
 
 /// Matches a file's size against a given size range in kilobytes
 fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
+    log::debug!(
+        "Matching file size: {} against range: {:?}",
+        metadata.len(),
+        size_kb
+    );
     let size = metadata.len();
     let min = match size_kb.min {
         Some(m) => m.saturating_mul(1024),
@@ -46,6 +66,11 @@ fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
 
 /// Matches a file's MIME type against a given MIME type string
 fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
+    log::debug!(
+        "Matching file: {} against MIME type: {}",
+        file_path.display(),
+        mime_type
+    );
     mime_guess::from_path(file_path)
         .first()
         .is_some_and(|mime| {
@@ -60,6 +85,7 @@ fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
 
 /// Matches a file's metadata against a date range
 fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> bool {
+    log::debug!("Matching against created date range: {:?}", date_range);
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
         let from = NaiveDate::parse_from_str(
@@ -77,6 +103,7 @@ fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> b
 
 /// Matches a file's metadata against a date range
 fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool {
+    log::debug!("Matching against modified date range: {:?}", date_range);
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
         let from = NaiveDate::parse_from_str(
@@ -94,11 +121,21 @@ fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool 
 
 /// Matches a file's symlink status against a boolean value
 fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
+    log::debug!(
+        "Matching symlink status: {} against expected: {}",
+        metadata.file_type().is_symlink(),
+        is_symlink
+    );
     metadata.file_type().is_symlink() == is_symlink
 }
 
 /// Matches a specific metadata field against the file's EXIF data
 fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
+    log::debug!(
+        "Matching metadata field: {} against file: {}",
+        field.key,
+        file_path.display()
+    );
     let file = match fs::File::open(file_path) {
         Ok(f) => f,
         Err(_) => return false,
@@ -126,6 +163,11 @@ fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
 
 /// Matches a file against a set of rules defined in a RuleMatch struct
 pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
+    log::debug!(
+        "Matching file: {} against conditions: {:?}",
+        file_path.display(),
+        conditions
+    );
     let metadata = match fs::symlink_metadata(file_path) {
         Ok(m) => m,
         Err(e) => {
@@ -133,59 +175,60 @@ pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
             return false;
         }
     };
+    log::debug!("File metadata: {:?}", metadata);
 
     let matches = [
-        conditions.filename.as_ref().map_or(Ok(false), |pattern| {
-            match_filename_regex(file_path, pattern)
-        }),
+        conditions
+            .filename
+            .as_ref()
+            .map_or(Ok(true), |pattern| match_filename_regex(file_path, pattern)),
         conditions
             .extensions
             .as_ref()
-            .map_or(Ok(false), |exts| Ok(match_extensions(file_path, exts))),
+            .map_or(Ok(true), |exts| Ok(match_extensions(file_path, exts))),
         conditions
             .path
             .as_ref()
-            .map_or(Ok(false), |pattern| match_path(file_path, pattern)),
+            .map_or(Ok(true), |pattern| match_path(file_path, pattern)),
         conditions
             .size_kb
             .as_ref()
-            .map_or(Ok(false), |size| Ok(match_size_kb(&metadata, size.clone()))),
+            .map_or(Ok(true), |size| Ok(match_size_kb(&metadata, size.clone()))),
         conditions
             .mime_type
             .as_ref()
-            .map_or(Ok(false), |m| Ok(match_mime_type(file_path, m))),
+            .map_or(Ok(true), |m| Ok(match_mime_type(file_path, m))),
         conditions
             .created_date
             .as_ref()
-            .map_or(Ok(false), |date_range| {
+            .map_or(Ok(true), |date_range| {
                 Ok(match_date_range_created(&metadata, date_range.clone()))
             }),
         conditions
             .modified_date
             .as_ref()
-            .map_or(Ok(false), |date_range| {
+            .map_or(Ok(true), |date_range| {
                 Ok(match_date_range_mod(&metadata, date_range.clone()))
             }),
         conditions
             .is_symlink
-            .map_or(Ok(false), |b| Ok(match_is_symlink(&metadata, b))),
+            .map_or(Ok(true), |b| Ok(match_is_symlink(&metadata, b))),
         conditions
             .metadata
             .as_ref()
-            .map_or(Ok(false), |metadata_fields| {
+            .map_or(Ok(true), |metadata_fields| {
                 Ok(metadata_fields
                     .iter()
                     .all(|field| match_metadata_field(file_path, field)))
             }),
     ];
-
-    // If any is not set, it defaults to false.
-    // If it is set, and its set to true, any of the conditions must match.
-    // If its not set, or set to false, all conditions must match.
     let any_conditions = conditions.any.unwrap_or(false);
+    log::debug!("Conditions any: {}, matches: {:?}", any_conditions, matches);
     if any_conditions {
+        log::debug!("Using OR logic for conditions");
         matches.into_iter().any(|m| m.unwrap_or(false))
     } else {
+        log::debug!("Using AND logic for conditions");
         matches.into_iter().all(|m| m.unwrap_or(false))
     }
 }

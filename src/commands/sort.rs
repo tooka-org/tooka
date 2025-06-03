@@ -45,7 +45,7 @@ pub fn run(args: SortArgs) -> Result<()> {
         )
     })?;
 
-    println!("Sorting completed. Results:");
+    println!("Sorting completed.");
     log::info!("Sorting completed, found {} matches", results.len());
 
     for match_result in &results {

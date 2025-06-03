@@ -174,10 +174,9 @@ fn sort_file(
     let mut results = Vec::new();
 
     for action in &rule.then {
-        let op_result =
-            file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
-                TookaError::FileOperationError(format!("Failed to execute action: {e}"))
-            })?;
+        let op_result = file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
+            TookaError::FileOperationError(format!("Failed to execute action: {e}"))
+        })?;
 
         let log_prefix = if dry_run { "DRY" } else { "" };
         log_file_operation(&format!(
@@ -186,12 +185,11 @@ fn sort_file(
             file_path.display(),
             op_result.new_path.display()
         ));
-        let compound_path =
-            if op_result.renamed.is_empty() || op_result.renamed == file_name {
-                op_result.new_path.clone()
-            } else {
-                file_path.with_file_name(op_result.renamed)
-            };
+        let compound_path = if op_result.renamed.is_empty() || op_result.renamed == file_name {
+            op_result.new_path.clone()
+        } else {
+            file_path.with_file_name(op_result.renamed)
+        };
 
         results.push(MatchResult {
             file_name: file_name.clone(),

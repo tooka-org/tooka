@@ -71,7 +71,7 @@ pub struct DateRange {
 
 /// Represents an action to perform when a rule matches
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(tag = "type", rename_all = "lowercase")]
+#[serde(tag = "action", rename_all = "lowercase")]
 pub enum Action {
     /// Move the file to a new location and optionally preserve the directory structure
     Move {
