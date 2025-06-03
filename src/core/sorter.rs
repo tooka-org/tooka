@@ -123,6 +123,7 @@ pub fn sort_files(
 }
 
 /// Processes a single file against the rules and returns the match results.
+/// If multiple rules match, picks the one with the highest priority (lowest index wins on tie).
 fn sort_file(
     file_path: &Path,
     rules_file: &RulesFile,
@@ -141,51 +142,63 @@ fn sort_file(
         })?
         .to_string();
 
+    // Find all matching rules with their index
+    let mut matching: Vec<(usize, &_, u32)> = rules_file
+        .rules
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, rule)| {
+            if file_match::match_rule_matcher(file_path, &rule.when) {
+                Some((idx, rule, rule.priority))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if matching.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // Pick the rule with the highest priority (largest u32), break ties by lowest index
+    matching.sort_by(|a, b| b.2.cmp(&a.2).then(a.0.cmp(&b.0)));
+    let (_idx, rule, _priority) = matching[0];
+
+    log::debug!(
+        "File '{}' matched rule '{}' with priority {}",
+        file_name,
+        rule.id,
+        rule.priority
+    );
+
     let mut results = Vec::new();
 
-    for rule in &rules_file.rules {
-        log::debug!(
-            "Checking if file '{}' matches rule '{}'",
-            file_name,
-            rule.id
-        );
+    for action in &rule.then {
+        let op_result =
+            file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
+                TookaError::FileOperationError(format!("Failed to execute action: {e}"))
+            })?;
 
-        let is_match = file_match::match_rule_matcher(file_path, &rule.when);
+        let log_prefix = if dry_run { "DRY" } else { "" };
+        log_file_operation(&format!(
+            "{log_prefix}[{:?}] '{}' to '{}'",
+            action,
+            file_path.display(),
+            op_result.new_path.display()
+        ));
+        let compound_path =
+            if op_result.renamed.is_empty() || op_result.renamed == file_name {
+                op_result.new_path.clone()
+            } else {
+                file_path.with_file_name(op_result.renamed)
+            };
 
-        if is_match {
-            log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
-
-            for action in &rule.then {
-                let op_result =
-                    file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
-                        TookaError::FileOperationError(format!("Failed to execute action: {e}"))
-                    })?;
-
-                let log_prefix = if dry_run { "DRY" } else { "" };
-                log_file_operation(&format!(
-                    "{log_prefix}[{:?}] '{}' to '{}'",
-                    action,
-                    file_path.display(),
-                    op_result.new_path.display()
-                ));
-                let compound_path =
-                    if op_result.renamed.is_empty() || op_result.renamed == file_name {
-                        op_result.new_path.clone()
-                    } else {
-                        file_path.with_file_name(op_result.renamed)
-                    };
-
-                results.push(MatchResult {
-                    file_name: file_name.clone(),
-                    matched_rule_id: rule.id.clone(),
-                    current_path: file_path.to_path_buf(),
-                    new_path: compound_path,
-                });
-            }
-
-            log::debug!("Stopping after first matching rule for file '{file_name}'");
-            break;
-        }
+        results.push(MatchResult {
+            file_name: file_name.clone(),
+            matched_rule_id: rule.id.clone(),
+            current_path: file_path.to_path_buf(),
+            new_path: compound_path,
+        });
     }
 
     Ok(results)
