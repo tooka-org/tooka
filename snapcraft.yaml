@@ -11,8 +11,6 @@ platforms:
         build-on: [amd64] 
         build-for: [all]
 
-
-
 parts:
     tooka:
         plugin: rust

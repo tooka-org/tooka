@@ -150,22 +150,12 @@ fn sort_file(
             rule.id
         );
 
-        let is_match = if rule.match_all {
-            log::debug!("Rule '{}' requires all matchers to match", rule.id);
-            rule.matches
-                .iter()
-                .all(|matcher| file_match::match_rule_matcher(file_path, matcher))
-        } else {
-            log::debug!("Rule '{}' requires any matcher to match", rule.id);
-            rule.matches
-                .iter()
-                .any(|matcher| file_match::match_rule_matcher(file_path, matcher))
-        };
+        let is_match = file_match::match_rule_matcher(file_path, &rule.when);
 
         if is_match {
             log::debug!("File '{}' matched rule '{}'", file_name, rule.id);
 
-            for action in &rule.actions {
+            for action in &rule.then {
                 let op_result =
                     file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
                         TookaError::FileOperationError(format!("Failed to execute action: {e}"))

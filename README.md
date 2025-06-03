@@ -35,8 +35,8 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
 ## ✨ Features
 
 - Define custom file rules in YAML
-- Match by attributes like name, extension, size, metadata, and age
-- Perform actions: move, copy, rename, delete, compress, skip
+- Match by attributes like name, extension, size, metadata, and timestamps
+- Perform actions: move, copy, rename, delete, skip
 - Dry-run mode for safe previews
 - Cross-platform: Windows, macOS, and Linux
 - Shell autocompletion support
@@ -73,6 +73,80 @@ Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
    ```bash
    tooka --help
    ```
+
+---
+
+## 📁 Rule Format
+
+Tooka rules are written in YAML. Each rule defines when to match a file and what actions to take.
+
+### ✅ Basic Structure
+
+```yaml
+id: example_rule
+name: "Example Rule"
+enabled: true
+description: "Describe what this rule does"
+priority: 1
+
+when:
+  any: false
+  filename: "^.*\\.jpg$"
+  extensions: ["jpg", "jpeg"]
+  path: "**/holiday/**"
+  size_kb:
+    min: 10
+    max: 5000
+  mime_type: "image/jpeg"
+  created_date:
+    from: null
+    to: null
+  modified_date: null
+  is_symlink: false
+  metadata:
+    - key: "EXIF:DateTime"
+      value: null
+
+then:
+  - type: move
+    to: "/path/to/destination"
+    preserve_structure: false
+  - type: rename
+    to: "{{metadata.EXIF:DateTime|date:%Y-%m-%d}}-{{filename}}"
+```
+
+---
+
+### 🔍 `when`: Conditions
+
+Control how files are matched. Use `any: true` for OR logic, or omit for AND logic (default).
+
+| Field           | Type              | Description                                        |
+| --------------- | ----------------- | -------------------------------------------------- |
+| `any`           | boolean           | `true` for OR logic between conditions             |
+| `filename`      | string (regex)    | Match filename using regex                         |
+| `extensions`    | list of strings   | File extensions (without the dot)                  |
+| `path`          | string (glob)     | Glob pattern for file paths                        |
+| `size_kb`       | object            | File size range in kilobytes: `min`, `max`         |
+| `mime_type`     | string            | Match MIME type (e.g. `image/png`)                 |
+| `created_date`  | object            | Match creation date range: `from`, `to` (ISO 8601) |
+| `modified_date` | object or null    | Same as above, for modification time               |
+| `is_symlink`    | boolean or null   | Match symlink status                               |
+| `metadata`      | list of key/value | Match file metadata (e.g., EXIF)                   |
+
+---
+
+### ⚙️ `then`: Actions
+
+Define what to do when the rule matches:
+
+| Type     | Fields                                                    |
+| -------- | --------------------------------------------------------- |
+| `move`   | `to` (path), `preserve_structure` (bool)                  |
+| `copy`   | `to` (path), `preserve_structure` (bool)                  |
+| `delete` | `trash` (bool)                                            |
+| `rename` | `to` (template string with variables like `{{filename}}`) |
+| `skip`   | *(no fields)* — skips further rules for the current file  |
 
 ---
 
@@ -169,9 +243,9 @@ tooka config --help
 
 ### Config File Locations
 
-- **Linux**: `~/.config/github.benji377/tooka/config.yaml`
-- **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
-- **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
+* **Linux**: `~/.config/github.benji377/tooka/config.yaml`
+* **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
+* **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
 
 ---
 

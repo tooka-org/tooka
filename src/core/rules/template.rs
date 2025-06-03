@@ -1,4 +1,4 @@
-use crate::core::rules::rule::{Action, Match, MetadataMatch, Rule};
+use crate::core::rules::rule::{Action, Conditions, DateRange, MetadataField, Range, Rule};
 use crate::error::TookaError;
 use serde_yaml;
 
@@ -8,27 +8,32 @@ pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
         id: "example_rule".to_string(),
         name: "Example Rule".to_string(),
         enabled: true,
-        description: None,
-        match_all: false,
-        matches: vec![Match {
-            extensions: None,
-            mime_type: None,
-            pattern: None,
-            metadata: Some(MetadataMatch {
-                exif_date: false,
-                fields: vec![],
+        description: Some("Describe what this rule does".to_string()),
+        priority: 1,
+        when: Conditions {
+            any: Some(false),
+            filename: Some(r"^.*\.jpg$".to_string()),
+            extensions: Some(vec!["jpg".to_string(), "jpeg".to_string()]),
+            path: None,
+            size_kb: Some(Range {
+                min: Some(10),
+                max: Some(5000),
             }),
-            older_than_days: None,
-            size_greater_than_kb: None,
-            created_between: None,
-            filename_regex: None,
+            mime_type: Some("image/jpeg".to_string()),
+            created_date: Some(DateRange {
+                from: None,
+                to: None,
+            }),
+            modified_date: None,
             is_symlink: None,
-            owner: None,
-        }],
-        actions: vec![Action::Move {
-            destination: "/path/to/destination".to_string(),
-            path_template: None,
-            create_dirs: false,
+            metadata: Some(vec![MetadataField {
+                key: "EXIF:DateTime".to_string(),
+                value: None,
+            }]),
+        },
+        then: vec![Action::Move {
+            to: "/path/to/destination".to_string(),
+            preserve_structure: false,
         }],
     };
 

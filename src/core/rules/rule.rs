@@ -12,46 +12,38 @@ pub struct Rule {
     pub enabled: bool,
     /// Optional description of the rule
     pub description: Option<String>,
-    /// List of matches that this rule applies to
-    pub matches: Vec<Match>,
-    /// If true, all matches must match for the rule to apply
-    pub match_all: bool,
-    /// One or more actions to perform if the rule matches
-    pub actions: Vec<Action>,
+    /// Priority of the rule, higher numbers indicate higher priority
+    pub priority: u32,
+    /// Conditions this rule applies to
+    pub when: Conditions,
+    /// Actions to perform if the rule matches
+    pub then: Vec<Action>,
 }
 
-/// Represents a match condition for files
+/// Represents the conditions under which a rule applies
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Match {
-    /// File extensions to match (e.g., ["jpg", "png"])
+pub struct Conditions {
+    /// If to match all conditions (AND) or any condition (OR), default is false (AND)
+    #[serde(default)]
+    pub any: Option<bool>,
+    /// Filename with regex pattern to match against
+    pub filename: Option<String>,
+    /// List of file extensions to match against
     pub extensions: Option<Vec<String>>,
-    /// MIME type to match (e.g., "image/jpeg")
+    /// Pattern to match against the file path (glob pattern)
+    pub path: Option<String>,
+    /// String that defines file size range to match against, eg <100, >1, 10-100, etc.
+    pub size_kb: Option<Range>,
+    /// MIme type to match against, e.g., "image/jpeg"
     pub mime_type: Option<String>,
-    /// Glob pattern to match file paths (e.g., "*.jpg")
-    pub pattern: Option<String>,
-    /// Metadata match criteria
-    pub metadata: Option<MetadataMatch>,
-    /// Matches files older than this many days
-    pub older_than_days: Option<u32>,
-    /// Matches files larger than this size in KB
-    pub size_greater_than_kb: Option<u64>,
-    /// Matches files created between the specified date range
-    pub created_between: Option<DateRange>,
-    /// Matches files named with a specific regex pattern
-    pub filename_regex: Option<String>,
-    /// Matches files which are symlinks
+    /// Date range to match against, e.g., files created within this range
+    pub created_date: Option<DateRange>,
+    /// Date range to match against, e.g., files modified within this range
+    pub modified_date: Option<DateRange>,
+    /// If the file is a symlink
     pub is_symlink: Option<bool>,
-    /// Matches files owned by a specific user
-    pub owner: Option<String>,
-}
-
-/// Represents metadata match criteria for files
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MetadataMatch {
-    /// If true, match files with EXIF date metadata
-    pub exif_date: bool,
-    /// List of metadata fields to match
-    pub fields: Vec<MetadataField>,
+    /// Additional metadata fields to match against
+    pub metadata: Option<Vec<MetadataField>>,
 }
 
 /// Represents a single metadata field to match against
@@ -65,55 +57,43 @@ pub struct MetadataField {
 
 /// Represents a date range for matching files
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Range {
+    pub min: Option<u64>,
+    pub max: Option<u64>,
+}
+
+/// Represents a date range for matching files
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DateRange {
-    pub from: String,
-    pub to: String,
+    pub from: Option<String>,
+    pub to: Option<String>,
 }
 
 /// Represents an action to perform when a rule matches
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum Action {
-    /// Move the file to a new location using a path template to create the destination path
-    /// Optionally create directories if they do not exist
+    /// Move the file to a new location and optionally preserve the directory structure
     Move {
-        destination: String,
+        to: String,
         #[serde(default)]
-        path_template: Option<PathTemplate>,
-        #[serde(default)]
-        create_dirs: bool,
+        preserve_structure: bool,
     },
-    /// Copy the file to a new location using a path template to create the destination path
-    /// Optionally create directories if they do not exist
+    /// Copy the file to a new location and optionally preserve the directory structure
     Copy {
-        destination: String,
+        to: String,
         #[serde(default)]
-        path_template: Option<PathTemplate>,
-        #[serde(default)]
-        create_dirs: bool,
+        preserve_structure: bool,
     },
     /// Rename the file using a template for the new name
-    Rename { rename_template: String },
-    /// Compress the file to a new location using a path template to create the destination path
-    /// Optionally specify the compression format and create directories if they do not exist
-    Compress {
-        destination: String,
-        #[serde(default)]
-        format: Option<String>,
-        #[serde(default)]
-        create_dirs: bool,
-    },
+    Rename { to: String },
     /// Delete the file
-    Delete,
+    Delete {
+        #[serde(default)]
+        trash: bool, // If true, move to trash instead of permanent deletion
+    },
     /// Skip the file without any action
     Skip,
-}
-
-/// Represents a path template for creating destination paths
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PathTemplate {
-    pub source: String,
-    pub format: String,
 }
 
 /// Implementation of Rule validation logic
@@ -128,20 +108,19 @@ impl Rule {
             log::error!("Rule validation failed: missing name for rule {}", self.id);
             return Err(RuleValidationError::MissingName(self.id.clone()));
         }
-        if self.actions.is_empty() {
+        if self.then.is_empty() {
             log::error!(
                 "Rule validation failed: no actions defined for rule {}",
                 self.id
             );
             return Err(RuleValidationError::NoActions(self.id.clone()));
         }
-        for (i, action) in self.actions.iter().enumerate() {
+
+        for (i, action) in self.then.iter().enumerate() {
             log::debug!("Validating action {} of rule {}", i, self.id);
             match action {
-                Action::Move { destination, .. }
-                | Action::Copy { destination, .. }
-                | Action::Compress { destination, .. } => {
-                    if destination.trim().is_empty() {
+                Action::Move { to, .. } | Action::Copy { to, .. } | Action::Rename { to } => {
+                    if to.trim().is_empty() {
                         log::error!("Rule {}: action {} is missing destination", self.id, i);
                         return Err(RuleValidationError::InvalidAction(
                             self.id.clone(),
@@ -150,18 +129,17 @@ impl Rule {
                         ));
                     }
                 }
-                Action::Rename { rename_template } => {
-                    if rename_template.trim().is_empty() {
-                        log::error!("Rule {}: action {} has empty rename_template", self.id, i);
-                        return Err(RuleValidationError::InvalidAction(
-                            self.id.clone(),
-                            i,
-                            "empty rename_template".into(),
-                        ));
+                Action::Delete { trash } => {
+                    // No additional validation needed for Delete
+                    if *trash && !self.when.is_symlink.unwrap_or(false) {
+                        log::warn!(
+                            "Rule {}: Delete action with trash enabled but not a symlink",
+                            self.id
+                        );
                     }
                 }
-                Action::Delete | Action::Skip => {
-                    // No additional validation needed for Delete and Skip
+                Action::Skip => {
+                    // No additional validation needed for Skip
                 }
             }
         }

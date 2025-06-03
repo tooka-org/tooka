@@ -1,5 +1,5 @@
 use glob::PatternError;
-use std::io;
+use std::{io, path};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -10,9 +10,6 @@ pub enum TookaError {
 
     #[error("YAML parse error: {0}")]
     Yaml(#[from] serde_yaml::Error),
-
-    #[error("Invalid template: {0}")]
-    InvalidTemplate(String),
 
     #[error("File operation error: {0}")]
     FileOperationError(String),
@@ -40,11 +37,13 @@ pub enum TookaError {
     #[error("Invalid regex pattern: {0}")]
     InvalidRegexPattern(#[from] regex::Error),
 
+    #[error("Failed prefix: {0}")]
+    FailedPrefix(#[from] path::StripPrefixError),
+
     // === Rules ===
     #[error("Rule not found: {0}")]
     RuleNotFound(String),
 
-    // === Rules ===
     #[error("Rule validation error: {0}")]
     RuleValidationError(#[from] RuleValidationError),
 
