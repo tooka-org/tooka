@@ -1,269 +1,251 @@
-use printpdf::{PdfSaveOptions, Pt, TextItem};
-use std::path::Path;
+use chrono::Local;
+use printpdf::*;
+use std::{collections::BTreeMap, fs::write, path::Path};
 
 use crate::{context, core::sorter::MatchResult};
 
-// Try not to change, might break the layout
 const PAGE_WIDTH: f32 = 210.0;
 const PAGE_HEIGHT: f32 = 297.0;
-const FONT_SIZE: f32 = 15.0;
-const LINE_HEIGHT: f32 = FONT_SIZE + 6.0;
-const LINE_PADDING: f32 = 3.0;
+const FONT_SIZE: f32 = 12.0;
+const TITLE_FONT_SIZE: f32 = 20.0;
+const MARGIN_X: f32 = 10.0;
+const MARGIN_TOP: f32 = 20.0;
 const LOGO_SCALE: f32 = 0.2;
 const LOGO_POS_X: f32 = 5.0;
 const LOGO_POS_Y: f32 = PAGE_HEIGHT - 15.0;
-const TITLE_FONT_SIZE: f32 = 20.0;
 const TITLE_POS_X: f32 = 18.0;
-const TITLE_POS_Y: f32 = LOGO_POS_Y + 2.0;
-const PAGE_NUMBER_FONT_SIZE: f32 = FONT_SIZE - 2.0;
-const DATE_FONT_SIZE: f32 = 12.0;
-const DATE_POS_X: f32 = PAGE_WIDTH - 50.0;
-const DATE_POS_Y: f32 = PAGE_HEIGHT - 10.0;
-const PAGE_NUMBER_POS_X: f32 = PAGE_WIDTH / 2.0 - 2.0;
-const PAGE_NUMBER_POS_Y: f32 = 5.0;
-// For the first page only
-const FIRST_CONTENT_POS_X: f32 = LOGO_POS_X;
-const FIRST_CONTENT_POS_Y: f32 = PAGE_HEIGHT - 35.0;
-// For the rest of the pages
-const CONTENT_POS_X: f32 = LOGO_POS_X;
-const CONTENT_POS_Y: f32 = PAGE_HEIGHT - 10.0;
+const TITLE_POS_Y: f32 = PAGE_HEIGHT - 13.0;
 
-// NOTE: P(0,0) is bottom left corner
-// NOTE: P(x,y) = P(width, height) is top right corner
+pub fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
+    let mut doc = PdfDocument::new("Tooka Report");
+    let logo_svg =
+        Svg::parse(context::LOGO_VECTOR_STR, &mut Vec::new()).map_err(anyhow::Error::msg)?;
+    let logo_id = doc.add_xobject(&logo_svg);
 
-pub fn generate_pdf(
-    path: &Path,
-    results: &[MatchResult]
-) -> Result<(), anyhow::Error> {
-    let mut doc = printpdf::PdfDocument::new("Tooka Report");
-    let mut page_ops = Vec::new();
+    // Group results by rule
+    let mut grouped: BTreeMap<String, Vec<&MatchResult>> = BTreeMap::new();
+    for result in results {
+        grouped
+            .entry(result.matched_rule_id.clone())
+            .or_default()
+            .push(result);
+    }
+
     let mut pages = Vec::new();
+    let mut page_number = 1;
 
-    let svg = printpdf::Svg::parse(context::LOGO_VECTOR_STR, &mut Vec::new())
-        .map_err(|err| format!("Failed to load logo: {err}"))
-        .unwrap();
+    // Chunk per page: ~6 match results per page
+    let mut ops = Vec::new();
+    let mut y = PAGE_HEIGHT - MARGIN_TOP - 20.0;
 
-    // >> START HEADER
-    let svg_id = doc.add_xobject(&svg);
+    ops.push(Op::SaveGraphicsState);
+    draw_header(&mut ops, &logo_id, results.len())?;
 
-    page_ops.push(printpdf::Op::SaveGraphicsState);
+    for (rule_id, entries) in grouped {
+        // Section header
+        write_text(
+            &mut ops,
+            &format!("> Rule: {}", rule_id),
+            FONT_SIZE + 2.0,
+            MARGIN_X,
+            y,
+            BuiltinFont::HelveticaBold,
+        );
+        y -= 10.0;
 
-    page_ops.push(printpdf::Op::UseXobject {
-        id: svg_id.clone(),
-        transform: printpdf::XObjectTransform {
-            translate_x: Some(printpdf::Mm(LOGO_POS_X).into_pt()),
-            translate_y: Some(printpdf::Mm(LOGO_POS_Y).into_pt()),
+        for entry in entries {
+            if (page_number == 1 && y < 50.0) || (page_number > 1 && y < 40.0) {
+                // Close current page
+                draw_footer(&mut ops, page_number);
+                ops.push(Op::RestoreGraphicsState);
+                pages.push(PdfPage::new(Mm(PAGE_WIDTH), Mm(PAGE_HEIGHT), ops));
+                page_number += 1;
+
+                // Start new page
+                ops = Vec::new();
+                y = PAGE_HEIGHT - 15.0;
+                ops.push(Op::SaveGraphicsState);
+                write_text(
+                    &mut ops,
+                    &format!("> Rule: {}", rule_id),
+                    FONT_SIZE + 2.0,
+                    MARGIN_X,
+                    y,
+                    BuiltinFont::HelveticaBold,
+                );
+                y -= 10.0;
+            }
+
+            draw_colored_box(
+                &mut ops,
+                MARGIN_X,
+                y - 20.0,
+                PAGE_WIDTH - 2.0 * MARGIN_X,
+                25.0,
+                Color::Greyscale(Greyscale {
+                    percent: 0.95,
+                    icc_profile: None,
+                }),
+            );
+            draw_match_result_block(&mut ops, entry, y + 5.0);
+            y -= 30.0;
+        }
+
+        y -= 5.0; // space after group
+    }
+
+    draw_footer(&mut ops, page_number);
+    ops.push(Op::RestoreGraphicsState);
+    pages.push(PdfPage::new(Mm(PAGE_WIDTH), Mm(PAGE_HEIGHT), ops));
+
+    let pdf_bytes = doc
+        .with_pages(pages)
+        .save(&PdfSaveOptions::default(), &mut Vec::new());
+    write(path, &pdf_bytes)?;
+    Ok(())
+}
+
+fn draw_header(
+    ops: &mut Vec<Op>,
+    logo_id: &XObjectId,
+    total_changes: usize,
+) -> Result<(), anyhow::Error> {
+    ops.push(Op::UseXobject {
+        id: logo_id.clone(),
+        transform: XObjectTransform {
+            translate_x: Some(Mm(LOGO_POS_X).into_pt()),
+            translate_y: Some(Mm(LOGO_POS_Y).into_pt()),
             scale_x: Some(LOGO_SCALE),
             scale_y: Some(LOGO_SCALE),
             ..Default::default()
         },
     });
 
-    page_ops.push(printpdf::Op::StartTextSection);
-    page_ops.push(printpdf::Op::SetTextCursor {
-        pos: printpdf::Point::new(printpdf::Mm(TITLE_POS_X), printpdf::Mm(TITLE_POS_Y)),
-    });
-    page_ops.push(printpdf::Op::SetFontSizeBuiltinFont {
-        size: Pt(TITLE_FONT_SIZE),
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::WriteTextBuiltinFont {
-        items: vec![TextItem::Text("Tooka Report".to_string())],
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-
-    // Create date string from file timestamp or set to default
-    let now = chrono::Local::now();
-    let now_str = now.format("%Y-%m-%d %H:%M:%S").to_string();
-
-    page_ops.push(printpdf::Op::SetTextCursor {
-        pos: printpdf::Point::new(printpdf::Mm(DATE_POS_X), printpdf::Mm(DATE_POS_Y)),
-    });
-    page_ops.push(printpdf::Op::SetFontSizeBuiltinFont {
-        size: Pt(DATE_FONT_SIZE),
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::WriteTextBuiltinFont {
-        items: vec![TextItem::Text(now_str)],
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-
-    page_ops.push(printpdf::Op::EndTextSection);
-
-    // Add a line below the title (Set the start and end points)
-    let line_start_point = printpdf::Point::new(
-        printpdf::Mm(LOGO_POS_X - 2.0),
-        printpdf::Mm(LOGO_POS_Y - LINE_PADDING),
+    write_text(
+        ops,
+        "Tooka Report",
+        TITLE_FONT_SIZE,
+        TITLE_POS_X,
+        TITLE_POS_Y,
+        BuiltinFont::HelveticaBold,
     );
 
-    let line_end_point = printpdf::Point::new(
-        printpdf::Mm(PAGE_WIDTH - LINE_PADDING),
-        printpdf::Mm(LOGO_POS_Y - LINE_PADDING),
+    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    write_text(
+        ops,
+        &timestamp,
+        FONT_SIZE - 1.0,
+        PAGE_WIDTH - 45.0,
+        PAGE_HEIGHT - 12.0,
+        BuiltinFont::Helvetica,
     );
 
-    page_ops.push(printpdf::Op::DrawLine {
-        line: printpdf::Line {
-            points: vec![
-                printpdf::LinePoint {
-                    p: line_start_point,
-                    bezier: true,
-                },
-                printpdf::LinePoint {
-                    p: line_end_point,
-                    bezier: true,
-                },
-            ],
-            is_closed: true,
-        },
-    });
-
-    page_ops.push(printpdf::Op::StartTextSection);
-    page_ops.push(printpdf::Op::SetTextCursor {
-        pos: printpdf::Point::new(printpdf::Mm(LOGO_POS_X), printpdf::Mm(LOGO_POS_Y - 10.0)),
-    });
-    page_ops.push(printpdf::Op::SetFontSizeBuiltinFont {
-        size: Pt(12.0),
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::WriteTextBuiltinFont {
-        items: vec![TextItem::Text(
-            format!("Total changes: {}", results.len()).to_string(),
-        )],
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::EndTextSection);
-
-    // << HEADER IS DONE
-
-    // Add content (VERY SIMILAR TO OLD CODE)
-    // weird code with magic numbers but what can you do /shrug
-    let pt_in_mm = (LINE_HEIGHT) * 0.3537778;
-    let max_lines_page = (FIRST_CONTENT_POS_Y / pt_in_mm) as usize;
-    let max_chars_per_line = (PAGE_WIDTH - 10.0) / (FONT_SIZE * 0.5 * 0.3537778);
-    log::debug!(
-        "Determined lines per page should be {max_lines_page}, and max chars per line should be {max_chars_per_line}"
+    write_text(
+        ops,
+        &format!("Total changes: {}", total_changes),
+        FONT_SIZE,
+        LOGO_POS_X,
+        PAGE_HEIGHT - 25.0,
+        BuiltinFont::Helvetica,
     );
-
-    // Start of the first page
-    page_ops.push(printpdf::Op::StartTextSection);
-    page_ops.push(printpdf::Op::SetTextCursor {
-        pos: printpdf::Point::new(
-            printpdf::Mm(FIRST_CONTENT_POS_X),
-            printpdf::Mm(FIRST_CONTENT_POS_Y),
-        ),
-    });
-    page_ops.push(printpdf::Op::SetFontSizeBuiltinFont {
-        size: Pt(FONT_SIZE),
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::SetLineHeight {
-        lh: Pt(LINE_HEIGHT),
-    });
-
-    // Counter for the current line and page
-    let mut current_line = 1;
-    let mut current_page = 1;
-
-    let mut result_lines = Vec::new();
-    // add changed files to the total lines
-    for changed_file in results {
-        // add initial 'header' for a particular changed file
-        result_lines.push(format!(
-            "> [{}] {}",
-            changed_file.file_name, changed_file.matched_rule_id
-        ));
-
-        result_lines.push(
-            format!(
-                "\t {} -> {}",
-                changed_file.current_path.display(),
-                changed_file.new_path.display()
-            ),
-        );
-    }
-
-    for line in result_lines {
-        // if we reach the maximum lines per page we create a new one
-        if current_line % max_lines_page == 0 && current_line > 0 {
-            current_page += 1;
-            // cleanup old page
-            page_ops.push(printpdf::Op::EndTextSection);
-            pages.push(printpdf::PdfPage::new(
-                printpdf::Mm(PAGE_WIDTH),
-                printpdf::Mm(PAGE_HEIGHT),
-                page_ops,
-            ));
-            page_ops = vec![
-                printpdf::Op::RestoreGraphicsState,
-                printpdf::Op::StartTextSection,
-                printpdf::Op::SetTextCursor {
-                    pos: printpdf::Point::new(
-                        printpdf::Mm(CONTENT_POS_X),
-                        printpdf::Mm(CONTENT_POS_Y),
-                    ),
-                },
-                printpdf::Op::SetFontSizeBuiltinFont {
-                    size: Pt(FONT_SIZE),
-                    font: printpdf::BuiltinFont::Helvetica,
-                },
-                printpdf::Op::SetLineHeight {
-                    lh: Pt(LINE_HEIGHT),
-                },
-            ];
-        }
-
-        // write the current line to pdf
-        let mut lines = Vec::new();
-
-        // split line into pieces that fit on the page
-        lines.extend(
-            line.chars()
-                .collect::<Vec<char>>()
-                .chunks(max_chars_per_line as usize)
-                .map(|chars| chars.iter().collect())
-                .collect::<Vec<String>>(),
-        );
-
-        for line in lines {
-            page_ops.push(printpdf::Op::WriteTextBuiltinFont {
-                items: vec![TextItem::Text(line.to_string())],
-                font: printpdf::BuiltinFont::Helvetica,
-            });
-            page_ops.push(printpdf::Op::AddLineBreak);
-
-            current_line += 1;
-        }
-    }
-
-    page_ops.push(printpdf::Op::SetTextCursor {
-        pos: printpdf::Point::new(
-            printpdf::Mm(PAGE_NUMBER_POS_X),
-            printpdf::Mm(PAGE_NUMBER_POS_Y),
-        ),
-    });
-    page_ops.push(printpdf::Op::SetFontSizeBuiltinFont {
-        size: Pt(PAGE_NUMBER_FONT_SIZE),
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::WriteTextBuiltinFont {
-        items: vec![TextItem::Text(current_page.to_string())],
-        font: printpdf::BuiltinFont::Helvetica,
-    });
-    page_ops.push(printpdf::Op::EndTextSection);
-
-    // Add the last page operations to the pages vector
-    pages.push(printpdf::PdfPage::new(
-        printpdf::Mm(PAGE_WIDTH),
-        printpdf::Mm(PAGE_HEIGHT),
-        page_ops,
-    ));
-
-    // Save the PDF to a file
-    let pdf_bytes = doc
-        .with_pages(pages)
-        .save(&PdfSaveOptions::default(), &mut Vec::new());
-    std::fs::write(path, &pdf_bytes)
-        .map_err(|err| anyhow::anyhow!("Failed to save pdf to file: {err}"))?;
 
     Ok(())
+}
+
+fn draw_footer(ops: &mut Vec<Op>, page_num: usize) {
+    write_text(
+        ops,
+        &format!("Page {}", page_num),
+        FONT_SIZE - 1.0,
+        PAGE_WIDTH / 2.0 - 5.0,
+        8.0,
+        BuiltinFont::Helvetica,
+    );
+}
+
+fn draw_match_result_block(ops: &mut Vec<Op>, r: &MatchResult, y_top: f32) {
+    let font = BuiltinFont::Helvetica;
+
+    write_text(
+        ops,
+        &format!("[{}] - {}", r.action, r.file_name),
+        FONT_SIZE + 0.5,
+        MARGIN_X + 2.0,
+        y_top - 5.0,
+        font,
+    );
+    write_text(
+        ops,
+        &format!("From: {}", r.current_path.display()),
+        FONT_SIZE,
+        MARGIN_X + 4.0,
+        y_top - 13.0,
+        font,
+    );
+    write_text(
+        ops,
+        &format!("To:   {}", r.new_path.display()),
+        FONT_SIZE,
+        MARGIN_X + 4.0,
+        y_top - 20.0,
+        font,
+    );
+}
+
+fn draw_colored_box(ops: &mut Vec<Op>, x: f32, y: f32, width: f32, height: f32, color: Color) {
+    let points = vec![
+        LinePoint {
+            p: Point::new(Mm(x), Mm(y)),
+            bezier: false,
+        },
+        LinePoint {
+            p: Point::new(Mm(x + width), Mm(y)),
+            bezier: false,
+        },
+        LinePoint {
+            p: Point::new(Mm(x + width), Mm(y + height)),
+            bezier: false,
+        },
+        LinePoint {
+            p: Point::new(Mm(x), Mm(y + height)),
+            bezier: false,
+        },
+        LinePoint {
+            p: Point::new(Mm(x), Mm(y)),
+            bezier: false,
+        }, // Closing the path
+    ];
+
+    let ring = PolygonRing { points };
+
+    let polygon = Polygon {
+        rings: vec![ring],
+        mode: PaintMode::Fill,
+        winding_order: WindingOrder::EvenOdd,
+    };
+
+    ops.push(Op::SetFillColor { col: color });
+    ops.push(Op::DrawPolygon { polygon });
+    ops.push(Op::SetFillColor {
+        col: Color::Greyscale(Greyscale {
+            percent: 0.0,
+            icc_profile: None,
+        }),
+    }); // Reset fill color
+}
+
+fn write_text(ops: &mut Vec<Op>, text: &str, size: f32, x: f32, y: f32, font: BuiltinFont) {
+    ops.push(Op::StartTextSection);
+    ops.push(Op::SetTextCursor {
+        pos: Point::new(Mm(x), Mm(y)),
+    });
+    ops.push(Op::SetFontSizeBuiltinFont {
+        size: Pt(size),
+        font,
+    });
+    ops.push(Op::WriteTextBuiltinFont {
+        items: vec![TextItem::Text(text.to_string())],
+        font,
+    });
+    ops.push(Op::EndTextSection);
 }

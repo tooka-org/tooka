@@ -8,7 +8,7 @@ use std::{
 /// Result of a file operation, containing the new path and renamed file name
 pub struct FileOperationResult {
     pub new_path: PathBuf,
-    pub renamed: String,
+    pub action: String,
 }
 
 /// Executes a file operation based on the provided action and file path.
@@ -34,7 +34,7 @@ pub fn execute_action(
             log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
                 new_path: file_path.to_path_buf(),
-                renamed: "[skipped]".into(),
+                action: "skip".into(),
             })
         }
     }
@@ -74,11 +74,7 @@ fn handle_move(
 
         Ok(FileOperationResult {
             new_path,
-            renamed: file_path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .into_owned(),
+            action: "move".into(),
         })
     } else {
         Err(TookaError::FileOperationError(
@@ -120,11 +116,7 @@ fn handle_copy(
 
         Ok(FileOperationResult {
             new_path,
-            renamed: file_path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .into_owned(),
+            action: "copy".into(),
         })
     } else {
         Err(TookaError::FileOperationError(
@@ -160,7 +152,7 @@ fn handle_rename(
 
         Ok(FileOperationResult {
             new_path,
-            renamed: new_name,
+            action: "rename".into(),
         })
     } else {
         Err(TookaError::FileOperationError(
@@ -193,7 +185,7 @@ fn handle_delete(
 
         Ok(FileOperationResult {
             new_path: PathBuf::new(),
-            renamed: "[deleted]".into(),
+            action: "delete".into(),
         })
     } else {
         Err(TookaError::FileOperationError(
