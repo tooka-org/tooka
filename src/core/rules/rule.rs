@@ -1,8 +1,9 @@
 use crate::error::RuleValidationError;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::SerializeMap};
 
 /// Represents a rule for file operations in Tooka
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Rule {
     /// Unique identifier for the rule
     pub id: String,
@@ -22,6 +23,7 @@ pub struct Rule {
 
 /// Represents the conditions under which a rule applies
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Conditions {
     /// If to match all conditions (AND) or any condition (OR), default is false (AND)
     #[serde(default)]
@@ -29,6 +31,7 @@ pub struct Conditions {
     /// Filename with regex pattern to match against
     pub filename: Option<String>,
     /// List of file extensions to match against
+    #[serde(default)]
     pub extensions: Option<Vec<String>>,
     /// Pattern to match against the file path (glob pattern)
     pub path: Option<String>,
@@ -43,11 +46,13 @@ pub struct Conditions {
     /// If the file is a symlink
     pub is_symlink: Option<bool>,
     /// Additional metadata fields to match against
+    #[serde(default)]
     pub metadata: Option<Vec<MetadataField>>,
 }
 
 /// Represents a single metadata field to match against
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct MetadataField {
     /// Metadata field key (e.g., "EXIF:DateTime")
     pub key: String,
@@ -57,6 +62,7 @@ pub struct MetadataField {
 
 /// Represents a date range for matching files
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Range {
     pub min: Option<u64>,
     pub max: Option<u64>,
@@ -64,50 +70,84 @@ pub struct Range {
 
 /// Represents a date range for matching files
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct DateRange {
     pub from: Option<String>,
     pub to: Option<String>,
 }
 
 /// Represents an action to perform when a rule matches
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(tag = "action", rename_all = "lowercase")]
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum Action {
-    /// Move the file to a new location and optionally preserve the directory structure
-    Move {
-        to: String,
-        #[serde(default)]
-        preserve_structure: bool,
-    },
-    /// Copy the file to a new location and optionally preserve the directory structure
-    Copy {
-        to: String,
-        #[serde(default)]
-        preserve_structure: bool,
-    },
-    /// Rename the file using a template for the new name
-    Rename { to: String },
-    /// Delete the file
-    Delete {
-        #[serde(default)]
-        trash: bool, // If true, move to trash instead of permanent deletion
-    },
-    /// Skip the file without any action
-    Skip,
+    Move(MoveAction),
+    Copy(CopyAction),
+    Rename(RenameAction),
+    Delete(DeleteAction),
+    Skip, // No payload
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct MoveAction {
+    pub to: String,
+    #[serde(default)]
+    pub preserve_structure: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct CopyAction {
+    pub to: String,
+    #[serde(default)]
+    pub preserve_structure: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct RenameAction {
+    pub to: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct DeleteAction {
+    #[serde(default)]
+    pub trash: bool,
+}
+
+impl Serialize for Action {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use Action::*;
+        let mut map = serializer.serialize_map(Some(1))?;
+        match self {
+            Move(data) => map.serialize_entry("move", data)?,
+            Copy(data) => map.serialize_entry("copy", data)?,
+            Rename(data) => map.serialize_entry("rename", data)?,
+            Delete(data) => map.serialize_entry("delete", data)?,
+            Skip => map.serialize_entry("skip", &())?, // serialize as `skip: null`
+        }
+        map.end()
+    }
 }
 
 /// Implementation of Rule validation logic
 impl Rule {
-    /// Validates the rule to ensure it has all required fields and actions
+    /// Validates the rule to ensure it has all required fields and valid structure.
     pub fn validate(&self) -> Result<(), RuleValidationError> {
-        if self.id.is_empty() {
+        if self.id.trim().is_empty() {
             log::error!("Rule validation failed: missing id");
             return Err(RuleValidationError::MissingId);
         }
-        if self.name.is_empty() {
+
+        if self.name.trim().is_empty() {
             log::error!("Rule validation failed: missing name for rule {}", self.id);
             return Err(RuleValidationError::MissingName(self.id.clone()));
         }
+
         if self.then.is_empty() {
             log::error!(
                 "Rule validation failed: no actions defined for rule {}",
@@ -116,33 +156,99 @@ impl Rule {
             return Err(RuleValidationError::NoActions(self.id.clone()));
         }
 
-        for (i, action) in self.then.iter().enumerate() {
-            log::debug!("Validating action {} of rule {}", i, self.id);
-            match action {
-                Action::Move { to, .. } | Action::Copy { to, .. } | Action::Rename { to } => {
-                    if to.trim().is_empty() {
-                        log::error!("Rule {}: action {} is missing destination", self.id, i);
-                        return Err(RuleValidationError::InvalidAction(
+        // Check for duplicate metadata keys
+        if let Some(metadata) = &self.when.metadata {
+            let mut keys = std::collections::HashSet::new();
+            for field in metadata {
+                if !keys.insert(&field.key) {
+                    log::error!("Rule {}: duplicate metadata key '{}'", self.id, field.key);
+                    return Err(RuleValidationError::InvalidCondition(
+                        self.id.clone(),
+                        format!("Duplicate metadata key '{}'", field.key),
+                    ));
+                }
+            }
+        }
+
+        // Check size range consistency
+        if let Some(size) = &self.when.size_kb {
+            if let (Some(min), Some(max)) = (size.min, size.max) {
+                if min > max {
+                    return Err(RuleValidationError::InvalidCondition(
+                        self.id.clone(),
+                        "Invalid size_kb range: min > max".into(),
+                    ));
+                }
+            }
+        }
+
+        // Check created and modified date formats (optional)
+        for (label, date_range) in [
+            ("created_date", &self.when.created_date),
+            ("modified_date", &self.when.modified_date),
+        ] {
+            if let Some(range) = date_range {
+                if let Some(from) = &range.from {
+                    if let Err(e) = chrono::DateTime::parse_from_rfc3339(from) {
+                        return Err(RuleValidationError::InvalidCondition(
                             self.id.clone(),
-                            i,
-                            "missing destination".into(),
+                            format!("Invalid {} 'from' date: {}", label, e),
                         ));
                     }
                 }
-                Action::Delete { trash } => {
-                    // No additional validation needed for Delete
-                    if *trash && !self.when.is_symlink.unwrap_or(false) {
+                if let Some(to) = &range.to {
+                    if let Err(e) = chrono::DateTime::parse_from_rfc3339(to) {
+                        return Err(RuleValidationError::InvalidCondition(
+                            self.id.clone(),
+                            format!("Invalid {} 'to' date: {}", label, e),
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Action validation
+        for (i, action) in self.then.iter().enumerate() {
+            match action {
+                Action::Move(inner) => {
+                    if inner.to.trim().is_empty() {
+                        return Err(RuleValidationError::InvalidAction(
+                            self.id.clone(),
+                            i,
+                            "Missing destination path".into(),
+                        ));
+                    }
+                }
+                Action::Copy(inner) => {
+                    if inner.to.trim().is_empty() {
+                        return Err(RuleValidationError::InvalidAction(
+                            self.id.clone(),
+                            i,
+                            "Missing destination path".into(),
+                        ));
+                    }
+                }
+                Action::Rename(inner) => {
+                    if inner.to.trim().is_empty() {
+                        return Err(RuleValidationError::InvalidAction(
+                            self.id.clone(),
+                            i,
+                            "Missing rename target path".into(),
+                        ));
+                    }
+                }
+                Action::Delete(inner) => {
+                    if inner.trash && !self.when.is_symlink.unwrap_or(false) {
                         log::warn!(
-                            "Rule {}: Delete action with trash enabled but not a symlink",
+                            "Rule {}: Delete action with trash enabled but file is not marked as symlink",
                             self.id
                         );
                     }
                 }
-                Action::Skip => {
-                    // No additional validation needed for Skip
-                }
+                Action::Skip => {}
             }
         }
+
         Ok(())
     }
 }

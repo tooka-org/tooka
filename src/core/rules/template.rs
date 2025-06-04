@@ -1,4 +1,6 @@
-use crate::core::rules::rule::{Action, Conditions, DateRange, MetadataField, Range, Rule};
+use crate::core::rules::rule::{
+    Action, Conditions, DateRange, MetadataField, MoveAction, Range, Rule,
+};
 use crate::error::TookaError;
 use serde_yaml;
 
@@ -31,10 +33,10 @@ pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
                 value: None,
             }]),
         },
-        then: vec![Action::Move {
+        then: vec![Action::Move(MoveAction {
             to: "/path/to/destination".to_string(),
             preserve_structure: false,
-        }],
+        })],
     };
 
     Ok(serde_yaml::to_string(&rule)?)

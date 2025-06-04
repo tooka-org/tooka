@@ -1,4 +1,4 @@
-use crate::core::rules::rule::Action;
+use crate::core::rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction};
 use crate::error::TookaError;
 use std::{
     fs,
@@ -26,10 +26,10 @@ pub fn execute_action(
     );
 
     match action {
-        Action::Move { .. } => handle_move(file_path, action, dry_run),
-        Action::Copy { .. } => handle_copy(file_path, action, dry_run),
-        Action::Rename { .. } => handle_rename(file_path, action, dry_run),
-        Action::Delete { .. } => handle_delete(file_path, action, dry_run),
+        Action::Move(inner) => handle_move(file_path, inner, dry_run),
+        Action::Copy(inner) => handle_copy(file_path, inner, dry_run),
+        Action::Rename(inner) => handle_rename(file_path, inner, dry_run),
+        Action::Delete(inner) => handle_delete(file_path, inner, dry_run),
         Action::Skip => {
             log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
@@ -42,154 +42,122 @@ pub fn execute_action(
 
 fn handle_move(
     file_path: &Path,
-    action: &Action,
+    action: &MoveAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
     // The Action has two attributes:
     // - to: A destination directory absolute or relative to the current working directory
     // - preserve_structure: If true, the directory structure is preserved
     // If preserve_structure is true, the file is moved to the destination directory with its original structure relative to the current working directory.
-    if let Action::Move {
-        to,
-        preserve_structure,
-    } = action
-    {
-        let destination = PathBuf::from(to);
-        let new_path = if *preserve_structure {
-            // Preserve the directory structure
-            let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
-            destination.join(relative_path)
-        } else {
-            // Move to the destination directory directly
-            destination.join(file_path.file_name().unwrap_or_default())
-        };
-
-        if dry_run {
-            log::debug!("Dry run: would move file to: {}", new_path.display());
-        } else {
-            log::info!("Moving file to: {}", new_path.display());
-            fs::create_dir_all(new_path.parent().unwrap())?;
-            fs::rename(file_path, &new_path)?;
-        }
-
-        Ok(FileOperationResult {
-            new_path,
-            action: "move".into(),
-        })
+    let destination = PathBuf::from(&action.to);
+    let new_path = if action.preserve_structure {
+        // Preserve the directory structure
+        let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
+        destination.join(relative_path)
     } else {
-        Err(TookaError::FileOperationError(
-            "Expected Move action".into(),
-        ))
+        // Move to the destination directory directly
+        destination.join(file_path.file_name().unwrap_or_default())
+    };
+
+    if dry_run {
+        log::debug!("Dry run: would move file to: {}", new_path.display());
+    } else {
+        log::info!("Moving file to: {}", new_path.display());
+        fs::create_dir_all(new_path.parent().unwrap())?;
+        fs::rename(file_path, &new_path)?;
     }
+
+    Ok(FileOperationResult {
+        new_path,
+        action: "move".into(),
+    })
 }
 
 fn handle_copy(
     file_path: &Path,
-    action: &Action,
+    action: &CopyAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
     // The Action has two attributes:
     // - to: A destination directory absolute or relative to the current working directory
     // - preserve_structure: If true, the directory structure is preserved
-    if let Action::Copy {
-        to,
-        preserve_structure,
-    } = action
-    {
-        let destination = PathBuf::from(to);
-        let new_path = if *preserve_structure {
-            // Preserve the directory structure
-            let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
-            destination.join(relative_path)
-        } else {
-            // Copy to the destination directory directly
-            destination.join(file_path.file_name().unwrap_or_default())
-        };
-
-        if dry_run {
-            log::debug!("Dry run: would copy file to: {}", new_path.display());
-        } else {
-            log::info!("Copying file to: {}", new_path.display());
-            fs::create_dir_all(new_path.parent().unwrap())?;
-            fs::copy(file_path, &new_path)?;
-        }
-
-        Ok(FileOperationResult {
-            new_path,
-            action: "copy".into(),
-        })
+    let destination = PathBuf::from(&action.to);
+    let new_path = if action.preserve_structure {
+        // Preserve the directory structure
+        let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
+        destination.join(relative_path)
     } else {
-        Err(TookaError::FileOperationError(
-            "Expected Copy action".into(),
-        ))
+        // Copy to the destination directory directly
+        destination.join(file_path.file_name().unwrap_or_default())
+    };
+
+    if dry_run {
+        log::debug!("Dry run: would copy file to: {}", new_path.display());
+    } else {
+        log::info!("Copying file to: {}", new_path.display());
+        fs::create_dir_all(new_path.parent().unwrap())?;
+        fs::copy(file_path, &new_path)?;
     }
+
+    Ok(FileOperationResult {
+        new_path,
+        action: "copy".into(),
+    })
 }
 
 fn handle_rename(
     file_path: &Path,
-    action: &Action,
+    action: &RenameAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
     // The Action has one attribute:
     // - to: The new name for the file, which can be a string or a template
-    if let Action::Rename { to } = action {
-        let new_name = to.replace(
-            "{filename}",
-            file_path
-                .file_name()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or(""),
-        );
-        let new_path = file_path.with_file_name(&new_name);
+    let new_name = &action.to.replace(
+        "{filename}",
+        file_path
+            .file_name()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or(""),
+    );
+    let new_path = file_path.with_file_name(new_name);
 
-        if dry_run {
-            log::debug!("Dry run: would rename file to: {}", new_path.display());
-        } else {
-            log::info!("Renaming file to: {}", new_path.display());
-            fs::rename(file_path, &new_path)?;
-        }
-
-        Ok(FileOperationResult {
-            new_path,
-            action: "rename".into(),
-        })
+    if dry_run {
+        log::debug!("Dry run: would rename file to: {}", new_path.display());
     } else {
-        Err(TookaError::FileOperationError(
-            "Expected Rename action".into(),
-        ))
+        log::info!("Renaming file to: {}", new_path.display());
+        fs::rename(file_path, &new_path)?;
     }
+
+    Ok(FileOperationResult {
+        new_path,
+        action: "rename".into(),
+    })
 }
 
 /// Handles the delete action for a file, either performing the deletion or simulating it in dry run mode.
 fn handle_delete(
     file_path: &Path,
-    action: &Action,
+    action: &DeleteAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
     // The Action has one attribute:
     // - trash: If true, the file is moved to the trash instead of being deleted permanently
-    if let Action::Delete { trash } = action {
-        if dry_run {
-            log::debug!("Dry run: would delete file: {}", file_path.display());
-        } else if *trash {
-            log::info!("Moving file to trash: {}", file_path.display());
-            // Implement trash logic here, e.g., using a crate like `trash`
-            trash::delete(file_path).map_err(|e| {
-                TookaError::FileOperationError(format!("Failed to move file to trash: {}", e))
-            })?;
-        } else {
-            log::info!("Deleting file permanently: {}", file_path.display());
-            fs::remove_file(file_path)?;
-        }
-
-        Ok(FileOperationResult {
-            new_path: PathBuf::new(),
-            action: "delete".into(),
-        })
+    if dry_run {
+        log::debug!("Dry run: would delete file: {}", file_path.display());
+    } else if action.trash {
+        log::info!("Moving file to trash: {}", file_path.display());
+        // Implement trash logic here, e.g., using a crate like `trash`
+        trash::delete(file_path).map_err(|e| {
+            TookaError::FileOperationError(format!("Failed to move file to trash: {}", e))
+        })?;
     } else {
-        Err(TookaError::FileOperationError(
-            "Expected Delete action".into(),
-        ))
+        log::info!("Deleting file permanently: {}", file_path.display());
+        fs::remove_file(file_path)?;
     }
+
+    Ok(FileOperationResult {
+        new_path: PathBuf::new(),
+        action: "delete".into(),
+    })
 }

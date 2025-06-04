@@ -64,4 +64,7 @@ pub enum RuleValidationError {
 
     #[error("rule {0}: action {1} invalid: {2}")]
     InvalidAction(String, usize, String),
+
+    #[error("rule {0}: invalid conditions: {1}")]
+    InvalidCondition(String, String),
 }
