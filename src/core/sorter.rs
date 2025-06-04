@@ -79,18 +79,24 @@ pub fn sort_files(
 
     log::debug!("Loaded {} rules", rf.rules.len());
 
-    // Count all files in the source directory
-    let entries: Vec<PathBuf> = source_path
-        .read_dir()?
-        .filter_map(|res| match res {
-            Ok(entry) => entry
-                .file_type()
-                .ok()
-                .filter(|ft| ft.is_file())
-                .map(|_| entry.path()),
-            Err(_) => None,
-        })
-        .collect();
+    // Recursively collect all files in the source directory and its subdirectories
+    let mut entries = Vec::new();
+    let mut dirs = vec![source_path.clone()];
+
+    while let Some(dir) = dirs.pop() {
+        for entry in std::fs::read_dir(&dir)? {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+            let path = entry.path();
+            match entry.file_type() {
+                Ok(ft) if ft.is_file() => entries.push(path),
+                Ok(ft) if ft.is_dir() => dirs.push(path),
+                _ => {}
+            }
+        }
+    }
 
     log::debug!("Found {} files in source directory.", entries.len());
 

@@ -48,14 +48,16 @@ pub fn run(args: SortArgs) -> Result<()> {
     println!("Sorting completed.");
     log::info!("Sorting completed, found {} matches", results.len());
 
-    for match_result in &results {
-        println!(
-            "File: {}, Matched: {}, Current Path: {}, New Path: {}",
-            match_result.file_name,
-            match_result.matched_rule_id,
-            match_result.current_path.display(),
-            match_result.new_path.display()
-        );
+    if args.report.is_none() {
+        for match_result in &results {
+            println!(
+                "File: {}, Matched: {}, Current Path: {}, New Path: {}",
+                match_result.file_name,
+                match_result.matched_rule_id,
+                match_result.current_path.display(),
+                match_result.new_path.display()
+            );
+        }
     }
 
     // Handle report generation

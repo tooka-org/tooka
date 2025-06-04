@@ -1,5 +1,5 @@
 use crate::error::RuleValidationError;
-use serde::{Deserialize, Serialize, ser::SerializeMap};
+use serde::{Deserialize, Serialize};
 
 /// Represents a rule for file operations in Tooka
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -77,8 +77,8 @@ pub struct DateRange {
 }
 
 /// Represents an action to perform when a rule matches
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "action", rename_all = "lowercase")]
 pub enum Action {
     Move(MoveAction),
     Copy(CopyAction),
@@ -114,24 +114,6 @@ pub struct RenameAction {
 pub struct DeleteAction {
     #[serde(default)]
     pub trash: bool,
-}
-
-impl Serialize for Action {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use Action::*;
-        let mut map = serializer.serialize_map(Some(1))?;
-        match self {
-            Move(data) => map.serialize_entry("move", data)?,
-            Copy(data) => map.serialize_entry("copy", data)?,
-            Rename(data) => map.serialize_entry("rename", data)?,
-            Delete(data) => map.serialize_entry("delete", data)?,
-            Skip => map.serialize_entry("skip", &())?, // serialize as `skip: null`
-        }
-        map.end()
-    }
 }
 
 /// Implementation of Rule validation logic
