@@ -22,13 +22,16 @@ pub fn generate_report(
         "csv" => {
             let path = output_dir.join("tooka_report.csv");
             let mut wtr = csv::Writer::from_path(&path)?;
+            // Write header
+            wtr.write_record(&["file_name", "action", "matched_rule_id", "current_path", "new_path"])?;
             for r in results {
-                wtr.serialize((
-                    &r.file_name,
-                    &r.matched_rule_id,
-                    r.current_path.display().to_string(),
-                    r.new_path.display().to_string(),
-                ))?;
+            wtr.serialize((
+                &r.file_name,
+                &r.action,
+                &r.matched_rule_id,
+                r.current_path.display().to_string(),
+                r.new_path.display().to_string(),
+            ))?;
             }
             wtr.flush()?;
             println!("✅ CSV report written to {}", path.display());
