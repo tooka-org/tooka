@@ -113,7 +113,7 @@ pub fn sort_files(
     let results: Result<Vec<_>, TookaError> = entries
         .par_iter()
         .map(|file_path| {
-            let res = sort_file(file_path, &rf, dry_run);
+            let res = sort_file(file_path, &rf, dry_run, &source_path);
             progress_bar.inc(1); // update bar from each thread
             res
         })
@@ -135,6 +135,7 @@ fn sort_file(
     file_path: &Path,
     rules_file: &RulesFile,
     dry_run: bool,
+    source_path: &Path,
 ) -> Result<Vec<MatchResult>, TookaError> {
     log::debug!("Processing file: '{}'", file_path.display());
 
@@ -181,9 +182,10 @@ fn sort_file(
     let mut results = Vec::new();
 
     for action in &rule.then {
-        let op_result = file_ops::execute_action(file_path, action, dry_run).map_err(|e| {
-            TookaError::FileOperationError(format!("Failed to execute action: {e}"))
-        })?;
+        let op_result =
+            file_ops::execute_action(file_path, action, dry_run, source_path).map_err(|e| {
+                TookaError::FileOperationError(format!("Failed to execute action: {e}"))
+            })?;
 
         let log_prefix = if dry_run { "DRY" } else { "" };
         log_file_operation(&format!(

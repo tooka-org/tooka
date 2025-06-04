@@ -17,6 +17,7 @@ pub fn execute_action(
     file_path: &Path,
     action: &Action,
     dry_run: bool,
+    source_path: &Path,
 ) -> Result<FileOperationResult, TookaError> {
     log::info!(
         "Executing action '{:?}' on file: {} (dry_run: {})",
@@ -26,8 +27,8 @@ pub fn execute_action(
     );
 
     match action {
-        Action::Move(inner) => handle_move(file_path, inner, dry_run),
-        Action::Copy(inner) => handle_copy(file_path, inner, dry_run),
+        Action::Move(inner) => handle_move(file_path, inner, dry_run, source_path),
+        Action::Copy(inner) => handle_copy(file_path, inner, dry_run, source_path),
         Action::Rename(inner) => handle_rename(file_path, inner, dry_run),
         Action::Delete(inner) => handle_delete(file_path, inner, dry_run),
         Action::Skip => {
@@ -44,20 +45,9 @@ fn handle_move(
     file_path: &Path,
     action: &MoveAction,
     dry_run: bool,
+    source_path: &Path,
 ) -> Result<FileOperationResult, TookaError> {
-    // The Action has two attributes:
-    // - to: A destination directory absolute or relative to the current working directory
-    // - preserve_structure: If true, the directory structure is preserved
-    // If preserve_structure is true, the file is moved to the destination directory with its original structure relative to the current working directory.
-    let destination = PathBuf::from(&action.to);
-    let new_path = if action.preserve_structure {
-        // Preserve the directory structure
-        let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
-        destination.join(relative_path)
-    } else {
-        // Move to the destination directory directly
-        destination.join(file_path.file_name().unwrap_or_default())
-    };
+    let new_path = compute_destination(file_path, action, source_path);
 
     if dry_run {
         log::debug!("Dry run: would move file to: {}", new_path.display());
@@ -77,19 +67,12 @@ fn handle_copy(
     file_path: &Path,
     action: &CopyAction,
     dry_run: bool,
+    source_path: &Path,
 ) -> Result<FileOperationResult, TookaError> {
     // The Action has two attributes:
     // - to: A destination directory absolute or relative to the current working directory
     // - preserve_structure: If true, the directory structure is preserved
-    let destination = PathBuf::from(&action.to);
-    let new_path = if action.preserve_structure {
-        // Preserve the directory structure
-        let relative_path = file_path.strip_prefix(std::env::current_dir()?)?;
-        destination.join(relative_path)
-    } else {
-        // Copy to the destination directory directly
-        destination.join(file_path.file_name().unwrap_or_default())
-    };
+    let new_path = compute_destination(file_path, action, source_path);
 
     if dry_run {
         log::debug!("Dry run: would copy file to: {}", new_path.display());
@@ -160,4 +143,54 @@ fn handle_delete(
         new_path: PathBuf::new(),
         action: "delete".into(),
     })
+}
+
+fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> PathBuf
+where
+    A: HasToAndPreserveStructure,
+{
+    let to = action.to();
+    let preserve_structure = action.preserve_structure();
+
+    let destination = if to.starts_with('.') {
+        PathBuf::from(to)
+    } else if to.starts_with('~') {
+        let home_dir = std::env::home_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
+        let stripped = to.trim_start_matches('~').trim_start_matches('/');
+        home_dir.join(stripped)
+    } else {
+        PathBuf::from("/").join(to.trim_start_matches('/'))
+    };
+
+    if preserve_structure {
+        // Preserve the directory structure using the source_path as the base
+        let relative_path = file_path.strip_prefix(source_path).unwrap_or(file_path);
+        destination.join(relative_path)
+    } else {
+        // Move to the destination directory directly
+        destination.join(file_path.file_name().unwrap_or_default())
+    }
+}
+
+pub trait HasToAndPreserveStructure {
+    fn to(&self) -> &str;
+    fn preserve_structure(&self) -> bool;
+}
+
+impl HasToAndPreserveStructure for MoveAction {
+    fn to(&self) -> &str {
+        &self.to
+    }
+    fn preserve_structure(&self) -> bool {
+        self.preserve_structure
+    }
+}
+
+impl HasToAndPreserveStructure for CopyAction {
+    fn to(&self) -> &str {
+        &self.to
+    }
+    fn preserve_structure(&self) -> bool {
+        self.preserve_structure
+    }
 }

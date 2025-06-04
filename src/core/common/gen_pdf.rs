@@ -15,6 +15,7 @@ const LOGO_POS_X: f32 = 5.0;
 const LOGO_POS_Y: f32 = PAGE_HEIGHT - 15.0;
 const TITLE_POS_X: f32 = 18.0;
 const TITLE_POS_Y: f32 = PAGE_HEIGHT - 13.0;
+const MAX_PATH_LENGTH: f32 = PAGE_WIDTH - 2.0 * MARGIN_X - 105.0;
 
 pub fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
     let mut doc = PdfDocument::new("Tooka Report");
@@ -165,6 +166,8 @@ fn draw_footer(ops: &mut Vec<Op>, page_num: usize) {
 
 fn draw_match_result_block(ops: &mut Vec<Op>, r: &MatchResult, y_top: f32) {
     let font = BuiltinFont::Helvetica;
+    let from_path = truncate_path(&r.current_path, MAX_PATH_LENGTH);
+    let to_path = truncate_path(&r.new_path, MAX_PATH_LENGTH);
 
     write_text(
         ops,
@@ -176,7 +179,7 @@ fn draw_match_result_block(ops: &mut Vec<Op>, r: &MatchResult, y_top: f32) {
     );
     write_text(
         ops,
-        &format!("From: {}", r.current_path.display()),
+        &format!("From: {}", from_path),
         FONT_SIZE,
         MARGIN_X + 4.0,
         y_top - 13.0,
@@ -184,7 +187,7 @@ fn draw_match_result_block(ops: &mut Vec<Op>, r: &MatchResult, y_top: f32) {
     );
     write_text(
         ops,
-        &format!("To:   {}", r.new_path.display()),
+        &format!("To:   {}", to_path),
         FONT_SIZE,
         MARGIN_X + 4.0,
         y_top - 20.0,
@@ -248,4 +251,33 @@ fn write_text(ops: &mut Vec<Op>, text: &str, size: f32, x: f32, y: f32, font: Bu
         font,
     });
     ops.push(Op::EndTextSection);
+}
+
+fn truncate_path(path: &Path, max_len: f32) -> String {
+    let full = path.display().to_string();
+    if full.len() <= max_len as usize {
+        return full;
+    }
+
+    // Try to get parent and filename
+    if let (Some(parent), Some(file_name)) = (path.parent(), path.file_name()) {
+        let parent_str = parent
+            .file_name()
+            .or(Some(parent.as_os_str()))
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| parent.display().to_string());
+
+        return format!(
+            "[truncated].../{}/{}",
+            parent_str,
+            file_name.to_string_lossy()
+        );
+    }
+
+    // Fallback: just truncate the string with ellipsis
+    if full.len() > max_len as usize {
+        format!("{}...", &full[..max_len as usize - 3])
+    } else {
+        full
+    }
 }
