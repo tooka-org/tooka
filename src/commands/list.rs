@@ -20,7 +20,7 @@ pub fn run(_args: ListArgs) -> Result<()> {
 
     log::info!("Found {} rules.", rules_list.len());
 
-    println!("{:<20} {:<30} Enabled", "Rule ID", "Name");
+    println!("{:<30} | {:<30} | Enabled", "Rule ID", "Name");
 
     for rule in &rules_list {
         log::debug!(
@@ -29,7 +29,7 @@ pub fn run(_args: ListArgs) -> Result<()> {
             rule.name,
             rule.enabled
         );
-        println!("{:<20} {:<30} {}", rule.id, rule.name, rule.enabled);
+        println!("{:<30} | {:<30} | {}", rule.id, rule.name, rule.enabled);
     }
 
     Ok(())

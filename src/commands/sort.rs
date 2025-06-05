@@ -50,13 +50,13 @@ pub fn run(args: SortArgs) -> Result<()> {
 
     if args.report.is_none() {
         println!(
-            "{:<30} {:<20} {:<40} New Path",
+            "{:<40} | {:<30} | {:<40} | New Path",
             "File", "Matched Rule", "Current Path"
         );
 
         for result in &results {
             println!(
-                "{:<30} {:<20} {:<40} {}",
+                "{:<40} | {:<30} | {:<40} | {}",
                 result.file_name,
                 result.matched_rule_id,
                 result.current_path.display(),
