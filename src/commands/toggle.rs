@@ -6,6 +6,7 @@ use clap::Args;
 #[command(about = "Toggles the state of a rule by its ID")]
 pub struct ToggleArgs {
     /// ID of the rule to toggle
+    #[arg(value_name = "ID")]
     pub rule_id: String,
 }
 

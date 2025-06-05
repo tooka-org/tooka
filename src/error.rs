@@ -8,6 +8,12 @@ pub enum TookaError {
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),
 
+    #[error("JSON parse error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("CSV parse error: {0}")]
+    Csv(#[from] csv::Error),
+
     #[error("YAML parse error: {0}")]
     Yaml(#[from] serde_yaml::Error),
 
@@ -49,6 +55,13 @@ pub enum TookaError {
 
     #[error("Invalid rule: {0}")]
     InvalidRule(String),
+
+    // === Others ===
+    #[error("Failed to generate PDF: {0}")]
+    PdfGenerationError(String),
+
+    #[error("Other: {0}")]
+    Other(String),
 }
 
 #[derive(Debug, Error)]

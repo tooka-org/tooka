@@ -49,24 +49,34 @@ pub fn run(args: SortArgs) -> Result<()> {
     log::info!("Sorting completed, found {} matches", results.len());
 
     if args.report.is_none() {
-        for match_result in &results {
+        println!(
+            "{:<30} {:<20} {:<40} New Path",
+            "File", "Matched Rule", "Current Path"
+        );
+
+        for result in &results {
             println!(
-                "File: {}, Matched: {}, Current Path: {}, New Path: {}",
-                match_result.file_name,
-                match_result.matched_rule_id,
-                match_result.current_path.display(),
-                match_result.new_path.display()
+                "{:<30} {:<20} {:<40} {}",
+                result.file_name,
+                result.matched_rule_id,
+                result.current_path.display(),
+                result.new_path.display()
             );
         }
     }
 
     // Handle report generation
     if let Some(report_type) = &args.report {
+        log::info!("Generating report of type: {}", report_type);
         let output_dir = args.output.as_ref().map(PathBuf::from).unwrap_or_else(|| {
             std::env::current_dir().expect("Cannot get current working directory")
         });
 
         report::generate_report(report_type, &output_dir, &results)?;
+        println!(
+            "Report generated successfully in {:?}",
+            output_dir.display()
+        );
     }
 
     Ok(())

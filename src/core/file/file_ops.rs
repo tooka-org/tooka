@@ -1,4 +1,5 @@
 use crate::core::rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction};
+use crate::core::utils::rename_pattern::{evaluate_template, extract_metadata};
 use crate::error::TookaError;
 use std::{
     fs,
@@ -47,6 +48,12 @@ fn handle_move(
     dry_run: bool,
     source_path: &Path,
 ) -> Result<FileOperationResult, TookaError> {
+    log::debug!(
+        "Handling move action: {:?} for file: {}",
+        action,
+        file_path.display()
+    );
+
     let new_path = compute_destination(file_path, action, source_path);
 
     if dry_run {
@@ -69,9 +76,12 @@ fn handle_copy(
     dry_run: bool,
     source_path: &Path,
 ) -> Result<FileOperationResult, TookaError> {
-    // The Action has two attributes:
-    // - to: A destination directory absolute or relative to the current working directory
-    // - preserve_structure: If true, the directory structure is preserved
+    log::debug!(
+        "Handling copy action: {:?} for file: {}",
+        action,
+        file_path.display()
+    );
+
     let new_path = compute_destination(file_path, action, source_path);
 
     if dry_run {
@@ -93,16 +103,17 @@ fn handle_rename(
     action: &RenameAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
-    // The Action has one attribute:
-    // - to: The new name for the file, which can be a string or a template
-    let new_name = &action.to.replace(
-        "{filename}",
-        file_path
-            .file_name()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or(""),
+    log::debug!(
+        "Handling rename action: {:?} for file: {}",
+        action,
+        file_path.display()
     );
+
+    let metadata = extract_metadata(file_path)?;
+
+    let new_name = evaluate_template(&action.to, file_path, &metadata)?;
+    log::debug!("New file name: {}", new_name);
+
     let new_path = file_path.with_file_name(new_name);
 
     if dry_run {
@@ -124,13 +135,17 @@ fn handle_delete(
     action: &DeleteAction,
     dry_run: bool,
 ) -> Result<FileOperationResult, TookaError> {
-    // The Action has one attribute:
-    // - trash: If true, the file is moved to the trash instead of being deleted permanently
+    log::debug!(
+        "Handling delete action: {:?} for file: {}",
+        action,
+        file_path.display()
+    );
+
     if dry_run {
         log::debug!("Dry run: would delete file: {}", file_path.display());
     } else if action.trash {
         log::info!("Moving file to trash: {}", file_path.display());
-        // Implement trash logic here, e.g., using a crate like `trash`
+
         trash::delete(file_path).map_err(|e| {
             TookaError::FileOperationError(format!("Failed to move file to trash: {}", e))
         })?;
@@ -149,24 +164,36 @@ fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> P
 where
     A: HasToAndPreserveStructure,
 {
+    log::debug!("Computing destination for file: {}", file_path.display(),);
     let to = action.to();
     let preserve_structure = action.preserve_structure();
 
     let destination = if to.starts_with('.') {
+        log::debug!("Destination is a relative path: {}", to);
         PathBuf::from(to)
     } else if to.starts_with('~') {
+        log::debug!("Destination is a home directory path: {}", to);
         let home_dir = std::env::home_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
         let stripped = to.trim_start_matches('~').trim_start_matches('/');
         home_dir.join(stripped)
     } else {
+        log::debug!("Destination is an absolute path: {}", to);
         PathBuf::from("/").join(to.trim_start_matches('/'))
     };
 
     if preserve_structure {
+        log::debug!(
+            "Preserving directory structure for file: {}",
+            file_path.display()
+        );
         // Preserve the directory structure using the source_path as the base
         let relative_path = file_path.strip_prefix(source_path).unwrap_or(file_path);
         destination.join(relative_path)
     } else {
+        log::debug!(
+            "Not preserving directory structure for file: {}",
+            file_path.display()
+        );
         // Move to the destination directory directly
         destination.join(file_path.file_name().unwrap_or_default())
     }

@@ -3,8 +3,10 @@ use crate::core::rules::{rule, rule::Conditions};
 use crate::error::TookaError;
 
 use chrono::{NaiveDate, Utc};
-use glob;
+use exif::Reader;
+use glob::{self, Pattern};
 use std::fs;
+use std::io::BufReader;
 use std::path::Path;
 
 /// Matches a file's name against a regular expression pattern
@@ -86,6 +88,7 @@ fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
 /// Matches a file's metadata against a date range
 fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> bool {
     log::debug!("Matching against created date range: {:?}", date_range);
+
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
         let from = NaiveDate::parse_from_str(
@@ -104,6 +107,7 @@ fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> b
 /// Matches a file's metadata against a date range
 fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool {
     log::debug!("Matching against modified date range: {:?}", date_range);
+
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
         let from = NaiveDate::parse_from_str(
@@ -129,36 +133,72 @@ fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
     metadata.file_type().is_symlink() == is_symlink
 }
 
-/// Matches a specific metadata field against the file's EXIF data
-fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
+/// Matches a specific metadata field (e.g., EXIF) against a file
+pub fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
     log::debug!(
-        "Matching metadata field: {} against file: {}",
+        "Checking metadata field match for key '{}' on file '{}'",
         field.key,
         file_path.display()
     );
+
     let file = match fs::File::open(file_path) {
         Ok(f) => f,
-        Err(_) => return false,
-    };
-    let mut reader = std::io::BufReader::new(file);
-    let exif = match exif::Reader::new().read_from_container(&mut reader) {
-        Ok(e) => e,
-        Err(_) => return false,
-    };
-
-    exif.fields().any(|f| {
-        let tag_name = format!("EXIF:{:?}", f.tag);
-        if tag_name != field.key {
+        Err(e) => {
+            log::warn!("Failed to open file '{}': {}", file_path.display(), e);
             return false;
         }
+    };
 
-        match &field.value {
-            Some(pattern_str) => glob::Pattern::new(pattern_str)
-                .map(|p| p.matches(&f.display_value().with_unit(&exif).to_string()))
-                .unwrap_or(false),
-            None => true,
+    let mut reader = BufReader::new(file);
+    let exif = match Reader::new().read_from_container(&mut reader) {
+        Ok(r) => r,
+        Err(e) => {
+            log::debug!("No EXIF data found in '{}': {}", file_path.display(), e);
+            return false;
         }
-    })
+    };
+
+    let requested_key = field.key.to_lowercase();
+
+    for f in exif.fields() {
+        let exif_key = format!("EXIF:{:?}", f.tag).to_lowercase();
+        let value_str = f.display_value().with_unit(&exif).to_string();
+
+        if exif_key == requested_key {
+            log::debug!("Found EXIF key match: '{}'", exif_key);
+
+            match &field.value {
+                Some(pattern_str) => match Pattern::new(pattern_str) {
+                    Ok(pattern) => {
+                        let is_match = pattern.matches(&value_str);
+                        log::debug!(
+                            "Comparing EXIF value '{}' with pattern '{}': {}",
+                            value_str,
+                            pattern_str,
+                            is_match
+                        );
+                        return is_match;
+                    }
+                    Err(e) => {
+                        log::warn!("Invalid glob pattern '{}': {}", pattern_str, e);
+                        return false;
+                    }
+                },
+                None => {
+                    log::debug!("EXIF key '{}' matched without value filter", exif_key);
+                    return true;
+                }
+            }
+        }
+    }
+
+    log::debug!(
+        "No matching EXIF key '{}' found in file '{}'",
+        field.key,
+        file_path.display()
+    );
+
+    false
 }
 
 /// Matches a file against a set of rules defined in a RuleMatch struct

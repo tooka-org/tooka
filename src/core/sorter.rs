@@ -12,10 +12,15 @@ use super::rules::rules_file::RulesFile;
 /// Represents the result of a file matching operation
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct MatchResult {
+    /// The name of the file that matched a rule
     pub file_name: String,
+    /// The action taken on the file (e.g., move, copy, delete)
     pub action: String,
+    /// The ID of the rule that matched the file
     pub matched_rule_id: String,
+    /// The current path of the file before any operation
     pub current_path: PathBuf,
+    /// The new path where the file will be moved or copied to
     pub new_path: PathBuf,
 }
 

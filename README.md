@@ -7,10 +7,11 @@
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
 </div>
 
-A fast, rule-based CLI tool for organizing your files.
+A fast, rule-based CLI tool for organizing files.
 
 > [!WARNING]
-> Tooka lacks tests and is currently in early beta. Do **not** use it in production environments for now!
+> **Tooka is in early development.** Do *not* use it in production environments at this time.
+
 
 ---
 
@@ -172,7 +173,7 @@ Once inside the container, you can explore Tooka freely:
 ```bash
 tooka --help
 tooka config
-tooka template > sample_rule.yaml
+tooka template
 ```
 
 You can mount volumes to access your real files and rules:

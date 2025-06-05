@@ -7,8 +7,8 @@ use std::io;
 #[derive(Args)]
 #[command(about = "Generate shell completions")]
 pub struct CompletionsArgs {
-    #[arg(value_enum)]
     /// The `shell` field specifies the target shell and must be provided as a value enum.
+    #[arg(value_enum)]
     pub shell: Shell,
 }
 

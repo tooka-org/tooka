@@ -34,7 +34,6 @@ pub fn init_logger() -> Result<(), TookaError> {
     let logs_folder = &config.logs_folder;
 
     // Ensure folders exist
-    create_dir_all(logs_folder.join("main"))?;
     create_dir_all(logs_folder.join("ops"))?;
 
     let log_spec = LogSpecification::parse("debug, file_ops=info")?;
@@ -78,20 +77,48 @@ impl DualWriter {
     /// Creates a new DualWriter with the specified base path
     fn new(base: &Path) -> Self {
         Self {
-            main_dir: base.join("main"),
+            main_dir: base.to_path_buf(),
             ops_dir: base.join("ops"),
         }
     }
 
-    /// Returns the log file path based on the target
-    fn get_log_path(&self, target: &str) -> PathBuf {
-        let timestamp = Local::now().format("%d-%m-%Y").to_string();
-        let dir = if target == "file_ops" {
-            &self.ops_dir
-        } else {
-            &self.main_dir
-        };
-        dir.join(format!("{timestamp}.log"))
+    // Main log path: just main.log at base folder
+    fn get_main_log_path(&self) -> PathBuf {
+        self.main_dir.join("main.log")
+    }
+
+    // Ops log path: figure out today's file, add -1, -2 if needed
+    fn get_ops_log_path(&self) -> std::io::Result<PathBuf> {
+        let date_str = Local::now().format("%Y-%m-%d").to_string();
+        let base_path = self.ops_dir.join(format!("{date_str}.log"));
+
+        // If base_path does not exist, use it directly
+        if !base_path.exists() {
+            return Ok(base_path);
+        }
+
+        // Otherwise, check for -1, -2, ... suffixes, find latest file
+        for i in 1..=MAX_LOG_FILES {
+            let candidate = self.ops_dir.join(format!("{date_str}-{i}.log"));
+            if !candidate.exists() {
+                // Use the first non-existent file
+                return Ok(candidate);
+            }
+        }
+
+        // If all numbered files exist, just return the last one
+        Ok(self.ops_dir.join(format!("{date_str}-{MAX_LOG_FILES}.log")))
+    }
+
+    // Helper: check if file modified less than 1 hour ago
+    fn is_file_recent(path: &Path) -> std::io::Result<bool> {
+        if !path.exists() {
+            return Ok(false);
+        }
+        let metadata = std::fs::metadata(path)?;
+        let modified = metadata.modified()?;
+        let age = Local::now().signed_duration_since(chrono::DateTime::<Local>::from(modified));
+        Ok(age.num_minutes() < 60)
     }
 }
 
@@ -110,49 +137,58 @@ impl LogWriter for DualWriter {
             return Ok(());
         };
 
-        let path = self.get_log_path(record.target());
-        let dir = path.parent().unwrap();
+        if record.target() == "file_ops" {
+            // Ops logger: use numbered daily file
+            let path = self.get_ops_log_path()?;
+            // Rotate ops logs: keep only MAX_LOG_FILES newest files
+            let dir = path.parent().unwrap();
 
-        // Log rotation: keep only MAX_LOG_FILES most recent logs
-        let mut log_files: Vec<_> = std::fs::read_dir(dir)
-            .map_err(|e| io::Error::other(format!("Failed to read dir: {e}")))?
-            .filter_map(|entry| {
-                let entry = entry.expect("Failed to read directory entry");
-                let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("log") {
-                    Some(path)
-                } else {
-                    None
+            let mut log_files: Vec<_> = std::fs::read_dir(dir)?
+                .filter_map(|entry| {
+                    let entry = entry.ok()?;
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) == Some("log") {
+                        Some(path)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            log_files.sort();
+
+            while log_files.len() > MAX_LOG_FILES {
+                if let Some(oldest) = log_files.first() {
+                    let _ = std::fs::remove_file(oldest);
+                    log_files.remove(0);
                 }
-            })
-            .collect();
-
-        // Sort by file name (date-based, so lexicographical sort works)
-        log_files.sort();
-
-        // Remove oldest files if exceeding MAX_LOG_FILES
-        while log_files.len() >= MAX_LOG_FILES {
-            if let Some(oldest) = log_files.first() {
-                let _ = std::fs::remove_file(oldest);
-                log_files.remove(0);
             }
+
+            let mut file = OpenOptions::new().create(true).append(true).open(&path)?;
+
+            let mut buf = Vec::new();
+            custom_format(&mut buf, now, record)?;
+            file.write_all(&buf)?;
+        } else {
+            // Main logger
+            let path = self.get_main_log_path();
+
+            let recent = Self::is_file_recent(&path)?;
+            let mut open_opts = OpenOptions::new();
+            open_opts.create(true);
+            if recent {
+                // append
+                open_opts.append(true);
+            } else {
+                // overwrite
+                open_opts.write(true).truncate(true);
+            }
+
+            let mut file = open_opts.open(&path)?;
+            let mut buf = Vec::new();
+            custom_format(&mut buf, now, record)?;
+            file.write_all(&buf)?;
         }
-
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .map_err(|e| io::Error::other(format!("Failed to open log file: {e}")))
-            .expect("Failed to open log file");
-
-        let mut buf = Vec::new();
-        // Use the custom_format function to format the log entry
-        custom_format(&mut buf, now, record)
-            .map_err(|e| io::Error::other(format!("Failed to format log entry: {e}")))
-            .expect("Failed to format log entry");
-        file.write_all(&buf)
-            .map_err(|e| io::Error::other(format!("Failed to write to log file: {e}")))
-            .expect("Failed to write to log file");
         Ok(())
     }
 
