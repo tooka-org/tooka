@@ -1,6 +1,10 @@
 # 🗂️ Tooka
 
-[![Rust-Clippy-Analyzer](https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg)](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
+[![crates-io]](https://crates.io/crates/tooka-core)&ensp;[![docs-rs]](https://docs.rs/tooka_core)&ensp;[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
+
+[clippy]: https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg
+[crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
+[docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
