@@ -11,7 +11,7 @@ pub static DEFAULT_LOGS_FOLDER: &str = "logs";
 pub const APP_QUALIFIER: &str = "io";
 pub const APP_ORG: &str = "github.benji377";
 pub const APP_NAME: &str = "tooka";
-pub const LOGO_VECTOR_STR: &str = include_str!("../../../assets/logo.svg");
+pub const LOGO_VECTOR_STR: &str = include_str!("../../assets/logo.svg");
 
 /// Global static variables to hold the configuration and rules file.
 static CONFIG: OnceLock<Arc<Mutex<Config>>> = OnceLock::new();
