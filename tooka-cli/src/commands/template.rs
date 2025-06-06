@@ -1,0 +1,32 @@
+use anyhow::{Result, anyhow};
+use clap::Args;
+use tooka_core::template::generate_rule_template_yaml;
+
+#[derive(Args)]
+#[command(about = "Exports a template rule to a YAML file")]
+pub struct TemplateArgs {
+    /// Output file path
+    #[arg(long)]
+    pub output: Option<String>,
+}
+
+pub fn run(args: TemplateArgs) -> Result<()> {
+    let output_path = args
+        .output
+        .unwrap_or_else(|| "rule_template.yaml".to_string());
+
+    log::info!("Generating rule template YAML to {}", output_path);
+
+    let rule_template = generate_rule_template_yaml()
+        .map_err(|e| anyhow!("Failed to generate rule template: {}", e))?;
+
+    std::fs::write(&output_path, rule_template)
+        .map_err(|e| anyhow!("Failed to write rule template to file: {}", e))?;
+
+    println!(
+        "Rule template YAML generated successfully at {}",
+        output_path
+    );
+
+    Ok(())
+}

@@ -1,0 +1,34 @@
+[package]
+name = "tooka-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../README.md"
+license-file = "../LICENSE"
+default-run = "tooka-cli"
+
+[dependencies]
+tooka-core = { path = "../tooka-core" }
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4.5.50"
+indicatif = "0.17.11"
+anyhow.workspace = true
+log.workspace = true
+
+[package.metadata.packager]
+product-name = "tooka"
+identifier = "io.github.benji377.tooka"
+category = "Utility"
+homepage = "https://tooka.deno.dev"
+icons = ["assets/logo.png"]
+licenseFile = "LICENSE"
+formats = ["all"]
+before-packaging-command = "cargo build --release"
+
+

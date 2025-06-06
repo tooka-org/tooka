@@ -1441,9 +1441,9 @@ dependencies = [
 
 [[package]]
 name = "portable-atomic"
-version = "1.11.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "350e9b48cbc6b0e028b0473b114454c6316e57336ee184ceab6e53f72c178b3e"
+checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
 
 [[package]]
 name = "powerfmt"
@@ -2173,18 +2173,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
-name = "tooka"
+name = "tooka-cli"
+version = "0.1.4"
+dependencies = [
+ "anyhow",
+ "clap",
+ "clap_complete",
+ "indicatif",
+ "log",
+ "tooka-core",
+]
+
+[[package]]
+name = "tooka-core"
 version = "0.1.4"
 dependencies = [
  "anyhow",
  "chrono",
- "clap",
- "clap_complete",
  "csv",
  "directories-next",
  "flexi_logger",
  "glob",
- "indicatif",
  "kamadak-exif",
  "lazy_static",
  "log",
