@@ -10,7 +10,7 @@ homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
 readme = "README.md"
-license-file = "../LICENSE"
+license = "GPL-3.0-only"
 
 [dependencies]
 # Core functionality
