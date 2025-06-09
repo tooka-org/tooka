@@ -4,7 +4,7 @@ mod completions;
 use anyhow::Result;
 use clap::Parser;
 use tooka_core::context;
-use tooka_core::init_logger;
+use tooka_core::logger::init_logger;
 
 #[derive(Parser)]
 #[clap(
