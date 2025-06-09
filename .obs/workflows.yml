@@ -1,0 +1,8 @@
+workflow:
+  steps:
+    - branch_package:
+        source_project: home:Benji377
+        source_package: tooka
+        target_project: home:Benji377:releases
+  filters:
+    event: push
