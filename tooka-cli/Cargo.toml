@@ -35,17 +35,20 @@ licenseFile = "../LICENSE"
 formats = ["all"]
 before-packaging-command = "cargo build --release -p tooka-cli"
 
-[[package.metadata.packager.resources]]
-src = "../data/io.github.benji377.tooka.desktop"
-target = "share/applications"
-
-[[package.metadata.packager.resources]]
-src = "../data/io.github.benji377.tooka.metainfo.xml"
-target = "share/metainfo"
-
-[[package.metadata.packager.resources]]
-src = "../data/io.github.benji377.tooka.svg"
-target = "share/icons/hicolor/scalable/apps"
-
 [package.metadata.packager.linux]
 generate-desktop-entry = false
+
+[package.metadata.packager.appimage.files]
+"../data/io.github.benji377.tooka.desktop" = "usr/share/applications/io.github.benji377.tooka.desktop"
+"../data/io.github.benji377.tooka.svg" = "usr/share/icons/hicolor/scalable/apps/io.github.benji377.tooka.svg"
+"../data/io.github.benji377.tooka.metainfo.xml" = "usr/share/metainfo/io.github.benji377.tooka.metainfo.xml"
+
+[package.metadata.packager.deb.files]
+"../data/io.github.benji377.tooka.desktop" = "usr/share/applications/io.github.benji377.tooka.desktop"
+"../data/io.github.benji377.tooka.svg" = "usr/share/icons/hicolor/scalable/apps/io.github.benji377.tooka.svg"
+"../data/io.github.benji377.tooka.metainfo.xml" = "usr/share/metainfo/io.github.benji377.tooka.metainfo.xml"
+
+[package.metadata.packager.pacman.files]
+"../data/io.github.benji377.tooka.desktop" = "usr/share/applications/io.github.benji377.tooka.desktop"
+"../data/io.github.benji377.tooka.svg" = "usr/share/icons/hicolor/scalable/apps/io.github.benji377.tooka.svg"
+"../data/io.github.benji377.tooka.metainfo.xml" = "usr/share/metainfo/io.github.benji377.tooka.metainfo.xml"
