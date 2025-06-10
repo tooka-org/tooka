@@ -111,7 +111,7 @@ jobs:
               env:
                   PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
               run: |
-                  cargo deb --target=${{ matrix.target }} -- -p tooka-cli 
+                  cargo deb --target=${{ matrix.target }}
 
             - name: Upload cross-compile artifacts
               uses: actions/upload-artifact@v4
@@ -135,15 +135,15 @@ jobs:
               uses: actions/attest-build-provenance@v2
               with:
                   subject-path: |
-                      artifacts/tooka_*_aarch64.dmg
-                      artifacts/tooka_*_x64.dmg
-                      artifacts/tooka_*_amd64.deb
-                      artifacts/tooka_*_x86_64.AppImage
-                      artifacts/tooka_*_x64_en-US.msi
-                      artifacts/tooka_*_x64-setup.exe
-                      artifacts/tooka_*_arm64.deb
-                      artifacts/tooka_*_riscv64.deb
-                      artifacts/tooka_*_armhf.deb
+                      artifacts/tooka*_aarch64.dmg
+                      artifacts/tooka*_x64.dmg
+                      artifacts/tooka*_amd64.deb
+                      artifacts/tooka*_x86_64.AppImage
+                      artifacts/tooka*_x64_en-US.msi
+                      artifacts/tooka*_x64-setup.exe
+                      artifacts/tooka*_arm64.deb
+                      artifacts/tooka*_riscv64.deb
+                      artifacts/tooka*_armhf.deb
 
             - name: Release to GitHub
               uses: softprops/action-gh-release@v2
@@ -152,13 +152,13 @@ jobs:
                   generate_release_notes: true
                   tag_name: Tooka v${{ env.VERSION }}
                   files: |
-                      artifacts/tooka_*_aarch64.dmg
-                      artifacts/tooka_*_x64.dmg
-                      artifacts/tooka_*_amd64.deb
-                      artifacts/tooka_*_x86_64.AppImage
-                      artifacts/tooka_*_x64_en-US.msi
-                      artifacts/tooka_*_x64-setup.exe
-                      artifacts/tooka_*_arm64.deb
-                      artifacts/tooka_*_riscv64.deb
-                      artifacts/tooka_*_armhf.deb
+                      artifacts/tooka*_aarch64.dmg
+                      artifacts/tooka*_x64.dmg
+                      artifacts/tooka*_amd64.deb
+                      artifacts/tooka*_x86_64.AppImage
+                      artifacts/tooka*_x64_en-US.msi
+                      artifacts/tooka*_x64-setup.exe
+                      artifacts/tooka*_arm64.deb
+                      artifacts/tooka*_riscv64.deb
+                      artifacts/tooka*_armhf.deb
                       artifacts/PKGBUILD
