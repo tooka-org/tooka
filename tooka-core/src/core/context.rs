@@ -6,7 +6,6 @@
 //!
 //! It includes functions to initialize, set, and safely access these globals.
 
-
 use crate::{common::config::Config, core::error::TookaError, rules::rules_file::RulesFile};
 use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex, OnceLock};

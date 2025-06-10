@@ -7,7 +7,6 @@
 //! It also defines `RuleValidationError` for detailed validation error reporting
 //! related to rules processing.
 
-
 use glob::PatternError;
 use std::{io, path};
 use thiserror::Error;

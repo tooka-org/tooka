@@ -5,7 +5,7 @@
 
 use crate::{
     core::error::TookaError,
-    rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction, ExecuteAction},
+    rules::rule::{Action, CopyAction, DeleteAction, ExecuteAction, MoveAction, RenameAction},
     utils::rename_pattern::{evaluate_template, extract_metadata},
 };
 use std::{
@@ -22,7 +22,7 @@ pub struct FileOperationResult {
 /// Executes a file operation specified by the given action on the provided file path.
 /// Supports dry run mode, which simulates the operation without modifying the filesystem.
 /// Handles Move, Copy, Rename, Delete, and Skip actions.
-/// 
+///
 /// # Arguments
 /// - `file_path`: The path of the file to operate on.
 /// - `action`: The action to execute (move, copy, rename, delete, skip).
@@ -192,13 +192,19 @@ pub(crate) fn handle_execute(
     );
 
     if dry_run {
-        log::debug!("Dry run: would execute command: {} with arguments: {}", action.command, action.args.join(" "));
+        log::debug!(
+            "Dry run: would execute command: {} with arguments: {}",
+            action.command,
+            action.args.join(" ")
+        );
     } else {
         log::info!("Executing command: {}", action.command);
         let output = std::process::Command::new(&action.command)
             .args(&action.args)
             .output()
-            .map_err(|e| TookaError::FileOperationError(format!("Failed to execute command: {}", e)))?;
+            .map_err(|e| {
+                TookaError::FileOperationError(format!("Failed to execute command: {}", e))
+            })?;
 
         if !output.status.success() {
             return Err(TookaError::FileOperationError(format!(

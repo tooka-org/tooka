@@ -148,7 +148,7 @@ pub struct ExecuteAction {
     /// Command to execute, can be a shell command or script
     pub command: String,
     /// Arguments to pass to the command
-    pub args: Vec<String>
+    pub args: Vec<String>,
 }
 
 /// Validates the rule's fields and consistency.

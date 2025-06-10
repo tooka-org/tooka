@@ -6,7 +6,6 @@
 //! It includes logic to fall back to default locations if environment variables
 //! or system directories are unavailable.
 
-
 use crate::{
     core::context::{APP_NAME, APP_ORG, APP_QUALIFIER},
     core::error::TookaError,

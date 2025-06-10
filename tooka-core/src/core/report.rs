@@ -2,7 +2,6 @@
 //!
 //! Supports creating reports in JSON, CSV, and PDF formats from sorting results.
 
-
 use crate::{core::error::TookaError, core::sorter::MatchResult, utils::gen_pdf::generate_pdf};
 use anyhow::Result;
 use std::{

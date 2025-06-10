@@ -6,7 +6,6 @@
 //! It provides functionality to load, save, reset, and display configuration
 //! settings from a user-specific file (typically stored in `$HOME/.config/tooka/config.yml`).
 
-
 use super::environment::{get_dir_with_env, get_source_folder};
 use crate::{
     core::context::{CONFIG_FILE_NAME, CONFIG_VERSION, DEFAULT_LOGS_FOLDER, RULES_FILE_NAME},

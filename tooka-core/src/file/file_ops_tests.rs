@@ -1,7 +1,10 @@
 use std::{fs, os::unix::fs::PermissionsExt};
 
 use super::file_ops;
-use crate::{rule::ExecuteAction, rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction}};
+use crate::{
+    rule::ExecuteAction,
+    rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction},
+};
 use tempfile::{NamedTempFile, TempDir, tempdir};
 
 fn setup_temp_dir_and_file() -> (TempDir, NamedTempFile) {

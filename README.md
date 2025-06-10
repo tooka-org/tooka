@@ -1,14 +1,13 @@
 # 🗂️ Tooka
 
-[![crates-io]](https://crates.io/crates/tooka-core)&ensp;[![docs-rs]](https://docs.rs/tooka_core)&ensp;[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
-
-[clippy]: https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg
-[crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
-[docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
+[![crates-io]](https://crates.io/crates/tooka-core)&ensp;[![docs-rs]](https://docs.rs/tooka_core)
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
 </div>
+
+[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
+[![test]](https://github.com/Benji377/tooka/actions/workflows/test.yml)
 
 A fast, rule-based CLI tool for organizing files.
 
@@ -259,3 +258,8 @@ Tooka is open source and available under the [GPLv3 License](LICENSE).
 ## 💬 Support
 
 Have a bug, idea, or question? Join the conversation in [GitHub Discussions](https://github.com/Benji377/tooka/discussions).
+
+[clippy]: https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg
+[test]: https://github.com/Benji377/tooka/actions/workflows/test.yml/badge.svg
+[crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
+[docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
