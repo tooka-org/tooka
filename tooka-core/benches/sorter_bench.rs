@@ -1,11 +1,11 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use tempfile::tempdir;
 use tooka_core::error::TookaError;
 use tooka_core::rule::{Action, Conditions, MoveAction, Range, Rule};
 use tooka_core::rules_file::RulesFile;
 use tooka_core::sorter::sort_files;
 
-use std::fs::{create_dir_all, File};
+use std::fs::{File, create_dir_all};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -77,8 +77,8 @@ fn benchmark_with_temp_data(file_count: usize, avg_kb: usize) -> Result<(), Took
     let files = generate_mixed_temp_files(&source_path, file_count, avg_kb);
     let rules_file = create_complex_dummy_rules(&source_path);
 
-    let _results = sort_files(files, source_path, &rules_file, true, None::<fn()>)
-        .expect("sort_files failed");
+    let _results =
+        sort_files(files, source_path, &rules_file, true, None::<fn()>).expect("sort_files failed");
 
     Ok(())
 }
@@ -86,13 +86,13 @@ fn benchmark_with_temp_data(file_count: usize, avg_kb: usize) -> Result<(), Took
 /// Criterion benchmark entrypoint
 fn sorter_benchmarks(c: &mut Criterion) {
     let test_cases = vec![
-        (10, 1),          // 10 small files
-        (100, 5),         // 100 mid-sized files
-        (500, 10),        // 500 larger files
-        (1000, 1),        // 1000 tiny files
-        (200, 50),        // 200 big files
-        (100, 1024),      // 100 x 1MB files
-        (5000, 0),        // 5000 empty files
+        (10, 1),     // 10 small files
+        (100, 5),    // 100 mid-sized files
+        (500, 10),   // 500 larger files
+        (1000, 1),   // 1000 tiny files
+        (200, 50),   // 200 big files
+        (100, 1024), // 100 x 1MB files
+        (5000, 0),   // 5000 empty files
     ];
 
     for (count, size_kb) in test_cases {

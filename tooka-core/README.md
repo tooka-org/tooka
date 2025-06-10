@@ -8,9 +8,6 @@
 
 The internal engine powering the Tooka CLI — a rule-based automation framework for file handling.
 
-> [!WARNING]
-> **Tooka Core is under active development** and should not be considered stable yet.
-
 ---
 
 ## 🧭 Overview
@@ -48,7 +45,7 @@ Add `tooka-core` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tooka-core = "0.1.4"
+tooka-core = "1.0.0"
 ```
 
 ---

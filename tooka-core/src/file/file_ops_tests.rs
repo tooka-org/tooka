@@ -1,6 +1,6 @@
 use super::file_ops;
 use crate::rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction};
-use tempfile::{tempdir, TempDir, NamedTempFile};
+use tempfile::{NamedTempFile, TempDir, tempdir};
 
 fn setup_temp_dir_and_file() -> (TempDir, NamedTempFile) {
     let dir = tempdir().unwrap();

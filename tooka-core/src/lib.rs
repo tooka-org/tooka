@@ -33,7 +33,7 @@ mod file;
 mod rules;
 mod utils;
 
-pub use common::{logger, config::Config};
+pub use common::{config::Config, logger};
 pub use core::{context, error, report, sorter};
 pub use file::{file_match, file_ops};
 pub use rules::{rule, rules_file, template};

@@ -48,8 +48,14 @@ fn test_match_extensions() {
     let matching_path = create_temp_file_with_extension("jpg");
     let non_matching_path = create_temp_file_with_extension("png");
 
-    assert!(file_match::match_extensions(&matching_path, &vec!["jpg".to_string()]));
-    assert!(!file_match::match_extensions(&non_matching_path, &vec!["jpg".to_string()]));
+    assert!(file_match::match_extensions(
+        &matching_path,
+        &vec!["jpg".to_string()]
+    ));
+    assert!(!file_match::match_extensions(
+        &non_matching_path,
+        &vec!["jpg".to_string()]
+    ));
 }
 
 #[test]

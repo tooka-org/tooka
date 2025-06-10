@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod tests {
-    use tempfile::tempdir;
     use std::{
         fs::{self, File},
         io::Write,
         path::{Path, PathBuf},
     };
+    use tempfile::tempdir;
     use tooka_core::{
         error::TookaError,
         rule::{Action, Conditions, MoveAction, Range, Rule},
         rules_file::RulesFile,
-        sorter::{sort_files, MatchResult},
+        sorter::{MatchResult, sort_files},
     };
 
     fn create_temp_files(base_dir: &Path) -> Vec<PathBuf> {
@@ -82,8 +82,13 @@ mod tests {
         let test_files = create_temp_files(base_path);
         let rules = create_dummy_rules(base_path);
 
-        let results: Vec<MatchResult> =
-            sort_files(test_files.clone(), base_path.to_path_buf(), &rules, true, None::<fn()>)?;
+        let results: Vec<MatchResult> = sort_files(
+            test_files.clone(),
+            base_path.to_path_buf(),
+            &rules,
+            true,
+            None::<fn()>,
+        )?;
 
         // We expect 4 out of 5 files to match (unknown extension should not match any rule)
         assert_eq!(results.len(), 4);
@@ -97,7 +102,11 @@ mod tests {
 
             assert_eq!(result.action, "move");
             assert!(result.matched_rule_id.contains(expected_ext));
-            assert!(result.new_path.starts_with(base_path.join(format!("out_{}", expected_ext))));
+            assert!(
+                result
+                    .new_path
+                    .starts_with(base_path.join(format!("out_{}", expected_ext)))
+            );
         }
 
         Ok(())
