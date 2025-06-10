@@ -31,7 +31,7 @@ jobs:
       run: cargo install cargo2junit
 
     - name: Run tests and convert to JUnit
-      run: cargo test -p tooka-core -- --format json --report-time | cargo2junit > test-results.xml
+      run: cargo test -p tooka-core -- --format json | cargo2junit > test-results.xml
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
