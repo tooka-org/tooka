@@ -1,145 +1,135 @@
 name: Build and Release
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 env:
-    VERSION: 1.0.0
+  VERSION: 1.0.0
 
 jobs:
-    # Release build job
-    release:
-        permissions: write-all
-        strategy:
-            fail-fast: false
-            matrix:
-                platform:
-                    [macos-latest, macos-13, ubuntu-latest, windows-latest]
-        runs-on: ${{ matrix.platform }}
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+  build:
+    name: Build & Package
+    runs-on: ${{ matrix.platform }}
+    permissions: write-all
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            artifact_paths: target/release/tooka*_aarch64.dmg
+          - platform: macos-13
+            artifact_paths: target/release/tooka*_x64.dmg
+          - platform: ubuntu-latest
+            artifact_paths: |
+              target/release/PKGBUILD
+              target/release/tooka*_amd64.deb
+              target/release/tooka*_x86_64.AppImage
+          - platform: windows-latest
+            artifact_paths: |
+              target/release/tooka*_x64_en-US.msi
+              target/release/tooka*_x64-setup.exe
 
-            - name: Install dependencies (ubuntu only)
-              if: matrix.platform == 'ubuntu-latest'
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y build-essential curl pkg-config zlib1g-dev
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Rust setup
-              uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl pkg-config
 
-            - name: Rust cache
-              uses: swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@stable
 
-            - name: Install app dependencies
-              run: cargo install cargo-packager --locked
+      - uses: swatinem/rust-cache@v2
 
-            - name: Package Binary
-              run: cargo packager --release --verbose
+      - name: Install app dependencies
+        run: cargo install cargo-packager --locked
 
-            - name: Upload build artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: ${{ matrix.platform }}-release-artifacts
-                  path: |
-                      ${{ matrix.platform == 'macos-latest' && 'target/release/tooka*_aarch64.dmg' || '' }}
-                      ${{ matrix.platform == 'macos-13' && 'target/release/tooka*_x64.dmg' || '' }}
-                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/PKGBUILD' || '' }}
-                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka*_amd64.deb' || '' }}
-                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka*_x86_64.AppImage' || '' }}
-                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka*_x64_en-US.msi' || '' }}
-                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka*_x64-setup.exe' || '' }}
+      - name: Package Binary
+        run: cargo packager --release --verbose
 
-    # Cross-compilation job
-    cross_compile:
-        permissions: write-all
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - arch: aarch64
-                      target: aarch64-unknown-linux-gnu
-                      apt: gcc-aarch64-linux-gnu
-                      sysroot: /usr/aarch64-linux-gnu/
-                      pkg_arch: arm64
-                    - arch: riscv64
-                      target: riscv64gc-unknown-linux-gnu
-                      apt: gcc-riscv64-linux-gnu
-                      sysroot: /usr/riscv64-linux-gnu/
-                      pkg_arch: riscv64
-                    - arch: armv7
-                      target: armv7-unknown-linux-gnueabihf
-                      apt: gcc-arm-linux-gnueabihf
-                      sysroot: /usr/arm-linux-gnueabihf/
-                      pkg_arch: armhf
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-release-artifacts
+          path: ${{ matrix.artifact_paths }}
 
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  cross_compile:
+    name: Cross Compile & Package
+    runs-on: ubuntu-latest
+    permissions: write-all
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
+            apt: gcc-aarch64-linux-gnu
+            sysroot: /usr/aarch64-linux-gnu/
+            pkg_arch: arm64
+          - arch: riscv64
+            target: riscv64gc-unknown-linux-gnu
+            apt: gcc-riscv64-linux-gnu
+            sysroot: /usr/riscv64-linux-gnu/
+            pkg_arch: riscv64
+          - arch: armv7
+            target: armv7-unknown-linux-gnueabihf
+            apt: gcc-arm-linux-gnueabihf
+            sysroot: /usr/arm-linux-gnueabihf/
+            pkg_arch: armhf
 
-            - name: Clean install Debian packages
-              run: sudo apt-get clean && sudo apt-get update && sudo apt-get upgrade -y
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Install system dependencies
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y \
-                    pkg-config \
-                    build-essential \
-                    curl \
-                    zlib1g-dev \
-                    ${{ matrix.apt }}
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential curl ${{ matrix.apt }}
 
-            - name: Rust setup
-              uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
 
-            - name: Rust cache
-              uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@v2
 
-            - name: Install Rust target
-              run: rustup target add ${{ matrix.target }}
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
 
-            - name: Set environment variables
-              run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
+      - name: Set PKG_CONFIG_SYSROOT_DIR
+        run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
-            - name: Install deb packager
-              run: cargo install cargo-deb
+      - name: Install deb packager
+        run: cargo install cargo-deb
 
-            - name: Package the cross-compiled build
-              env:
-                  PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
-              run: |
-                  cargo deb --target=${{ matrix.target }} -- -p tooka-cli
+      - name: Package the cross-compiled build
+        env:
+          PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
+        run: cargo deb --target=${{ matrix.target }} -- -p tooka-cli
 
-            - name: Upload cross-compile artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
-                  path: target/${{ matrix.target }}/debian/*.deb
+      - name: Upload cross-compile artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
+          path: target/${{ matrix.target }}/debian/*.deb
 
-    # Upload to GitHub release job
-    upload_to_release:
-        permissions: write-all
-        runs-on: ubuntu-latest
-        needs: [release, cross_compile]
-        steps:
-            - name: Download release artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: artifacts
-                  merge-multiple: true
+  upload_to_release:
+    name: Upload to GitHub Release
+    runs-on: ubuntu-latest
+    permissions: write-all
+    needs: [build, cross_compile]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
-            - name: Create attestation for all builds
-              uses: actions/attest-build-provenance@v2
-              with:
-                  subject-path: artifacts/*
+      - name: Create attestation for all builds
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: artifacts/*
 
-            - name: Release to GitHub
-              uses: softprops/action-gh-release@v2
-              with:
-                  draft: true
-                  generate_release_notes: true
-                  tag_name: Tooka v${{ env.VERSION }}
-                  files: artifacts/*
+      - name: Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          tag_name: Tooka v${{ env.VERSION }}
+          files: artifacts/*
