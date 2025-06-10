@@ -30,5 +30,3 @@ icons = ["../assets/logo.png"]
 licenseFile = "../LICENSE"
 formats = ["all"]
 before-packaging-command = "cargo build --release"
-
-
