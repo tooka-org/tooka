@@ -12,10 +12,6 @@
 
 A fast, rule-based CLI tool for organizing files.
 
-> [!WARNING]
-> **Tooka is in early development.** Do *not* use it in production environments at this time.
-
-
 ---
 
 ## 🧭 Introduction
@@ -144,13 +140,14 @@ Control how files are matched. Use `any: true` for OR logic, or omit for AND log
 
 Define what to do when the rule matches:
 
-| Type     | Fields                                                    |
-| -------- | --------------------------------------------------------- |
-| `move`   | `to` (path), `preserve_structure` (bool)                  |
-| `copy`   | `to` (path), `preserve_structure` (bool)                  |
-| `delete` | `trash` (bool)                                            |
-| `rename` | `to` (template string with variables like `{{filename}}`) |
-| `skip`   | *(no fields)* — skips further rules for the current file  |
+| Type      | Fields                                                    |
+| --------- | --------------------------------------------------------- |
+| `move`    | `to` (path), `preserve_structure` (bool)                  |
+| `copy`    | `to` (path), `preserve_structure` (bool)                  |
+| `delete`  | `trash` (bool)                                            |
+| `rename`  | `to` (template string with variables like `{{filename}}`) |
+| `execute` | `command` (string), `args` (list of arguments)            |
+| `skip`    | *(no fields)* — skips further rules for the current file  |
 
 ---
 

@@ -1,5 +1,7 @@
+use std::{fs, os::unix::fs::PermissionsExt};
+
 use super::file_ops;
-use crate::rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction};
+use crate::{rule::ExecuteAction, rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction}};
 use tempfile::{NamedTempFile, TempDir, tempdir};
 
 fn setup_temp_dir_and_file() -> (TempDir, NamedTempFile) {
@@ -64,4 +66,36 @@ fn test_delete_file() {
     let result = file_ops::execute_action(&src_path, &delete_action, false, dir.path()).unwrap();
     assert!(!src_path.exists());
     assert_eq!(result.action, "delete");
+}
+
+#[test]
+fn test_execute_file() {
+    let (dir, src_file) = setup_temp_dir_and_file();
+    let src_path = src_file.path().to_path_buf();
+
+    // Create a simple script that just echoes a message
+    let script_content = "#!/bin/sh\necho 'Hello, World!'\n";
+    let script_path = dir.path().join("test_script.sh");
+    std::fs::write(&script_path, script_content).unwrap();
+    std::fs::set_permissions(&script_path, fs::Permissions::from_mode(0o755)).unwrap();
+
+    let execute_action = Action::Execute(ExecuteAction {
+        command: script_path.to_str().unwrap().to_string(),
+        args: vec![],
+    });
+
+    let result = file_ops::execute_action(&src_path, &execute_action, false, dir.path()).unwrap();
+    assert_eq!(result.action, "execute");
+}
+
+#[test]
+fn test_skip_file() {
+    let (dir, src_file) = setup_temp_dir_and_file();
+    let src_path = src_file.path().to_path_buf();
+
+    let skip_action = Action::Skip;
+
+    let result = file_ops::execute_action(&src_path, &skip_action, false, dir.path()).unwrap();
+    assert_eq!(result.action, "skip");
+    assert!(src_path.exists());
 }

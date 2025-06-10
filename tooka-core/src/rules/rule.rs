@@ -96,6 +96,8 @@ pub enum Action {
     Rename(RenameAction),
     /// Delete the file, optionally moving it to trash
     Delete(DeleteAction),
+    /// Executes a CLI command or script
+    Execute(ExecuteAction),
     /// Skip the file without any action
     Skip,
 }
@@ -137,6 +139,16 @@ pub struct DeleteAction {
     /// If true, moves the file to the trash instead of permanently deleting it
     #[serde(default)]
     pub trash: bool,
+}
+
+/// Represents an execute action, specifying the command to run and its arguments
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct ExecuteAction {
+    /// Command to execute, can be a shell command or script
+    pub command: String,
+    /// Arguments to pass to the command
+    pub args: Vec<String>
 }
 
 /// Validates the rule's fields and consistency.
@@ -253,6 +265,15 @@ impl Rule {
                             "Rule {}: Delete action with trash enabled but file is not marked as symlink",
                             self.id
                         );
+                    }
+                }
+                Action::Execute(inner) => {
+                    if inner.command.trim().is_empty() {
+                        return Err(RuleValidationError::InvalidAction(
+                            self.id.clone(),
+                            i,
+                            "Missing command to execute".into(),
+                        ));
                     }
                 }
                 Action::Skip => {}

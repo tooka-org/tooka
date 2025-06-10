@@ -5,7 +5,7 @@
 
 use crate::{
     core::error::TookaError,
-    rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction},
+    rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction, ExecuteAction},
     utils::rename_pattern::{evaluate_template, extract_metadata},
 };
 use std::{
@@ -50,6 +50,7 @@ pub fn execute_action(
         Action::Copy(inner) => handle_copy(file_path, inner, dry_run, source_path),
         Action::Rename(inner) => handle_rename(file_path, inner, dry_run),
         Action::Delete(inner) => handle_delete(file_path, inner, dry_run),
+        Action::Execute(inner) => handle_execute(file_path, inner, dry_run),
         Action::Skip => {
             log::info!("Skipping file: {}", file_path.display());
             Ok(FileOperationResult {
@@ -175,6 +176,41 @@ pub(crate) fn handle_delete(
     Ok(FileOperationResult {
         new_path: PathBuf::new(),
         action: "delete".into(),
+    })
+}
+
+/// Handles the execute action for a file, executing a command or script specified in the action.
+pub(crate) fn handle_execute(
+    file_path: &Path,
+    action: &ExecuteAction,
+    dry_run: bool,
+) -> Result<FileOperationResult, TookaError> {
+    log::debug!(
+        "Handling execute action: {:?} for file: {}",
+        action,
+        file_path.display()
+    );
+
+    if dry_run {
+        log::debug!("Dry run: would execute command: {} with arguments: {}", action.command, action.args.join(" "));
+    } else {
+        log::info!("Executing command: {}", action.command);
+        let output = std::process::Command::new(&action.command)
+            .args(&action.args)
+            .output()
+            .map_err(|e| TookaError::FileOperationError(format!("Failed to execute command: {}", e)))?;
+
+        if !output.status.success() {
+            return Err(TookaError::FileOperationError(format!(
+                "Command failed with status: {}",
+                output.status
+            )));
+        }
+    }
+
+    Ok(FileOperationResult {
+        new_path: file_path.to_path_buf(),
+        action: "execute".into(),
     })
 }
 
