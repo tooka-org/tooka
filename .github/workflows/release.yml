@@ -43,13 +43,13 @@ jobs:
               with:
                   name: ${{ matrix.platform }}-release-artifacts
                   path: |
-                      ${{ matrix.platform == 'macos-latest' && 'target/release/tooka_*_aarch64.dmg' || '' }}
-                      ${{ matrix.platform == 'macos-13' && 'target/release/tooka_*_x64.dmg' || '' }}
+                      ${{ matrix.platform == 'macos-latest' && 'target/release/tooka*_aarch64.dmg' || '' }}
+                      ${{ matrix.platform == 'macos-13' && 'target/release/tooka*_x64.dmg' || '' }}
                       ${{ matrix.platform == 'ubuntu-latest' && 'target/release/PKGBUILD' || '' }}
-                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka_*_amd64.deb' || '' }}
-                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka_*_x86_64.AppImage' || '' }}
-                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka_*_x64_en-US.msi' || '' }}
-                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka_*_x64-setup.exe' || '' }}
+                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka*_amd64.deb' || '' }}
+                      ${{ matrix.platform == 'ubuntu-latest' && 'target/release/tooka*_x86_64.AppImage' || '' }}
+                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka*_x64_en-US.msi' || '' }}
+                      ${{ matrix.platform == 'windows-latest' && 'target/release/tooka*_x64-setup.exe' || '' }}
 
     # Cross-compilation job
     cross_compile:
@@ -134,16 +134,7 @@ jobs:
             - name: Create attestation for all builds
               uses: actions/attest-build-provenance@v2
               with:
-                  subject-path: |
-                      artifacts/tooka*_aarch64.dmg
-                      artifacts/tooka*_x64.dmg
-                      artifacts/tooka*_amd64.deb
-                      artifacts/tooka*_x86_64.AppImage
-                      artifacts/tooka*_x64_en-US.msi
-                      artifacts/tooka*_x64-setup.exe
-                      artifacts/tooka*_arm64.deb
-                      artifacts/tooka*_riscv64.deb
-                      artifacts/tooka*_armhf.deb
+                  subject-path: artifacts/*
 
             - name: Release to GitHub
               uses: softprops/action-gh-release@v2
@@ -151,14 +142,4 @@ jobs:
                   draft: true
                   generate_release_notes: true
                   tag_name: Tooka v${{ env.VERSION }}
-                  files: |
-                      artifacts/tooka*_aarch64.dmg
-                      artifacts/tooka*_x64.dmg
-                      artifacts/tooka*_amd64.deb
-                      artifacts/tooka*_x86_64.AppImage
-                      artifacts/tooka*_x64_en-US.msi
-                      artifacts/tooka*_x64-setup.exe
-                      artifacts/tooka*_arm64.deb
-                      artifacts/tooka*_riscv64.deb
-                      artifacts/tooka*_armhf.deb
-                      artifacts/PKGBUILD
+                  files: artifacts/*
