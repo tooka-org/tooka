@@ -1,3 +1,9 @@
+//! Logging utilities for the Tooka application.
+//!
+//! This module provides a custom logger setup using `flexi_logger`.
+//! It supports separate log files for general logs and file operation logs,
+//! with daily log rotation and a maximum number of retained log files.
+
 use crate::{core::context, core::error::TookaError};
 use chrono::Local;
 use flexi_logger::writers::LogWriter;
@@ -26,7 +32,13 @@ struct DualWriter {
     ops_dir: PathBuf,
 }
 
-/// Initialize the logger once
+/// Initializes the Tooka logger.
+///
+/// Sets up logging directories, configures log levels and targets,
+/// and ensures that the logger is only initialized once.
+///
+/// # Errors
+/// Returns a [`TookaError`] if initialization fails or config cannot be loaded.
 pub fn init_logger() -> Result<(), TookaError> {
     let config = context::get_locked_config()
         .map_err(|e| TookaError::ConfigError(format!("Failed to get config: {e}")))?;
@@ -50,7 +62,9 @@ pub fn init_logger() -> Result<(), TookaError> {
     Ok(())
 }
 
-/// Logs a file operation using the `file_ops` target
+/// Logs a file operation message.
+///
+/// Sends the message to the `file_ops` log target for separate logging.
 pub fn log_file_operation(msg: &str) {
     log::info!(target: "file_ops", "{msg}");
 }

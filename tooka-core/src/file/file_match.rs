@@ -1,3 +1,9 @@
+//! File matching utilities for Tooka.
+//!
+//! This module provides functions to match files against various criteria,
+//! including filename patterns, extensions, paths, sizes, MIME types, dates,
+//! symlink status, EXIF metadata, and combined rule conditions.
+
 use crate::{
     core::error::TookaError,
     rules::rule::{self, Conditions, DateRange, Range},
@@ -202,7 +208,9 @@ pub(crate) fn match_metadata_field(file_path: &Path, field: &rule::MetadataField
     false
 }
 
-/// Matches a file against a set of rules defined in a RuleMatch struct
+/// Matches a file against all specified conditions in a rule.
+///
+/// Uses OR logic if `conditions.any` is true; otherwise AND logic.
 pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
     log::debug!(
         "Matching file: {} against conditions: {:?}",

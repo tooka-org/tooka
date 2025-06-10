@@ -1,51 +1,55 @@
+//! Defines the core data structures representing file operation rules in Tooka.
+//! Includes rule conditions, actions, and validation logic ensuring rule correctness.
+//! Supports complex matching criteria such as filename patterns, metadata, size, dates, etc.
+
 use crate::core::error::RuleValidationError;
 use serde::{Deserialize, Serialize};
 
-/// Represents a rule for file operations in Tooka
+/// Represents a rule for file operations, specifying when it applies and what actions to take.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Rule {
-    /// Unique identifier for the rule
+    /// Unique identifier for the rule.
     pub id: String,
-    /// Human-readable name for the rule
+    /// Human-readable name of the rule.
     pub name: String,
-    /// If the rule is enabled or not
+    /// Whether the rule is enabled.
     pub enabled: bool,
-    /// Optional description of the rule
+    /// Optional detailed description.
     pub description: Option<String>,
-    /// Priority of the rule, higher numbers indicate higher priority
+    /// Rule priority (higher is more important).
     pub priority: u32,
-    /// Conditions this rule applies to
+    /// Conditions to match files for this rule.
     pub when: Conditions,
-    /// Actions to perform if the rule matches
+    /// Actions to perform when conditions match.
     pub then: Vec<Action>,
 }
 
-/// Represents the conditions under which a rule applies
+/// Contains matching criteria to determine when a rule applies.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Conditions {
-    /// If to match all conditions (AND) or any condition (OR), default is false (AND)
+    /// If true, matches if any condition is true (logical OR); otherwise all must match (AND).
     #[serde(default)]
     pub any: Option<bool>,
-    /// Filename with regex pattern to match against
+    /// Regex pattern to match against the filename.
     pub filename: Option<String>,
-    /// List of file extensions to match against
+    /// List of file extensions to match.
     #[serde(default)]
     pub extensions: Option<Vec<String>>,
-    /// Pattern to match against the file path (glob pattern)
+    /// Glob pattern for file path matching.
     pub path: Option<String>,
-    /// String that defines file size range to match against, eg <100, >1, 10-100, etc.
+    /// File size range in KB.
     pub size_kb: Option<Range>,
-    /// MIme type to match against, e.g., "image/jpeg"
+    /// MIME type filter.
     pub mime_type: Option<String>,
-    /// Date range to match against, e.g., files created within this range
+    /// Date range when the file was created.
     pub created_date: Option<DateRange>,
-    /// Date range to match against, e.g., files modified within this range
+    /// Date range when the file was modified.
     pub modified_date: Option<DateRange>,
-    /// If the file is a symlink
+    /// Whether the file is a symbolic link.
     pub is_symlink: Option<bool>,
-    /// Additional metadata fields to match against
+    /// Additional metadata fields for matching.
     #[serde(default)]
     pub metadata: Option<Vec<MetadataField>>,
 }
@@ -60,11 +64,13 @@ pub struct MetadataField {
     pub value: Option<String>,
 }
 
-/// Represents a date range for matching files
+/// Represents a data range for matching files
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Range {
+    /// Minimum size in KB (inclusive)
     pub min: Option<u64>,
+    /// Maximum size in KB (inclusive)
     pub max: Option<u64>,
 }
 
@@ -72,7 +78,9 @@ pub struct Range {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct DateRange {
+    /// Optional start date in RFC3339 format (inclusive)
     pub from: Option<String>,
+    /// Optional end date in RFC3339 format (inclusive)
     pub to: Option<String>,
 }
 
@@ -80,43 +88,63 @@ pub struct DateRange {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "action", rename_all = "lowercase")]
 pub enum Action {
+    /// Move the file to a new location
     Move(MoveAction),
+    /// Copy the file to a new location
     Copy(CopyAction),
+    /// Rename the file to a new name
     Rename(RenameAction),
+    /// Delete the file, optionally moving it to trash
     Delete(DeleteAction),
-    Skip, // No payload
+    /// Skip the file without any action
+    Skip,
 }
 
+/// Represents a move action, specifying the destination path and whether to preserve structure
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct MoveAction {
+    /// Destination path where the file should be moved
     pub to: String,
+    /// If true, preserves the directory structure relative to the source path
     #[serde(default)]
     pub preserve_structure: bool,
 }
 
+/// Represents a copy action, specifying the destination path and whether to preserve structure
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct CopyAction {
+    /// Destination path where the file should be copied
     pub to: String,
+    /// If true, preserves the directory structure relative to the source path
     #[serde(default)]
     pub preserve_structure: bool,
 }
 
+/// Represents a rename action, specifying the new name for the file
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct RenameAction {
+    /// New name for the file, can include metadata placeholders
     pub to: String,
 }
 
+/// Represents a delete action, specifying whether to move the file to trash
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct DeleteAction {
+    /// If true, moves the file to the trash instead of permanently deleting it
     #[serde(default)]
     pub trash: bool,
 }
 
-/// Implementation of Rule validation logic
+/// Validates the rule's fields and consistency.
+///
+/// Checks for required fields, duplicate metadata keys, valid size ranges,
+/// valid date formats, and valid action configurations.
+///
+/// Returns an error if validation fails.
 impl Rule {
     /// Validates the rule to ensure it has all required fields and valid structure.
     pub fn validate(&self) -> Result<(), RuleValidationError> {

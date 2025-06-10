@@ -1,3 +1,10 @@
+//! File sorting logic for the Tooka application.
+//!
+//! This module handles sorting files according to rules loaded from a rules file.
+//! It supports recursively collecting files, matching files against rules, and
+//! executing actions such as move, copy, or delete. Sorting operations can be
+//! performed in parallel with progress callbacks and dry-run support.
+
 use super::{context, error::TookaError};
 use crate::{
     common::logger::log_file_operation,
@@ -8,22 +15,35 @@ use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-/// Represents the result of a file matching operation
+/// Result of matching a file against a rule and executing an action.
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct MatchResult {
-    /// The name of the file that matched a rule
+    /// File name matched by the rule.
     pub file_name: String,
-    /// The action taken on the file (e.g., move, copy, delete)
+    /// Action performed on the file (e.g., move, copy, delete).
     pub action: String,
-    /// The ID of the rule that matched the file
+    /// ID of the rule that matched.
     pub matched_rule_id: String,
-    /// The current path of the file before any operation
+    /// File's original path.
     pub current_path: PathBuf,
-    /// The new path where the file will be moved or copied to
+    /// Destination path after action.
     pub new_path: PathBuf,
 }
 
-/// Sorts files in the specified source directory according to the provided rules.
+/// Sorts a batch of files using given rules.
+///
+/// # Arguments
+/// * `files` - Files to sort.
+/// * `source_path` - Base directory of source files.
+/// * `rules_file` - Rules to apply.
+/// * `dry_run` - If true, actions are logged but not performed.
+/// * `on_progress` - Optional callback invoked after each file processed.
+///
+/// # Returns
+/// List of matching results for files that matched any rule.
+///
+/// # Errors
+/// Returns `TookaError` if file operations fail.
 pub fn sort_files<F>(
     files: Vec<PathBuf>,
     source_path: PathBuf,
@@ -158,7 +178,17 @@ fn collect_files_recursively(dir: &Path) -> Result<Vec<PathBuf>, TookaError> {
     Ok(entries)
 }
 
-/// Prepares the sorting operation by resolving config, rules, and collecting files.
+/// Prepares sorting by loading config, rules, and collecting files.
+///
+/// # Arguments
+/// * `source` - Source folder path or `<default>` for config source.
+/// * `rules` - Rule IDs comma-separated or `<all>` for all rules.
+///
+/// # Returns
+/// (source path, rules file, files to process)
+///
+/// # Errors
+/// Errors if config or rules loading fails or no rules/files found.
 pub fn prepare_sort(
     source: &str,
     rules: &str,

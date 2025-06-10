@@ -12,41 +12,42 @@ The internal engine powering the Tooka CLI — a rule-based automation framework
 
 ## 🧭 Overview
 
-**Tooka Core** is the logic layer behind the Tooka CLI. It enables robust file traversal, filtering, and automation using declarative YAML rules.
+`tooka-core` provides:
 
-Designed to be decoupled from the CLI, this crate is suitable for building custom file management apps or services.
+* Declarative YAML rule parsing and validation
+* Parallel recursive file traversal
+* Conditional filtering on filenames, size, metadata, and timestamps
+* Actions including move, copy, rename, delete, and skip
+* Template support for dynamic file naming
+* Dry-run support and detailed logging
 
----
-
-## ✨ Core Features
-
-- YAML-driven rule parsing and execution
-- Recursive, parallel file system traversal
-- Conditional filtering by name, size, metadata, etc.
-- Flexible actions: move, copy, rename, delete, skip
-- Custom templating for output filenames
-- Dry-run mode for safe testing
-- Detailed logging via `flexi_logger`
+Designed for embedding in CLI tools or other Rust applications.
 
 ---
 
 ## 🚀 Use Cases
 
-- Build file cleanup utilities
-- Automate media organization (images, documents, etc.)
-- Create backups or archive flows
-- Filter and tag datasets by metadata
+* Automated file cleanup
+* Media and document organization
+* Backup and archival workflows
+* Metadata-driven dataset filtering
 
 ---
 
-## 📦 Integration Example
+## 🛠 Integration
 
-Add `tooka-core` to your `Cargo.toml`:
+Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 tooka-core = "1.0.0"
 ```
+
+---
+
+## ⚡ Performance Benchmarks
+
+Benchmarks using [Criterion.rs](https://github.com/bheisler/criterion.rs) are located in the `benches/` directory to track and optimize sorting and traversal performance.
 
 ---
 

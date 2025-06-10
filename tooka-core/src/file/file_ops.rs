@@ -1,3 +1,8 @@
+//! Module handling file operations such as moving, copying, renaming, and deleting files.
+//! Supports dry run mode to simulate actions without making changes to the filesystem.
+//! Provides utilities for computing destination paths with optional preservation of
+//! directory structure, and uses metadata extraction to support renaming templates.
+
 use crate::{
     core::error::TookaError,
     rules::rule::{Action, CopyAction, DeleteAction, MoveAction, RenameAction},
@@ -8,14 +13,25 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Result of a file operation, containing the new path and renamed file name
+/// Result of a file operation, containing the new path of the file and the action performed.
 pub struct FileOperationResult {
     pub new_path: PathBuf,
     pub action: String,
 }
 
-/// Executes a file operation based on the provided action and file path.
-/// If `dry_run` is true, it simulates the operation without making changes.
+/// Executes a file operation specified by the given action on the provided file path.
+/// Supports dry run mode, which simulates the operation without modifying the filesystem.
+/// Handles Move, Copy, Rename, Delete, and Skip actions.
+/// 
+/// # Arguments
+/// - `file_path`: The path of the file to operate on.
+/// - `action`: The action to execute (move, copy, rename, delete, skip).
+/// - `dry_run`: If true, simulates the operation without performing it.
+/// - `source_path`: The base source directory, used when preserving directory structure.
+///
+/// # Returns
+/// A `FileOperationResult` containing the new file path and action performed on success.
+/// Returns a `TookaError` on failure.
 pub fn execute_action(
     file_path: &Path,
     action: &Action,

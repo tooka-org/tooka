@@ -1,3 +1,8 @@
+//! Provides the `RulesFile` struct representing the `rules.yaml` configuration file
+//! and methods to load, save, add, remove, find, export, list, and toggle rules.
+//! Handles reading from and writing to disk, rule validation, and rule management
+//! within Tooka's file operation rules system.
+
 use crate::{core::context, core::error::TookaError, rules::rule::Rule};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -6,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Top-level struct for the `rules.yaml` file
+/// Top-level struct for the `rules.yaml` file containing all rules.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct RulesFile {
     pub rules: Vec<Rule>,
@@ -14,7 +19,11 @@ pub struct RulesFile {
 
 /// Represents the rules file, providing methods to load, save, and manipulate rules
 impl RulesFile {
-    /// Load rules from the default file path
+    /// Loads all rules from the default `rules.yaml` file path.
+    /// Creates an empty file if none exists.
+    ///
+    /// # Errors
+    /// Returns an error if the file cannot be read or parsed.
     pub fn load() -> Result<Self, TookaError> {
         log::debug!("Loading rules from file");
 
@@ -44,7 +53,10 @@ impl RulesFile {
         Ok(rules)
     }
 
-    /// Load rules by a list of rule IDs
+    /// Loads rules filtered by a list of rule IDs.
+    ///
+    /// # Errors
+    /// Returns an error if any requested rule ID is not found.
     pub fn load_from_ids(rule_ids: &[String]) -> Result<Self, TookaError> {
         log::debug!("Loading rules for specified IDs: {rule_ids:?}");
         let all_rules = Self::load()?;
@@ -67,7 +79,10 @@ impl RulesFile {
         })
     }
 
-    /// Save the current rules to the file
+    /// Saves the current set of rules to the rules file on disk.
+    ///
+    /// # Errors
+    /// Returns an error if the file cannot be written.
     pub fn save(&self) -> Result<(), TookaError> {
         log::debug!("Saving rules to file");
         let path = Self::rules_file_path()?;
@@ -76,7 +91,12 @@ impl RulesFile {
         Ok(())
     }
 
-    /// Add rule(s) from a YAML file (single or multiple)
+    /// Adds rule(s) from a YAML file path.
+    /// Supports single or multiple rules depending on YAML content.
+    /// Optionally overwrites existing rules with the same ID.
+    ///
+    /// # Errors
+    /// Returns an error if the file can't be read, parsed, or validation fails.
     pub fn add_rule_from_file(
         &mut self,
         file_path: &str,
@@ -144,7 +164,10 @@ impl RulesFile {
         Ok(())
     }
 
-    /// Remove a rule by ID
+    /// Removes a rule identified by its ID.
+    ///
+    /// # Errors
+    /// Returns an error if the rule ID is not found.
     pub fn remove_rule(&mut self, rule_id: &str) -> Result<(), TookaError> {
         log::debug!("Removing rule with id: {rule_id}");
 
@@ -161,13 +184,18 @@ impl RulesFile {
         }
     }
 
-    /// Find a rule by ID
+    /// Finds a rule by its ID.
+    ///
+    /// Returns `Some(Rule)` if found, otherwise `None`.
     pub fn find_rule(&self, rule_id: &str) -> Option<Rule> {
         log::debug!("Finding rule with id: {rule_id}");
         self.rules.iter().find(|r| r.id == rule_id).cloned()
     }
 
-    /// Export a rule by ID to a file or stdout
+    /// Exports a rule by ID either to a file or prints it to stdout.
+    ///
+    /// # Errors
+    /// Returns an error if the rule ID is not found or if writing to file fails.
     pub fn export_rule(&self, rule_id: &str, out_path: Option<&str>) -> Result<(), TookaError> {
         log::debug!(
             "Exporting rule with id: {} to {}",
@@ -193,13 +221,16 @@ impl RulesFile {
         }
     }
 
-    /// Return all rules
+    /// Returns a clone of all rules.
     pub fn list_rules(&self) -> Vec<Rule> {
         log::debug!("Listing all rules");
         self.rules.clone()
     }
 
-    /// Toggle the `enabled` flag on a rule
+    /// Toggles the `enabled` flag of a rule identified by its ID.
+    ///
+    /// # Errors
+    /// Returns an error if the rule ID is not found.
     pub fn toggle_rule(&mut self, rule_id: &str) -> Result<(), TookaError> {
         log::debug!("Toggling rule with id: {rule_id}");
 

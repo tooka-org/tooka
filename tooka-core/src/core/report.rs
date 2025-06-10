@@ -1,3 +1,8 @@
+//! Report generation module for Tooka.
+//!
+//! Supports creating reports in JSON, CSV, and PDF formats from sorting results.
+
+
 use crate::{core::error::TookaError, core::sorter::MatchResult, utils::gen_pdf::generate_pdf};
 use anyhow::Result;
 use std::{
@@ -5,6 +10,19 @@ use std::{
     path::Path,
 };
 
+/// Generates a report from sorting results in the specified format.
+///
+/// Supported formats are `"json"`, `"csv"`, and `"pdf"`. The generated report
+/// is saved in the provided output directory.
+///
+/// # Arguments
+/// * `report_type` - A string slice indicating the desired report format.
+/// * `output_dir` - Path to the directory where the report will be saved.
+/// * `results` - Slice of [`MatchResult`] structs containing sorting results.
+///
+/// # Errors
+/// Returns a [`TookaError`] if directory creation, file writing, or PDF generation fails,
+/// or if an unsupported report format is requested.
 pub fn generate_report(
     report_type: &str,
     output_dir: &Path,

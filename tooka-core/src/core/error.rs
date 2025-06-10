@@ -1,7 +1,21 @@
+//! Error definitions for Tooka.
+//!
+//! This module defines the `TookaError` enum that encompasses all possible
+//! errors encountered in the application, including I/O, parsing, configuration,
+//! logging, rule validation, and matching errors.
+//!
+//! It also defines `RuleValidationError` for detailed validation error reporting
+//! related to rules processing.
+
+
 use glob::PatternError;
 use std::{io, path};
 use thiserror::Error;
 
+/// Represents all errors that can occur within Tooka.
+///
+/// Wraps errors from standard IO, parsing libraries, configuration,
+/// logging, rules processing, and other application-specific failures.
 #[derive(Debug, Error)]
 pub enum TookaError {
     // === General ===
@@ -64,6 +78,7 @@ pub enum TookaError {
     Other(String),
 }
 
+/// Errors specific to rule validation failures.
 #[derive(Debug, Error)]
 pub enum RuleValidationError {
     #[error("rule id is required")]

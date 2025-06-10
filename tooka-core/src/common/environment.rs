@@ -1,3 +1,12 @@
+//! Environment-aware directory resolution utilities for the Tooka application.
+//!
+//! This module provides helper functions to resolve user-specific directories,
+//! such as config and data paths, using environment variables and system conventions.
+//!
+//! It includes logic to fall back to default locations if environment variables
+//! or system directories are unavailable.
+
+
 use crate::{
     core::context::{APP_NAME, APP_ORG, APP_QUALIFIER},
     core::error::TookaError,
@@ -8,7 +17,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Returns a directory path from an env var or project dir fallback.
+/// Returns a directory path from an environment variable or fallback.
+///
+/// Prefers the value of the given environment variable. If not set, uses a
+/// standard project directory (like config or data). Falls back to `$HOME/<fallback_subdir>/<app>`
+/// if none are found.
+///
+/// # Errors
+/// Returns [`TookaError`] if path resolution fails.
 pub fn get_dir_with_env<F>(
     env_var: &str,
     project_dir_fn: F,
@@ -32,7 +48,13 @@ where
     Ok(fallback)
 }
 
-/// Returns the source folder, usually Downloads, or a fallback.
+/// Returns the source folder path, usually pointing to the Downloads directory.
+///
+/// Uses `TOOKA_SOURCE_FOLDER` if set. Otherwise tries to locate the system's
+/// Downloads directory. Falls back to `$HOME/Downloads` if necessary.
+///
+/// # Errors
+/// Returns [`TookaError`] if path resolution fails.
 pub fn get_source_folder(home: &Path) -> Result<PathBuf, TookaError> {
     if let Ok(path) = env::var("TOOKA_SOURCE_FOLDER").map(PathBuf::from) {
         return Ok(path);

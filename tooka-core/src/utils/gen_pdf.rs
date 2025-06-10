@@ -17,7 +17,7 @@ const TITLE_POS_X: f32 = 18.0;
 const TITLE_POS_Y: f32 = PAGE_HEIGHT - 13.0;
 const MAX_PATH_LENGTH: f32 = PAGE_WIDTH - 2.0 * MARGIN_X - 105.0;
 
-pub fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
+pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
     let mut doc = PdfDocument::new("Tooka Report");
     let logo_svg =
         Svg::parse(context::LOGO_VECTOR_STR, &mut Vec::new()).map_err(anyhow::Error::msg)?;

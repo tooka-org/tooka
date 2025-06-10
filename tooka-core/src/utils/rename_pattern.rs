@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Evaluates a template string with metadata and file information.
-pub fn evaluate_template(
+pub(crate) fn evaluate_template(
     template: &str,
     file_path: &Path,
     metadata: &HashMap<String, String>,
@@ -67,7 +67,7 @@ fn apply_filters(value: String, filters: &[&str]) -> String {
 }
 
 /// Returns metadata fields for use in templating
-pub fn extract_metadata(file_path: &Path) -> Result<HashMap<String, String>, TookaError> {
+pub(crate) fn extract_metadata(file_path: &Path) -> Result<HashMap<String, String>, TookaError> {
     let mut map = HashMap::new();
 
     // File system metadata
