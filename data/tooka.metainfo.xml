@@ -17,7 +17,7 @@ You write the rules. Tooka does the sorting.
 With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.</p>
 	</description>
 
-	<launchable type="desktop-id">io.github.benji377.tooka.desktop</launchable>
+	<launchable type="desktop-id">tooka.desktop</launchable>
 
 	<url type="homepage">https://tooka.deno.dev/</url>
 	<url type="bugtracker">https://github.com/Benji377/tooka/issues</url>
@@ -32,7 +32,7 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 		</screenshot>
 	</screenshots>
 
-	<icon type="stock">io.github.benji377.tooka</icon>
+	<icon type="stock">tooka</icon>
 	<content_rating type="oars-1.1" />
 
 	<categories>

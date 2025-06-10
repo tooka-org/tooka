@@ -5,6 +5,6 @@ Comment=A rule-based file sorter
 Exec=tooka
 Terminal=true
 Type=Application
-Icon=io.github.benji377.tooka
+Icon=tooka
 Categories=Utility;ConsoleOnly;FileTools
 StartupNotify=true
