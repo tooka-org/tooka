@@ -11,7 +11,11 @@ keywords.workspace = true
 categories.workspace = true
 readme.workspace = true
 license-file.workspace = true
-default-run = "tooka-cli"
+default-run = "tooka"
+
+[[bin]]
+name = "tooka"
+path = "src/main.rs"
 
 [dependencies]
 tooka-core = { path = "../tooka-core" }
@@ -29,4 +33,4 @@ homepage = "https://tooka.deno.dev"
 icons = ["../assets/logo.png"]
 licenseFile = "../LICENSE"
 formats = ["all"]
-before-packaging-command = "cargo build --release"
+before-packaging-command = "cargo build --release -p tooka-cli"
