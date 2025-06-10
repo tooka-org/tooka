@@ -11,7 +11,7 @@ use std::io::BufReader;
 use std::path::Path;
 
 /// Matches a file's name against a regular expression pattern
-fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
+pub(crate) fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
     log::debug!(
         "Matching file: {} against pattern: {}",
         file_path.display(),
@@ -23,7 +23,7 @@ fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaEr
 }
 
 /// Matches a file against a given vector of file extensions
-fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
+pub(crate) fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
     log::debug!(
         "Matching file: {} against extensions: {:?}",
         file_path.display(),
@@ -37,7 +37,7 @@ fn match_extensions(file_path: &Path, extensions: &[String]) -> bool {
 }
 
 /// Matches a file path against a glob pattern
-fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
+pub(crate) fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
     log::debug!(
         "Matching file: {} against glob pattern: {}",
         file_path.display(),
@@ -49,7 +49,7 @@ fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
 }
 
 /// Matches a file's size against a given size range in kilobytes
-fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
+pub(crate) fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
     log::debug!(
         "Matching file size: {} against range: {:?}",
         metadata.len(),
@@ -68,7 +68,7 @@ fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
 }
 
 /// Matches a file's MIME type against a given MIME type string
-fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
+pub(crate) fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
     log::debug!(
         "Matching file: {} against MIME type: {}",
         file_path.display(),
@@ -87,7 +87,7 @@ fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
 }
 
 /// Matches a file's metadata against a date range
-fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> bool {
+pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> bool {
     log::debug!("Matching against created date range: {:?}", date_range);
 
     metadata.created().is_ok_and(|created| {
@@ -106,7 +106,7 @@ fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> b
 }
 
 /// Matches a file's metadata against a date range
-fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool {
+pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool {
     log::debug!("Matching against modified date range: {:?}", date_range);
 
     metadata.modified().is_ok_and(|modified| {
@@ -125,7 +125,7 @@ fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool 
 }
 
 /// Matches a file's symlink status against a boolean value
-fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
+pub(crate) fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
     log::debug!(
         "Matching symlink status: {} against expected: {}",
         metadata.file_type().is_symlink(),
@@ -135,7 +135,7 @@ fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
 }
 
 /// Matches a specific metadata field (e.g., EXIF) against a file
-pub fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
+pub(crate) fn match_metadata_field(file_path: &Path, field: &rule::MetadataField) -> bool {
     log::debug!(
         "Checking metadata field match for key '{}' on file '{}'",
         field.key,

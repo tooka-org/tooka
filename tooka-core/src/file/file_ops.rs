@@ -44,7 +44,7 @@ pub fn execute_action(
     }
 }
 
-fn handle_move(
+pub(crate) fn handle_move(
     file_path: &Path,
     action: &MoveAction,
     dry_run: bool,
@@ -72,7 +72,7 @@ fn handle_move(
     })
 }
 
-fn handle_copy(
+pub(crate) fn handle_copy(
     file_path: &Path,
     action: &CopyAction,
     dry_run: bool,
@@ -100,7 +100,7 @@ fn handle_copy(
     })
 }
 
-fn handle_rename(
+pub(crate) fn handle_rename(
     file_path: &Path,
     action: &RenameAction,
     dry_run: bool,
@@ -132,7 +132,7 @@ fn handle_rename(
 }
 
 /// Handles the delete action for a file, either performing the deletion or simulating it in dry run mode.
-fn handle_delete(
+pub(crate) fn handle_delete(
     file_path: &Path,
     action: &DeleteAction,
     dry_run: bool,
@@ -162,7 +162,7 @@ fn handle_delete(
     })
 }
 
-fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> PathBuf
+pub(crate) fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> PathBuf
 where
     A: HasToAndPreserveStructure,
 {
@@ -201,7 +201,7 @@ where
     }
 }
 
-pub trait HasToAndPreserveStructure {
+pub(crate) trait HasToAndPreserveStructure {
     fn to(&self) -> &str;
     fn preserve_structure(&self) -> bool;
 }
