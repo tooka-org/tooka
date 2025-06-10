@@ -10,6 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  RUSTC_BOOTSTRAP: 1
 
 jobs:
   build:
@@ -30,18 +31,20 @@ jobs:
       run: cargo install cargo2junit
 
     - name: Run tests and convert to JUnit
-      run: cargo2junit --output test-results.xml -- cargo test -p tooka-core -- --show-output
+      run: cargo test -p tooka-core --format json --report-time | cargo2junit > test-results.xml
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}   
       with:
-        name: junit-test-results
+        name: test-results
         path: test-results.xml
 
     - name: Publish test results to GitHub UI
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       if: always()
       with:
+        artifact: test-results
         name: Rust Tests
-        path: test-results.xml
+        path: '*.xml'
         reporter: java-junit
