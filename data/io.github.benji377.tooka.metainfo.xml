@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>io.github.benji377.tooka</id>
+
+	<developer id="io.github.benji377">
+		<name>Benjamin Demetz</name>
+	</developer>
+
+	<metadata_license>MIT</metadata_license>
+	<project_license>GPL-3.0-only</project_license>
+	<name>Tooka</name>
+
+	<summary>A fast, rule-based CLI tool for organizing files</summary>
+	<description>
+		<p>Tooka is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
+You write the rules. Tooka does the sorting.
+With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.</p>
+	</description>
+
+	<launchable type="desktop-id">io.github.benji377.tooka.desktop</launchable>
+
+	<url type="homepage">https://tooka.deno.dev/</url>
+	<url type="bugtracker">https://github.com/Benji377/tooka/issues</url>
+	<url type="donation">https://github.com/sponsors/Benji377</url>
+	<url type="vcs-browser">https://github.com/Benji377/tooka</url>
+	<url type="contribute">https://github.com/Benji377/tooka/discussions</url>
+	<url type="contact">https://github.com/Benji377/tooka/discussions</url>
+
+	<screenshots>
+		<screenshot type="default">
+			<image>https://github.com/Benji377/tooka/blob/728bdf81a38f4a652db243512f09a139fd1b4dd7/assets/logo-banner.png</image>
+		</screenshot>
+	</screenshots>
+
+	<icon type="stock">io.github.benji377.tooka</icon>
+	<content_rating type="oars-1.1" />
+
+	<categories>
+		<category>Utility</category>
+		<category>ConsoleOnly</category>
+		<category>FileTools</category>
+	</categories>
+
+	<keywords>
+		<keyword>sorter</keyword>
+		<keyword>files</keyword>
+		<keyword>organizer</keyword>
+		<keyword>tooka</keyword>
+		<keyword>automation</keyword>
+		<keyword>tool</keyword>
+	</keywords>
+	
+	<provides>
+		<binary>tooka</binary>
+	</provides>
+
+	<releases>
+		<release version="1.0.0" date="2025-06-10">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v1.0.0</url>
+		<description>
+			<p>First full release with a working product.</p>
+		</description>
+		</release>
+		<release version="0.1.4" date="2025-06-5">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v0.1.4</url>
+		<description>
+			<p>BETA: Made logic more stable. General bug fixes</p>
+		</description>
+		</release>
+		<release version="0.1.3" date="2025-06-04">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v0.1.3</url>
+		<description>
+			<p>BETA: Changed the rule structure to have a better overview</p>
+		</description>
+		</release>
+		<release version="0.1.2" date="2025-05-28">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v0.1.2</url>
+		<description>
+			<p>BETA: Added Docker support and use of env variables</p>
+		</description>
+		</release>
+		<release version="0.1.1" date="2025-05-27">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v0.1.1</url>
+		<description>
+			<p>BETA: Added website with builder and globalized configs</p>
+		</description>
+		</release>
+		<release version="0.1.0" date="2025-05-25">
+		<url type="details">https://github.com/Benji377/tooka/releases/tag/v0.1.0</url>
+		<description>
+			<p>ALPHA: First release, general logic</p>
+		</description>
+		</release>
+	</releases>
+
+</component>
