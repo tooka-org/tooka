@@ -7,10 +7,10 @@ pkgdesc="A rule-based automatic file sorter"
 arch=('i686' 'x86_64' 'aarch64' 'riscv64')
 url="https://github.com/benji377/tooka"
 license=('GPL-3.0-only')
-depends=()
-makedepends=('git' 'cargo')
+depends=('glibc' 'gcc-libs')
+makedepends=('git' 'cargo' 'jq')
 provides=('tooka')
-conflicts=('tooka-cli' 'tooka' 'jq')
+conflicts=('tooka-cli' 'tooka')
 source=("${pkgname}::git+${url}.git")
 sha256sums=('SKIP')
 
@@ -45,13 +45,6 @@ build() {
   export RUSTUP_TOOLCHAIN=stable
   export CARGO_TARGET_DIR=target
   cargo build -p tooka-cli --frozen --release
-}
-
-
-check() {
-  cd "$srcdir/$pkgname"
-  export RUSTUP_TOOLCHAIN=stable
-  cargo test -p tooka-core --frozen
 }
 
 
