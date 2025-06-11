@@ -108,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
-          path: target/${{ matrix.target }}/debian/*.deb
+          path: target/release/tooka*.deb
 
   upload_to_release:
     name: Upload to GitHub Release
