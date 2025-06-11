@@ -97,12 +97,12 @@ jobs:
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
       - name: Install deb packager
-        run: cargo install cargo-deb
+        run: cargo install cargo-packager --locked
 
       - name: Package the cross-compiled build
         env:
           PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
-        run: cargo deb --target=${{ matrix.target }} -- -p tooka-cli
+        run: cargo packager --target=${{ matrix.target }} --formats=deb --release --verbose
 
       - name: Upload cross-compile artifacts
         uses: actions/upload-artifact@v4
