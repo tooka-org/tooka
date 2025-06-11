@@ -103,16 +103,16 @@ mod tests {
             } else {
                 matched += 1;
                 let ext = result
-                .file_name
-                .split('.')
-                .last()
-                .expect("File should have extension");
+                    .file_name
+                    .split('.')
+                    .last()
+                    .expect("File should have extension");
                 assert_eq!(result.action, "move");
                 assert!(result.matched_rule_id.contains(ext));
                 assert!(
                     result
-                    .new_path
-                    .starts_with(base_path.join(format!("out_{}", ext)))
+                        .new_path
+                        .starts_with(base_path.join(format!("out_{}", ext)))
                 );
             }
         }
