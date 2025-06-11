@@ -40,7 +40,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tooka-core = "1.0.0"
+tooka-core = "1.0.1"
 ```
 
 ---
