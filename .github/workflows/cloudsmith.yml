@@ -1,0 +1,42 @@
+name: Upload to Cloudsmith
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of the release (e.g. v1.0.0)"
+        required: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install GitHub CLI
+      run: sudo apt-get install -y gh
+
+    - name: Download release assets
+      run: |
+        TAG="${{ github.event.release.tag_name || inputs.tag }}"
+        echo "Downloading release assets for $TAG"
+        gh release download "$TAG" --dir dist/
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Cloudsmith CLI
+      run: pip install --upgrade cloudsmith-cli
+
+    - name: Upload all .deb packages
+      run: |
+        for deb in dist/*.deb; do
+          echo "Uploading $deb"
+          cloudsmith push deb benji377/tooka/ubuntu "$deb" -k ${{ secrets.CLOUDSMITH_API_KEY }}
+        done
+
+#    - name: Upload .rpm package
+#      run: cloudsmith push rpm benji377/tooka dist/*.rpm -k ${{ secrets.CLOUDSMITH_API_KEY }}
