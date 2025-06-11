@@ -90,24 +90,35 @@ mod tests {
             None::<fn()>,
         )?;
 
-        // We expect 4 out of 5 files to match (unknown extension should not match any rule)
-        assert_eq!(results.len(), 4);
+        // We expect all 5 files to be processed: 4 matched, 1 skipped
+        assert_eq!(results.len(), 5);
+
+        let mut matched = 0;
+        let mut skipped = 0;
 
         for result in results {
-            let expected_ext = result
+            if result.matched_rule_id == "none" {
+                skipped += 1;
+                assert_eq!(result.action, "skip");
+            } else {
+                matched += 1;
+                let ext = result
                 .file_name
                 .split('.')
                 .last()
                 .expect("File should have extension");
-
-            assert_eq!(result.action, "move");
-            assert!(result.matched_rule_id.contains(expected_ext));
-            assert!(
-                result
+                assert_eq!(result.action, "move");
+                assert!(result.matched_rule_id.contains(ext));
+                assert!(
+                    result
                     .new_path
-                    .starts_with(base_path.join(format!("out_{}", expected_ext)))
-            );
+                    .starts_with(base_path.join(format!("out_{}", ext)))
+                );
+            }
         }
+
+        assert_eq!(matched, 4);
+        assert_eq!(skipped, 1);
 
         Ok(())
     }
