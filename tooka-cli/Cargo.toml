@@ -38,16 +38,19 @@ formats = ["all"]
 generate-desktop-entry = false
 
 [package.metadata.packager.appimage.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.deb.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.pacman.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
