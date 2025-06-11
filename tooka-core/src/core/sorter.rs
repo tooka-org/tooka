@@ -106,7 +106,15 @@ fn sort_file(
         .collect();
 
     if matching.is_empty() {
-        return Ok(Vec::new());
+        log::debug!("No matching rules found for file '{}'", file_name);
+        // Return a default empty result if no rules match and the skip action performed
+        return Ok(vec![MatchResult {
+            file_name: file_name.clone(),
+            action: "skip".to_string(),
+            matched_rule_id: "none".to_string(),
+            current_path: file_path.to_path_buf(),
+            new_path: file_path.to_path_buf(),
+        }]);
     }
 
     // Pick the rule with the highest priority (largest u32), break ties by lowest index

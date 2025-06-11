@@ -26,9 +26,6 @@ pub const APP_ORG: &str = "github.benji377";
 /// Application name.
 pub const APP_NAME: &str = "tooka";
 
-/// SVG logo string embedded from assets.
-pub const LOGO_VECTOR_STR: &str = include_str!("../../assets/logo.svg");
-
 /// Global, thread-safe storage of the configuration.
 static CONFIG: OnceLock<Arc<Mutex<Config>>> = OnceLock::new();
 /// Global, thread-safe storage of the rules file.
