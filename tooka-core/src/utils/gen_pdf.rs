@@ -1,7 +1,7 @@
+use crate::sorter::MatchResult;
 use chrono::Local;
 use pdf_writer::{Chunk, Content, Name, Pdf, Rect, Ref, Str};
 use std::{collections::BTreeMap, path::Path};
-use crate::sorter::MatchResult;
 
 const PAGE_WIDTH: f32 = 595.0;
 const PAGE_HEIGHT: f32 = 842.0;
@@ -14,7 +14,6 @@ const TITLE_POS_Y: f32 = PAGE_HEIGHT - MARGIN_TOP;
 const TIME_POS_X: f32 = PAGE_WIDTH - 110.0;
 const TIME_POS_Y: f32 = PAGE_HEIGHT - 15.0;
 const MAX_PATH_LENGTH: f32 = PAGE_WIDTH - 2.0 * MARGIN_X - 105.0;
-
 
 pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
     let mut alloc = Ref::new(1);
@@ -31,7 +30,10 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
     // Group results by rule
     let mut grouped: BTreeMap<String, Vec<&MatchResult>> = BTreeMap::new();
     for result in results {
-        grouped.entry(result.matched_rule_id.clone()).or_default().push(result);
+        grouped
+            .entry(result.matched_rule_id.clone())
+            .or_default()
+            .push(result);
     }
 
     // Flatten entries, but keep rule_id for section headers
@@ -73,9 +75,11 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
                 let content_id = alloc.bump();
                 secondary.stream(content_id, &content.finish());
                 page.contents(content_id);
-                page.resources()
-                    .ext_g_states()
-                    .pairs(extg_states.iter().map(|(n, id): & (String, Ref)| (Name(n.as_bytes()), *id)));
+                page.resources().ext_g_states().pairs(
+                    extg_states
+                        .iter()
+                        .map(|(n, id): &(String, Ref)| (Name(n.as_bytes()), *id)),
+                );
 
                 page_number += 1;
                 y = PAGE_HEIGHT - MARGIN_TOP - 50.0;
@@ -140,7 +144,14 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
 
             let state_name = format!("G_{}_{}", entry.matched_rule_id, entry.file_name);
             content.set_parameters(Name(state_name.as_bytes()));
-            draw_colored_box(&mut content, MARGIN_X, y - 30.0, PAGE_WIDTH - 2.0 * MARGIN_X, 50.0, (0.9, 0.9, 0.9));
+            draw_colored_box(
+                &mut content,
+                MARGIN_X,
+                y - 30.0,
+                PAGE_WIDTH - 2.0 * MARGIN_X,
+                50.0,
+                (0.9, 0.9, 0.9),
+            );
             draw_match_result_block(&mut content, entry, y + 5.0, font_name);
             y -= 60.0;
             let state_id = alloc.bump();
@@ -181,14 +192,7 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
     Ok(())
 }
 
-
-fn write_text(
-    content: &mut Content, 
-    text: &str, 
-    font_size: f32, 
-    x: f32, y: f32, 
-    font_name: Name,
-) {
+fn write_text(content: &mut Content, text: &str, font_size: f32, x: f32, y: f32, font_name: Name) {
     content.begin_text();
     content.next_line(x, y);
     content.set_font(font_name, font_size);
@@ -203,22 +207,18 @@ fn draw_footer(content: &mut Content, page_num: usize, font_name: Name) {
         FONT_SIZE - 1.0,
         PAGE_WIDTH / 2.0 - 20.0,
         8.0,
-        font_name
+        font_name,
     );
 }
 
-fn draw_header(
-    content: &mut Content,
-    total_changes: usize,
-    font_name: Name
-) {
+fn draw_header(content: &mut Content, total_changes: usize, font_name: Name) {
     write_text(
         content,
         "Tooka Report",
         TITLE_FONT_SIZE,
         TITLE_POS_X,
         TITLE_POS_Y,
-        font_name
+        font_name,
     );
 
     let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
@@ -228,7 +228,7 @@ fn draw_header(
         FONT_SIZE - 1.0,
         TIME_POS_X,
         TIME_POS_Y,
-        font_name
+        font_name,
     );
 
     write_text(
@@ -237,7 +237,7 @@ fn draw_header(
         FONT_SIZE,
         TITLE_POS_X,
         TITLE_POS_Y - 15.0,
-        font_name
+        font_name,
     );
 }
 
@@ -252,13 +252,13 @@ fn draw_match_result_block(
 
     // Set colors based on action
     let color = match result.action.as_str() {
-        "move" => (0.2, 0.4, 0.8),      // Blue-ish
-        "copy" => (0.2, 0.7, 0.3),      // Green-ish
-        "delete" => (0.85, 0.3, 0.3),   // Red-ish
-        "rename" => (0.8, 0.6, 0.2),    // Orange-ish
-        "execute" => (0.5, 0.2, 0.7),   // Purple-ish
-        "skip" => (0.6, 0.6, 0.6),      // Grey
-        _ => (0.0, 0.0, 0.0),           // Default to black
+        "move" => (0.2, 0.4, 0.8),    // Blue-ish
+        "copy" => (0.2, 0.7, 0.3),    // Green-ish
+        "delete" => (0.85, 0.3, 0.3), // Red-ish
+        "rename" => (0.8, 0.6, 0.2),  // Orange-ish
+        "execute" => (0.5, 0.2, 0.7), // Purple-ish
+        "skip" => (0.6, 0.6, 0.6),    // Grey
+        _ => (0.0, 0.0, 0.0),         // Default to black
     };
 
     content.set_fill_rgb(color.0, color.1, color.2);
@@ -305,7 +305,6 @@ fn draw_colored_box(
     content.fill_even_odd();
     content.set_fill_rgb(0.0, 0.0, 0.0); // Reset fill color to black
 }
-
 
 fn truncate_path(path: &Path, max_len: f32) -> String {
     let full = path.display().to_string();
