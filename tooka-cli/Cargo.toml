@@ -33,7 +33,6 @@ homepage = "https://tooka.deno.dev"
 icons = ["../assets/logo.png"]
 licenseFile = "../LICENSE"
 formats = ["all"]
-before-packaging-command = "cargo build --release -p tooka-cli"
 
 [package.metadata.packager.linux]
 generate-desktop-entry = false

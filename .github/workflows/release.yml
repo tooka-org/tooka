@@ -45,6 +45,9 @@ jobs:
       - name: Install app dependencies
         run: cargo install cargo-packager --locked
 
+      - name: Build the application
+        run: cargo build -p tooka-cli --release
+
       - name: Package Binary
         run: cargo packager --release --verbose
 
@@ -99,6 +102,9 @@ jobs:
       - name: Install deb packager
         run: cargo install cargo-packager --locked
 
+      - name: Build the application
+        run: cargo build -p tooka-cli --release --target=${{ matrix.target }}
+
       - name: Package the cross-compiled build
         env:
           PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
@@ -108,7 +114,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
-          path: target/release/tooka*.deb
+          path: target/${{ matrix.target }}/release/tooka*.deb
 
   upload_to_release:
     name: Upload to GitHub Release
