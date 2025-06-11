@@ -35,7 +35,7 @@ jobs:
       run: |
         for deb in dist/*.deb; do
           echo "Uploading $deb"
-          cloudsmith push deb benji377/tooka "$deb" -k ${{ secrets.CLOUDSMITH_API_KEY }}
+          cloudsmith push deb benji377/tooka/any-distro/any-version "$deb" -k ${{ secrets.CLOUDSMITH_API_KEY }}
         done
 
 #    - name: Upload .rpm package
