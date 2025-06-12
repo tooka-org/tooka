@@ -7,9 +7,11 @@ icon: assets/logo.svg
 grade: stable
 confinement: strict
 platforms:
-  all:
-    build-on: [amd64] 
-    build-for: [all]
+  amd64:
+  arm64:
+  armhf:
+  riscv64:
+  
 
 parts:
   tooka:
