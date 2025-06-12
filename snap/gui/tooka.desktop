@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Tooka
+GenericName=Tooka
+Comment=A rule-based file sorter
+Exec=tooka
+Terminal=true
+Type=Application
+Icon=tooka
+Categories=Utility;ConsoleOnly;FileTools
+StartupNotify=true

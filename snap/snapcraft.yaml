@@ -18,17 +18,16 @@ parts:
     rust-channel: "stable"
     rust-cargo-parameters: ["-p tooka-cli"]
 
-#  desktop-files:
-#    plugin: dump
-#    source: data
-#    organize:
-#      tooka.desktop: usr/share/applications/tooka.desktop
-#      tooka.metainfo.xml: usr/share/metainfo/tooka.metainfo.xml
-#      tooka.svg: usr/share/applications/tooka.svg
+  desktop-files:
+    plugin: dump
+    source: data
+    organize:
+      tooka.desktop: usr/share/applications/tooka.desktop
+      tooka.svg: usr/share/applications/tooka.svg
 
 apps:
   tooka:
-    command: usr/bin/tooka
+    command: tooka
     plugs:
       - home
       - removable-media
