@@ -15,7 +15,7 @@ A fast, rule-based CLI tool for organizing files.
 
 ## 🧭 Introduction
 
-**Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
+**Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, or delete files using rules written in simple YAML format.
 
 You write the rules. Tooka does the sorting.
 
