@@ -15,6 +15,7 @@ parts:
   tooka:
     plugin: rust
     source: .
+    rust-channel: "stable"
 
 apps:
   tooka:
