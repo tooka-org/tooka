@@ -1,13 +1,14 @@
 # 🗂️ Tooka
 
-[![crates-io]](https://crates.io/crates/tooka-core)&ensp;[![docs-rs]](https://docs.rs/tooka_core)
+[![crates-io]](https://crates.io/crates/tooka-core)
+[![docs-rs]](https://docs.rs/tooka_core)
+[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
+[![test]](https://github.com/Benji377/tooka/actions/workflows/test.yml)
+[![feedback]](https://tally.so/r/mBVyLe)
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
 </div>
-
-[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
-[![test]](https://github.com/Benji377/tooka/actions/workflows/test.yml)
 
 A fast, rule-based CLI tool for organizing files.
 
@@ -15,251 +16,79 @@ A fast, rule-based CLI tool for organizing files.
 
 ## 🧭 Introduction
 
-**Tooka** is a powerful file automation tool that helps you organize, rename, move, copy, or delete files using rules written in simple YAML format.
+**Tooka** is a flexible command-line tool for automating your filesystem: organize, rename, move, copy, or delete files using simple, powerful YAML rules.
 
-You write the rules. Tooka does the sorting.
-
-With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.
+You define what files to match (by name, extension, metadata, size, etc.) and what should happen to them — Tooka handles the rest.
 
 ---
 
-## 🌐 Website
+## 🚀 Quick Start
 
-Visit [https://tooka.deno.dev](https://tooka.deno.dev) for a full overview.
-
-👉 Try the **interactive rule builder** at [https://tooka.deno.dev/builder](https://tooka.deno.dev/builder) — generate a YAML rule and download it directly for use with Tooka!
-
----
-
-## ✨ Features
-
-- Define custom file rules in YAML
-- Match by attributes like name, extension, size, metadata, and timestamps
-- Perform actions: move, copy, rename, delete, skip
-- Dry-run mode for safe previews
-- Cross-platform: Windows, macOS, and Linux
-- Shell autocompletion support
-
----
-
-## 🚀 Getting Started
-
-1. **Download Tooka** from the [releases page](https://github.com/Benji377/tooka/releases)
-2. Run `tooka` in your terminal to verify it's installed
-3. Create a new rule using the online builder or CLI:
+1. **Download** Tooka from the [📦 Website](https://tooka.deno.dev)
+2. **Verify install**:
 
    ```bash
-   tooka template --help
+   tooka --version
    ```
 
-4. Run a dry-run to test your rules:
+3. **Create a rule** using the [🛠️ Rule Builder](https://tooka.deno.dev/builder) or manually with YAML
+
+4. **Run a dry sort**:
 
    ```bash
    tooka sort --dry-run ~/Downloads
    ```
 
-> [!IMPORTANT]
-> **Always run a dry-run first** to see what files would be moved, renamed, or deleted. Tooka **cannot recover lost or changed files**. Proceed carefully!
-
-5. Once verified, run Tooka normally:
+5. **Apply the rule**:
 
    ```bash
-   tooka sort ~/Downloads
+   tooka sort
    ```
 
-6. Explore all options with:
-
-   ```bash
-   tooka --help
-   ```
+📚 Full usage examples and explanations in the [Wiki](https://github.com/Benji377/tooka/wiki).
 
 ---
 
-## 📁 Rule Format
+## 🌐 Website
 
-Tooka rules are written in YAML. Each rule defines when to match a file and what actions to take.
+Visit [**tooka.deno.dev**](https://tooka.deno.dev) for:
 
-### ✅ Basic Structure
-
-```yaml
-id: example_rule
-name: "Example Rule"
-enabled: true
-description: "Describe what this rule does"
-priority: 1
-
-when:
-  any: false
-  filename: "^.*\\.jpg$"
-  extensions: ["jpg", "jpeg"]
-  path: "**/holiday/**"
-  size_kb:
-    min: 10
-    max: 5000
-  mime_type: "image/jpeg"
-  created_date:
-    from: null
-    to: null
-  modified_date: null
-  is_symlink: false
-  metadata:
-    - key: "EXIF:DateTime"
-      value: null
-
-then:
-  - type: move
-    to: "/path/to/destination"
-    preserve_structure: false
-  - type: rename
-    to: "{{metadata.EXIF:DateTime|date:%Y-%m-%d}}-{{filename}}"
-```
+* 📦 **Downloads** – prebuilt binaries for macOS, Windows, and Linux
+* 🛠️ **Rule Builder** – create rules visually and export as YAML
 
 ---
 
-### 🔍 `when`: Conditions
+## 📚 Wiki
 
-Control how files are matched. Use `any: true` for OR logic, or omit for AND logic (default).
+The [**Tooka Wiki**](https://github.com/Benji377/tooka/wiki) covers:
 
-| Field           | Type              | Description                                        |
-| --------------- | ----------------- | -------------------------------------------------- |
-| `any`           | boolean           | `true` for OR logic between conditions             |
-| `filename`      | string (regex)    | Match filename using regex                         |
-| `extensions`    | list of strings   | File extensions (without the dot)                  |
-| `path`          | string (glob)     | Glob pattern for file paths                        |
-| `size_kb`       | object            | File size range in kilobytes: `min`, `max`         |
-| `mime_type`     | string            | Match MIME type (e.g. `image/png`)                 |
-| `created_date`  | object            | Match creation date range: `from`, `to` (ISO 8601) |
-| `modified_date` | object or null    | Same as above, for modification time               |
-| `is_symlink`    | boolean or null   | Match symlink status                               |
-| `metadata`      | list of key/value | Match file metadata (e.g., EXIF)                   |
+* Installation & configuration
+* Rule structure & templates
+* CLI commands
+* Troubleshooting
+* Docker sandbox usage
 
 ---
 
-### ⚙️ `then`: Actions
+## 💬 Community
 
-Define what to do when the rule matches:
+Join the [**GitHub Discussions**](https://github.com/Benji377/tooka/discussions) for:
 
-| Type      | Fields                                                    |
-| --------- | --------------------------------------------------------- |
-| `move`    | `to` (path), `preserve_structure` (bool)                  |
-| `copy`    | `to` (path), `preserve_structure` (bool)                  |
-| `delete`  | `trash` (bool)                                            |
-| `rename`  | `to` (template string with variables like `{{filename}}`) |
-| `execute` | `command` (string), `args` (list of arguments)            |
-| `skip`    | *(no fields)* — skips further rules for the current file  |
+* Feature ideas
+* Help and usage tips
+* Community showcase
 
 ---
 
-## 🐳 Try Tooka in Docker
+## 📝 Feedback
 
-Run Tooka inside a lightweight Debian container — perfect for testing rules in
-isolation.
+Got thoughts, bugs, or praise?
 
-### Build the Docker Image
+**👉 [Submit feedback via this form](https://tally.so/r/mBVyLe)** – no GitHub account needed.
 
-```bash
-docker build -t tooka-playground .
-```
-
-### Start a Bash Session with Tooka Preinstalled
-
-```bash
-docker run --rm -it tooka-playground
-```
-
-Once inside the container, you can explore Tooka freely:
-
-```bash
-tooka --help
-tooka config
-tooka template
-```
-
-You can mount volumes to access your real files and rules:
-
-```bash
-docker run --rm -it \
-  -v "$HOME/Downloads:/input" \
-  -v "$PWD/rules:/rules" \
-  tooka-playground
-```
-
-> 💡 Use `/input` as your working directory or test folder, and reference rules from `/rules`.
-
----
-
-## ⚙️ Environment Variables
-
-Tooka uses environment variables to override its default directories:
-
-| Variable              | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `TOOKA_CONFIG_DIR`    | Custom path for Tooka’s config file              |
-| `TOOKA_DATA_DIR`      | Custom path for data storage (e.g., rules, logs) |
-| `TOOKA_SOURCE_FOLDER` | Custom path used by the sort command             |
-
-Example usage:
-
-```bash
-export TOOKA_CONFIG_DIR="$HOME/.config/custom-tooka"
-export TOOKA_DATA_DIR="$HOME/.local/share/custom-tooka"
-export TOOKA_SOURCE_FOLDER="$HOME/downloads"
-```
-
----
-
-## 🛠️ CLI Commands
-
-| Command               | Description                                        |
-| --------------------- | -------------------------------------------------- |
-| `add <YAML-file>`     | Import a rule file                                 |
-| `remove <ID>`         | Remove a rule by its ID                            |
-| `toggle <ID>`         | Enable or disable a rule                           |
-| `list`                | List all available rules                           |
-| `export <ID> <path>`  | Export a rule to file                              |
-| `sort [OPTIONS]`      | Apply active rules to sort files                   |
-| `template [OPTIONS]`  | Generate rule templates from predefined logic      |
-| `config [OPTIONS]`    | View or modify Tooka’s configuration               |
-| `completions <shell>` | Generate autocompletions for bash, zsh, fish, etc. |
-
----
-
-## ⚙️ Configuration
-
-Tooka uses a YAML configuration file stored in your system’s configuration directory. You can manage it entirely via the CLI:
-
-```bash
-tooka config --help
-```
-
-### What You Can Configure
-
-| Field            | Description                                     |
-| ---------------- | ----------------------------------------------- |
-| `config_version` | Internal version tracking for config migrations |
-| `source_folder`  | Default folder Tooka uses to sort files         |
-| `rules_file`     | Path to the active YAML rule set                |
-| `logs_folder`    | Directory where Tooka writes log files          |
-
-### Config File Locations
-
-* **Linux**: `~/.config/github.benji377/tooka/config.yaml`
-* **Windows**: `%APPDATA%\github.benji377\tooka\config.yaml`
-* **macOS**: `~/Library/Application Support/github.benji377/tooka/config.yaml`
-
----
-
-## 📜 License
-
-Tooka is open source and available under the [GPLv3 License](LICENSE).
-
----
-
-## 💬 Support
-
-Have a bug, idea, or question? Join the conversation in [GitHub Discussions](https://github.com/Benji377/tooka/discussions).
-
-[clippy]: https://github.com/Benji377/tooka/actions/workflows/clippy.yml/badge.svg
-[test]: https://github.com/Benji377/tooka/actions/workflows/test.yml/badge.svg
+[clippy]: https://img.shields.io/github/actions/workflow/status/Benji377/tooka/clippy.yml?label=Clippy&logo=rust&style=for-the-badge&labelColor=555555
+[test]: https://img.shields.io/github/actions/workflow/status/Benji377/tooka/test.yml?label=Tests&logo=githubactions&style=for-the-badge&labelColor=555555
 [crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
 [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
+[feedback]: https://img.shields.io/badge/feedback-Tally-blueviolet?style=for-the-badge&labelColor=555555&logo=googleforms
+
