@@ -27,7 +27,7 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
     let page_tree_id = alloc.bump();
     let mut page_ids = vec![];
 
-    // Group results by rule
+    // Group results by rule and sort each group by file name
     let mut grouped: BTreeMap<String, Vec<&MatchResult>> = BTreeMap::new();
     for result in results {
         grouped
@@ -36,7 +36,12 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
             .push(result);
     }
 
-    // Flatten entries, but keep rule_id for section headers
+    // Sort entries by file_name within each rule_id group
+    for entries in grouped.values_mut() {
+        entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
+    }
+
+    // Flatten into display order: sorted by rule_id (already sorted in BTreeMap), then file_name
     let mut flat_entries = vec![];
     for (rule_id, entries) in grouped {
         flat_entries.push((Some(rule_id), None)); // Section header marker

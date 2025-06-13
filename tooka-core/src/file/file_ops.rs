@@ -174,7 +174,7 @@ pub(crate) fn handle_delete(
     }
 
     Ok(FileOperationResult {
-        new_path: PathBuf::new(),
+        new_path: "[deleted]".into(),
         action: "delete".into(),
     })
 }

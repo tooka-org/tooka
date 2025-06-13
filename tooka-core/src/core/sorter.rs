@@ -129,10 +129,11 @@ fn sort_file(
     );
 
     let mut results = Vec::new();
+    let mut current_path = file_path.to_path_buf();
 
-    for action in &rule.then {
-        let op_result =
-            file_ops::execute_action(file_path, action, dry_run, source_path).map_err(|e| {
+    for (i, action) in rule.then.iter().enumerate() {
+        let op_result = file_ops::execute_action(&current_path, action, dry_run, source_path)
+            .map_err(|e| {
                 TookaError::FileOperationError(format!("Failed to execute action: {e}"))
             })?;
 
@@ -140,7 +141,7 @@ fn sort_file(
         log_file_operation(&format!(
             "{log_prefix}[{:?}] '{}' to '{}'",
             action,
-            file_path.display(),
+            current_path.display(),
             op_result.new_path.display()
         ));
 
@@ -148,9 +149,22 @@ fn sort_file(
             file_name: file_name.clone(),
             action: op_result.action.clone(),
             matched_rule_id: rule.id.clone(),
-            current_path: file_path.to_path_buf(),
+            current_path: current_path.clone(),
             new_path: op_result.new_path.clone(),
         });
+
+        // Stop if the file was deleted
+        if op_result.action == "delete" {
+            if i + 1 < rule.then.len() {
+                log::warn!(
+                    "File was deleted, skipping {} remaining action(s).",
+                    rule.then.len() - (i + 1)
+                );
+            }
+            break;
+        }
+
+        current_path = op_result.new_path.clone();
     }
 
     Ok(results)
