@@ -1,0 +1,20 @@
+name: Winget
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ github.workspace }}/winget
+    env:
+      WINGETCREATE_TOKEN: ${{ secrets.WINGETCREATE_TOKEN }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Create manifest and submit PR
+      run: |
+        ./build.ps1 -Version "${{ github.event.release.tag_name }}" -Token $env:WINGETCREATE_TOKEN
