@@ -64,6 +64,11 @@ Get-ChildItem '*.yaml' | ForEach-Object {
 
 # Optional: Submit to winget-pkgs if token is present
 if ($Token) {
+    # Install C++ Runtime Desktop framework package (required dependency)
+    $vcLibsBundleFile = "$env:TEMP\Microsoft.VCLibs.x64.14.00.Desktop.appx"
+    Invoke-WebRequest https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile $vcLibsBundleFile
+    Add-AppxPackage $vcLibsBundleFile
+
     # Install latest wingetcreate
     $wingetAppx = "$env:TEMP\wingetcreate.msixbundle"
     Invoke-WebRequest https://aka.ms/wingetcreate/latest/msixbundle -OutFile $wingetAppx
