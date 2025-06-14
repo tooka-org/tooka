@@ -11,5 +11,8 @@ Installers:
   InstallerType: nullsoft
   InstallerUrl: https://github.com/Benji377/tooka/releases/download/v<VERSION>/tooka_<VERSION>_x64-setup.exe
   InstallerSha256: <HASH-EXE>
+  InstallerSwitches:
+    Silent: "/S"
+    SilentWithProgress: "/S"
 ManifestType: installer
 ManifestVersion: 1.9.0
