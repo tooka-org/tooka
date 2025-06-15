@@ -92,3 +92,18 @@ Got thoughts, bugs, or praise?
 [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
 [feedback]: https://img.shields.io/badge/feedback-Tally-blueviolet?style=for-the-badge&labelColor=555555&logo=googleforms
 
+---
+
+## 🌟 Stargazers
+
+[![Stargazers repo roster for @Benji377/tooka](https://reporoster.com/stars/dark/Benji377/tooka)](https://github.com/Benji377/tooka/stargazers)
+[![Forkers repo roster for @Benji377/tooka](https://reporoster.com/forks/dark/Benji377/tooka)](https://github.com/Benji377/tooka/network/members)
+## Star History
+
+<a href="https://www.star-history.com/#Benji377/tooka&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date" />
+ </picture>
+</a>
