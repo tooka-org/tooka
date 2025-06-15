@@ -7,7 +7,7 @@ env:
   VERSION: 1.0.2
 
 jobs:
-  build:
+  build_and_package:
     name: Build & Package
     runs-on: ${{ matrix.platform }}
     permissions: write-all
@@ -17,80 +17,64 @@ jobs:
         include:
           - platform: macos-latest
             artifact_paths: target/release/tooka*_aarch64.dmg
+            build_target: tooka-cli
+            build_args: ""
+            cross: false
           - platform: macos-13
             artifact_paths: target/release/tooka*_x64.dmg
+            build_target: tooka-cli
+            build_args: ""
+            cross: false
           - platform: ubuntu-latest
             artifact_paths: |
               target/release/PKGBUILD
               target/release/tooka*_amd64.deb
               target/release/tooka*_x86_64.AppImage
               target/generate-rpm/tooka*.rpm
+            build_target: tooka-cli
+            build_args: ""
+            cross: false
           - platform: windows-latest
             artifact_paths: |
               target/release/tooka*_x64_en-US.msi
               target/release/tooka*_x64-setup.exe
+            build_target: tooka-cli
+            build_args: ""
+            cross: false
+          - platform: ubuntu-latest
+            artifact_paths: |
+              target/aarch64-unknown-linux-gnu/release/tooka*.deb
+              target/aarch64-unknown-linux-gnu/generate-rpm/tooka*.rpm
+            build_target: tooka-cli
+            build_args: "--target=aarch64-unknown-linux-gnu"
+            cross: true
+            apt: gcc-aarch64-linux-gnu
+            sysroot: /usr/aarch64-linux-gnu/
+            pkg_arch: arm64
+            rust_target: aarch64-unknown-linux-gnu
+          - platform: ubuntu-latest
+            artifact_paths: |
+              target/armv7-unknown-linux-gnueabihf/release/tooka*.deb
+              target/armv7-unknown-linux-gnueabihf/generate-rpm/tooka*.rpm
+            build_target: tooka-cli
+            build_args: "--target=armv7-unknown-linux-gnueabihf"
+            cross: true
+            apt: gcc-arm-linux-gnueabihf
+            sysroot: /usr/arm-linux-gnueabihf/
+            pkg_arch: armhf
+            rust_target: armv7-unknown-linux-gnueabihf
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'ubuntu-latest' && !matrix.cross
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential curl pkg-config
 
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: swatinem/rust-cache@v2
-
-      - name: Install app dependencies
-        run: cargo install cargo-packager cargo-generate-rpm --locked
-
-      - name: Build the application
-        run: cargo build -p tooka-cli --release
-
-      - name: Package Binary
-        run: cargo packager --release --verbose
-
-      # If we are on linux, we also package the RPM
-      - name: Package RPM
-        if: matrix.platform == 'ubuntu-latest'
-        run: cargo generate-rpm -p tooka-cli
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.platform }}-release-artifacts
-          path: ${{ matrix.artifact_paths }}
-
-  cross_compile:
-    name: Cross Compile & Package
-    runs-on: ubuntu-latest
-    permissions: write-all
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: aarch64
-            target: aarch64-unknown-linux-gnu
-            apt: gcc-aarch64-linux-gnu
-            sysroot: /usr/aarch64-linux-gnu/
-            pkg_arch: arm64
-#          - arch: riscv64                         Not supported by cargo-packager yet
-#            target: riscv64gc-unknown-linux-gnu
-#            apt: gcc-riscv64-linux-gnu
-#            sysroot: /usr/riscv64-linux-gnu/
-#            pkg_arch: riscv64
-          - arch: armv7
-            target: armv7-unknown-linux-gnueabihf
-            apt: gcc-arm-linux-gnueabihf
-            sysroot: /usr/arm-linux-gnueabihf/
-            pkg_arch: armhf
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install system dependencies
+      - name: Install cross dependencies (cross only)
+        if: matrix.cross
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config build-essential curl ${{ matrix.apt }}
@@ -99,41 +83,49 @@ jobs:
 
       - uses: swatinem/rust-cache@v2
 
-      - name: Install Rust target
-        run: rustup target add ${{ matrix.target }}
+      - name: Install Rust target (cross only)
+        if: matrix.cross
+        run: rustup target add ${{ matrix.rust_target }}
 
-      - name: Set PKG_CONFIG_SYSROOT_DIR
+      - name: Set PKG_CONFIG_SYSROOT_DIR (cross only)
+        if: matrix.cross
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
-      - name: Install deb packager
+      - name: Install app dependencies
         run: cargo install cargo-packager cargo-generate-rpm --locked
 
       - name: Build the application
-        run: cargo build -p tooka-cli --release --target=${{ matrix.target }}
+        run: cargo build -p ${{ matrix.build_target }} --release ${{ matrix.build_args }}
 
-      - name: Package the cross-compiled build
-        env:
-          PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
-        run: cargo packager --target=${{ matrix.target }} --formats=deb --release --verbose
+      - name: Package Binary
+        if: (!matrix.cross) || (matrix.cross && matrix.build_args != '')
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cargo packager --target=${{ matrix.rust_target }} --formats=deb --release --verbose
+          else
+            cargo packager --release --verbose
+          fi
 
       - name: Package RPM
-        env:
-          PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
-        run: cargo generate-rpm -p tooka-cli --target=${{ matrix.target }} --target-dir=target/${{ matrix.target }}
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cargo generate-rpm -p ${{ matrix.build_target }} --target=${{ matrix.rust_target }} --target-dir=target/${{ matrix.rust_target }}
+          else
+            cargo generate-rpm -p ${{ matrix.build_target }}
+          fi
 
-      - name: Upload cross-compile artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
-          path: |
-              target/${{ matrix.target }}/release/tooka*.deb
-              target/${{ matrix.target }}/generate-rpm/tooka*.rpm
+          name: ${{ matrix.platform }}${{ matrix.cross && format('-{0}', matrix.pkg_arch) || '' }}-release-artifacts
+          path: ${{ matrix.artifact_paths }}
 
   upload_to_release:
     name: Upload to GitHub Release
     runs-on: ubuntu-latest
     permissions: write-all
-    needs: [build, cross_compile]
+    needs: [build_and_package]
     steps:
       - uses: actions/download-artifact@v4
         with:
