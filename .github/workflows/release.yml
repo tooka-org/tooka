@@ -99,6 +99,7 @@ jobs:
 
       - name: Package Binary
         if: (!matrix.cross) || (matrix.cross && matrix.build_args != '')
+        shell: bash
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
             cargo packager --target=${{ matrix.rust_target }} --formats=deb --release --verbose
@@ -110,7 +111,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
-            cargo generate-rpm -p ${{ matrix.build_target }} --target=${{ matrix.rust_target }} --target-dir=target/${{ matrix.rust_target }}
+            cargo generate-rpm -p ${{ matrix.build_target }} --target=${{ matrix.rust_target }}
           else
             cargo generate-rpm -p ${{ matrix.build_target }}
           fi
