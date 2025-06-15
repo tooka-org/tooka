@@ -1,27 +1,34 @@
-FROM debian:bookworm-slim
+# syntax=docker/dockerfile:1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    sudo \
-    jq \
-    ca-certificates && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+### ---- Stage 1: Build Tooka ----
+FROM rust:1.87 AS builder
 
-# Fetch latest Tooka release and install
-RUN LATEST_URL=$(curl -s https://api.github.com/repos/Benji377/tooka/releases/latest | \
-    jq -r '.assets[] | select(.name | endswith("_amd64.deb")) | .browser_download_url') && \
-    wget -O tooka.deb "$LATEST_URL" && \
-    sudo dpkg -i tooka.deb && \
-    rm tooka.deb
+# Install build tools
+RUN apt-get update && apt-get install -y musl-tools pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN useradd -ms /bin/bash tooka
-USER tooka
+# Add musl target for static linking
+RUN rustup target add x86_64-unknown-linux-musl
 
-# Create workspace directory
-WORKDIR /home/tooka/workspace
+WORKDIR /usr/src/tooka
 
-# Entrypoint to keep container alive with bash shell
-ENTRYPOINT ["/bin/bash"]
+# Accept TOOKA_REF arg (branch or tag name)
+ARG TOOKA_REF=main
+
+# Clone repo and checkout ref
+RUN git clone --depth 1 --branch ${TOOKA_REF} https://github.com/Benji377/tooka.git .
+
+# Build Tooka using musl
+RUN cargo build -p tooka-cli --release --target x86_64-unknown-linux-musl
+
+### ---- Stage 2: Runtime Container ----
+FROM alpine:latest
+
+# Install minimal runtime dependencies
+RUN apk add --no-cache ca-certificates bash
+
+# Copy static binary
+COPY --from=builder /usr/src/tooka/target/x86_64-unknown-linux-musl/release/tooka /usr/local/bin/tooka
+
+# Set entrypoint to Tooka
+ENTRYPOINT ["tooka"]
+CMD ["--help"]

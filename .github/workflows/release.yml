@@ -15,35 +15,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS native builds
           - platform: macos-latest
             artifact_paths: target/release/tooka*_aarch64.dmg
             build_target: tooka-cli
             build_args: ""
             cross: false
-            rust_target: x86_64-apple-darwin
-
           - platform: macos-13
             artifact_paths: target/release/tooka*_x64.dmg
             build_target: tooka-cli
             build_args: ""
             cross: false
-            rust_target: x86_64-apple-darwin
-
-          # Linux native build with musl
           - platform: ubuntu-latest
             artifact_paths: |
-              target/x86_64-unknown-linux-musl/release/tooka*
               target/release/PKGBUILD
               target/release/tooka*_amd64.deb
               target/release/tooka*_x86_64.AppImage
               target/generate-rpm/tooka*.rpm
             build_target: tooka-cli
-            build_args: "--target=x86_64-unknown-linux-musl"
+            build_args: ""
             cross: false
-            rust_target: x86_64-unknown-linux-musl
-
-          # Windows native builds
           - platform: windows-latest
             artifact_paths: |
               target/release/tooka*_x64_en-US.msi
@@ -51,9 +41,6 @@ jobs:
             build_target: tooka-cli
             build_args: ""
             cross: false
-            rust_target: x86_64-pc-windows-msvc
-
-          # Cross compile ARM64
           - platform: ubuntu-latest
             artifact_paths: |
               target/aarch64-unknown-linux-gnu/release/tooka*.deb
@@ -65,8 +52,6 @@ jobs:
             sysroot: /usr/aarch64-linux-gnu/
             pkg_arch: arm64
             rust_target: aarch64-unknown-linux-gnu
-
-          # Cross compile ARMv7
           - platform: ubuntu-latest
             artifact_paths: |
               target/armv7-unknown-linux-gnueabihf/release/tooka*.deb
@@ -82,12 +67,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install dependencies for musl native build and cross builds
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-latest' && !matrix.cross
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential curl pkg-config musl-tools
+          sudo apt-get install -y build-essential curl pkg-config
 
       - name: Install cross dependencies (cross only)
         if: matrix.cross
@@ -99,11 +83,10 @@ jobs:
 
       - uses: swatinem/rust-cache@v2
 
-      # Install Rust targets for cross and musl builds
-      - name: Install Rust target
+      - name: Install Rust target (cross only)
+        if: matrix.cross
         run: rustup target add ${{ matrix.rust_target }}
 
-      # Set sysroot for cross compilation
       - name: Set PKG_CONFIG_SYSROOT_DIR (cross only)
         if: matrix.cross
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
