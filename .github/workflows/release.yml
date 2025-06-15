@@ -136,7 +136,7 @@ jobs:
       - name: Create attestation for all builds
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: artifacts/tooka*
+          subject-path: artifacts/**/tooka*
 
       - name: Release to GitHub
         uses: softprops/action-gh-release@v2
@@ -144,4 +144,4 @@ jobs:
           draft: true
           generate_release_notes: true
           tag_name: Tooka v${{ env.VERSION }}
-          files: artifacts/tooka*
+          files: artifacts/**/tooka*
