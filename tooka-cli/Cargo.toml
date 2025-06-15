@@ -11,6 +11,7 @@ keywords.workspace = true
 categories.workspace = true
 readme.workspace = true
 license-file.workspace = true
+license.workspace = true
 default-run = "tooka"
 
 [[bin]]
@@ -39,18 +40,31 @@ generate-desktop-entry = false
 
 [package.metadata.packager.appimage.files]
 "../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.deb.files]
 "../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.pacman.files]
 "../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
 "../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
 "../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
 "../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/tooka", dest = "/usr/bin/tooka", mode = "0755" },
+    { source = "LICENSE", dest = "/usr/share/doc/tooka/LICENSE", doc = true, mode = "0644" },
+    { source = "README.md", dest = "/usr/share/doc/tooka/README.md", doc = true, mode = "0644" },
+    { source = "data/tooka.desktop", dest = "/usr/share/applications/tooka.desktop", mode = "0644" },
+    { source = "data/tooka.svg", dest = "/usr/share/icons/hicolor/scalable/apps/tooka.svg", mode = "0644" },
+    { source = "data/tooka.metainfo.xml", dest = "/usr/share/metainfo/tooka.metainfo.xml", mode = "0644" }
+]

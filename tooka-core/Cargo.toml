@@ -9,8 +9,9 @@ repository.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 categories.workspace = true
+license.workspace = true
+license-file.workspace = true
 readme = "README.md"
-license = "GPL-3.0-only"
 
 [dependencies]
 # Core functionality

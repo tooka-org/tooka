@@ -24,6 +24,7 @@ jobs:
               target/release/PKGBUILD
               target/release/tooka*_amd64.deb
               target/release/tooka*_x86_64.AppImage
+              target/generate-rpm/tooka*.rpm
           - platform: windows-latest
             artifact_paths: |
               target/release/tooka*_x64_en-US.msi
@@ -43,13 +44,18 @@ jobs:
       - uses: swatinem/rust-cache@v2
 
       - name: Install app dependencies
-        run: cargo install cargo-packager --locked
+        run: cargo install cargo-packager cargo-generate-rpm --locked
 
       - name: Build the application
         run: cargo build -p tooka-cli --release
 
       - name: Package Binary
         run: cargo packager --release --verbose
+
+      # If we are on linux, we also package the RPM
+      - name: Package RPM
+        if: matrix.platform == 'ubuntu-latest'
+        run: cargo generate-rpm -p tooka-cli
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -100,7 +106,7 @@ jobs:
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
       - name: Install deb packager
-        run: cargo install cargo-packager --locked
+        run: cargo install cargo-packager cargo-generate-rpm --locked
 
       - name: Build the application
         run: cargo build -p tooka-cli --release --target=${{ matrix.target }}
@@ -110,11 +116,18 @@ jobs:
           PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
         run: cargo packager --target=${{ matrix.target }} --formats=deb --release --verbose
 
+      - name: Package RPM
+        env:
+          PKG_CONFIG_SYSROOT_DIR: ${{ matrix.sysroot }}
+        run: cargo generate-rpm -p tooka-cli --target=${{ matrix.target }} --target-dir=target/${{ matrix.target }}
+
       - name: Upload cross-compile artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.pkg_arch }}-cross-compile-artifacts
-          path: target/${{ matrix.target }}/release/tooka*.deb
+          path: |
+              target/${{ matrix.target }}/release/tooka*.deb
+              target/${{ matrix.target }}/generate-rpm/tooka*.rpm
 
   upload_to_release:
     name: Upload to GitHub Release
