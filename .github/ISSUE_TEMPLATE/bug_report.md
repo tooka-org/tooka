@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: '[BUG] ...'
 labels: 'bug'
 assignees: ''
 
@@ -20,8 +20,9 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Logs**
+If applicable, add logs to help us debug the issue faster.
+You can [check the wiki](https://github.com/Benji377/tooka/wiki/Configuration#-what-you-can-configure) on how to retrieve them.
 
 **Desktop (please complete the following information):**
  - OS: [e.g. iOS]
