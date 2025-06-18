@@ -26,14 +26,12 @@ function Write-MetaData {
     param (
         [string]$FileName,
         [string]$Version,
-        [string]$HashAmd64Msi,
-        [string]$HashAmd64Exe
+        [string]$HashAmd64Msi
     )
 
     $content = Get-Content $FileName -Raw
     $content = $content.Replace('<VERSION>', $Version)
     $content = $content.Replace('<HASH-AMD64>', $HashAmd64Msi)
-    $content = $content.Replace('<HASH-EXE>', $HashAmd64Exe)
     $date = Get-Date -Format "yyyy-MM-dd"
     $content = $content.Replace('<DATE>', $date)
 
@@ -50,16 +48,11 @@ $Version = $Version.TrimStart('v')
 
 # Download and hash installers
 $msiName = "tooka_${Version}_x64_en-US.msi"
-$exeName = "tooka_${Version}_x64-setup.exe"
-
 $HashAmd64Msi = Get-GitHubFileHash -FileName $msiName -Version $Version
-$HashAmd64Exe = Get-GitHubFileHash -FileName $exeName -Version $Version
 
 # Generate updated YAMLs
 Get-ChildItem '*.yaml' | ForEach-Object {
-    Write-MetaData -FileName $_.Name -Version $Version `
-        -HashAmd64Msi $HashAmd64Msi `
-        -HashAmd64Exe $HashAmd64Exe
+    Write-MetaData -FileName $_.Name -Version $Version -HashAmd64Msi $HashAmd64Msi
 }
 
 # Optional: Submit to winget-pkgs if token is present
