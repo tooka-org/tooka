@@ -10,6 +10,6 @@ jobs:
       - uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: Benji377.Tooka
-          installers-regex: '\.exe$' # Only .exe files
+          installers-regex: '\.msi$' # Only .exe files
           token: ${{ secrets.WINGETCREATE_TOKEN }}
 
