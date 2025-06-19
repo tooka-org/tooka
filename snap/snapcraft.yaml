@@ -3,7 +3,7 @@ base: core24
 version: git
 summary: A fast, rule-based CLI tool for organizing your files.
 description: Tooka is a powerful file automation tool that helps you organize, rename, move, copy, compress, or delete files using rules written in simple YAML format.
-icon: assets/logo.svg
+icon: tooka.svg
 grade: stable
 confinement: strict
 platforms:
