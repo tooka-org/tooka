@@ -28,7 +28,7 @@ parts:
 
 apps:
   tooka:
-    command: bin/raspirus
+    command: usr/bin/raspirus
     plugs:
       - home
       - removable-media
