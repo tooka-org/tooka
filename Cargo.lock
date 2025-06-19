@@ -299,9 +299,9 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "flexi_logger"
-version = "0.30.2"
+version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb03342077df16d5b1400d7bed00156882846d7a479ff61a6f10594bcc3423d8"
+checksum = "ab9765cc4ba26211f932a7a37649ec88752f7abcbd8822617572562ce31234df"
 dependencies = [
  "chrono",
  "log",
@@ -794,9 +794,9 @@ dependencies = [
 
 [[package]]
 name = "tooka-core"
-version = "1.0.2"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f3bad03be173418a726c924dd1eb06ba38e8749f1a148baddb4370956e63544"
+checksum = "034865a4a1ee9b1a1683fdf73e306d0870d075538b4999a2c69fe8753c54a2b6"
 dependencies = [
  "anyhow",
  "chrono",
