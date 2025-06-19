@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 ### ---- Stage 1: Build Tooka ----
 FROM rust:1.87 AS builder
 
