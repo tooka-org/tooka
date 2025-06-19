@@ -32,7 +32,7 @@ panic = "abort"
 
 [package.metadata.packager]
 product-name = "tooka"
-identifier = "io.github.benji377.tooka"
+identifier = "io.github.tooka-org.tooka"
 category = "Utility"
 homepage = "https://tooka.deno.dev"
 icons = ["../assets/logo.png"]
