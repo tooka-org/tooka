@@ -1,26 +1,24 @@
-[workspace]
-resolver = "3"
-members = [
-    "tooka-core",
-    "tooka-cli"
-]
-default-members = ["tooka-cli"]
-
-[workspace.package]
+[package]
+name = "tooka"
 version = "1.0.2"
 description = "A fast, rule-based CLI tool for organizing your files"
 authors = ["Benjamin Demetz"]
 license-file = "LICENSE"
 license = "GPL-3.0-only"
 readme = "README.md"
-repository = "https://github.com/Benji377/tooka"
+repository = "https://github.com/tooka-org/cli"
 homepage = "https://tooka.deno.dev"
 keywords = ["tooka", "cli", "utility", "automation", "file-organizer"]
 categories = ["command-line-utilities", "filesystem"]
 edition = "2024"
 rust-version = "1.87"
+default-run = "tooka"
 
-[workspace.dependencies]
+[dependencies]
+tooka-core = "1.0.2"
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4.5.50"
+indicatif = "0.17.11"
 anyhow = "1.0.98"
 log = "0.4.27"
 
@@ -30,3 +28,47 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+
+[package.metadata.packager]
+product-name = "tooka"
+identifier = "io.github.benji377.tooka"
+category = "Utility"
+homepage = "https://tooka.deno.dev"
+icons = ["../assets/logo.png"]
+licenseFile = "../LICENSE"
+formats = ["all"]
+
+[package.metadata.packager.linux]
+generate-desktop-entry = false
+
+[package.metadata.packager.appimage.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
+"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+
+[package.metadata.packager.deb.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
+"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+
+[package.metadata.packager.pacman.files]
+"../README.md" = "usr/share/doc/tooka/README.md"
+"../LICENSE" = "usr/share/doc/tooka/LICENSE"
+"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/tooka", dest = "/usr/bin/tooka", mode = "0755" },
+    { source = "LICENSE", dest = "/usr/share/doc/tooka/LICENSE", doc = true, mode = "0644" },
+    { source = "README.md", dest = "/usr/share/doc/tooka/README.md", doc = true, mode = "0644" },
+    { source = "data/tooka.desktop", dest = "/usr/share/applications/tooka.desktop", mode = "0644" },
+    { source = "data/tooka.svg", dest = "/usr/share/icons/hicolor/scalable/apps/tooka.svg", mode = "0644" },
+    { source = "data/tooka.metainfo.xml", dest = "/usr/share/metainfo/tooka.metainfo.xml", mode = "0644" }
+]

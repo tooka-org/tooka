@@ -24,5 +24,5 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ghcr.io/benji377/tooka:latest .
-          docker push ghcr.io/benji377/tooka:latest
+          docker build -t ghcr.io/tooka-org/tooka:latest .
+          docker push ghcr.io/tooka-org/tooka:latest

@@ -13,10 +13,10 @@ WORKDIR /usr/src/tooka
 ARG TOOKA_REF=main
 
 # Clone repo and checkout ref
-RUN git clone --depth 1 --branch ${TOOKA_REF} https://github.com/Benji377/tooka.git .
+RUN git clone --depth 1 --branch ${TOOKA_REF} https://github.com/tooka-org/cli.git .
 
 # Build Tooka using musl
-RUN cargo build -p tooka-cli --release --target x86_64-unknown-linux-musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
 ### ---- Stage 2: Runtime Container ----
 FROM alpine:latest

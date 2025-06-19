@@ -18,7 +18,6 @@ parts:
     plugin: rust
     source: .
     rust-channel: "stable"
-    rust-cargo-parameters: ["-p tooka-cli"]
 
   desktop-files:
     plugin: dump

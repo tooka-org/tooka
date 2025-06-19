@@ -17,12 +17,10 @@ jobs:
         include:
           - platform: macos-latest
             artifact_paths: target/release/tooka*_aarch64.dmg
-            build_target: tooka-cli
             build_args: ""
             cross: false
           - platform: macos-13
             artifact_paths: target/release/tooka*_x64.dmg
-            build_target: tooka-cli
             build_args: ""
             cross: false
           - platform: ubuntu-latest
@@ -31,21 +29,18 @@ jobs:
               target/release/tooka*_amd64.deb
               target/release/tooka*_x86_64.AppImage
               target/generate-rpm/tooka*.rpm
-            build_target: tooka-cli
             build_args: ""
             cross: false
           - platform: windows-latest
             artifact_paths: |
               target/release/tooka*_x64_en-US.msi
               target/release/tooka*_x64-setup.exe
-            build_target: tooka-cli
             build_args: ""
             cross: false
           - platform: ubuntu-latest
             artifact_paths: |
               target/aarch64-unknown-linux-gnu/release/tooka*.deb
               target/aarch64-unknown-linux-gnu/generate-rpm/tooka*.rpm
-            build_target: tooka-cli
             build_args: "--target=aarch64-unknown-linux-gnu"
             cross: true
             apt: gcc-aarch64-linux-gnu
@@ -56,7 +51,6 @@ jobs:
             artifact_paths: |
               target/armv7-unknown-linux-gnueabihf/release/tooka*.deb
               target/armv7-unknown-linux-gnueabihf/generate-rpm/tooka*.rpm
-            build_target: tooka-cli
             build_args: "--target=armv7-unknown-linux-gnueabihf"
             cross: true
             apt: gcc-arm-linux-gnueabihf
@@ -95,7 +89,7 @@ jobs:
         run: cargo install cargo-packager cargo-generate-rpm --locked
 
       - name: Build the application
-        run: cargo build -p ${{ matrix.build_target }} --release ${{ matrix.build_args }}
+        run: cargo build --release ${{ matrix.build_args }}
 
       - name: Package Binary
         if: (!matrix.cross) || (matrix.cross && matrix.build_args != '')
@@ -111,9 +105,9 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
-            cargo generate-rpm -p ${{ matrix.build_target }} --target=${{ matrix.rust_target }}
+            cargo generate-rpm --target=${{ matrix.rust_target }}
           else
-            cargo generate-rpm -p ${{ matrix.build_target }}
+            cargo generate-rpm
           fi
 
       - name: Upload build artifacts

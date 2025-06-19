@@ -1,10 +1,10 @@
 # 🗂️ Tooka
 
-[![crates-io]](https://crates.io/crates/tooka-core)
-[![docs-rs]](https://docs.rs/tooka_core)
-[![clippy]](https://github.com/Benji377/tooka/actions/workflows/clippy.yml)
-[![test]](https://github.com/Benji377/tooka/actions/workflows/test.yml)
+[![clippy]](https://github.com/tooka-org/cli/actions/workflows/clippy.yml)
 [![feedback]](https://tally.so/r/mBVyLe)
+
+[clippy]: https://img.shields.io/github/actions/workflow/status/Benji377/tooka/clippy.yml?label=Clippy&logo=rust&style=for-the-badge&labelColor=555555
+[feedback]: https://img.shields.io/badge/feedback-Tally-blueviolet?style=for-the-badge&labelColor=555555&logo=googleforms
 
 <div align="center">
   <img src="./assets/logo-banner.png" alt="Tooka logo" style="width: 80%">
@@ -45,7 +45,7 @@ You define what files to match (by name, extension, metadata, size, etc.) and wh
    tooka sort
    ```
 
-📚 Full usage examples and explanations in the [Wiki](https://github.com/Benji377/tooka/wiki).
+📚 Full usage examples and explanations in the [Wiki](https://github.com/tooka-org/cli/wiki).
 
 ---
 
@@ -60,7 +60,7 @@ Visit [**tooka.deno.dev**](https://tooka.deno.dev) for:
 
 ## 📚 Wiki
 
-The [**Tooka Wiki**](https://github.com/Benji377/tooka/wiki) covers:
+The [**Tooka Wiki**](https://github.com/tooka-org/cli/wiki) covers:
 
 * Installation & configuration
 * Rule structure & templates
@@ -72,7 +72,7 @@ The [**Tooka Wiki**](https://github.com/Benji377/tooka/wiki) covers:
 
 ## 💬 Community
 
-Join the [**GitHub Discussions**](https://github.com/Benji377/tooka/discussions) for:
+Join the [**GitHub Discussions**](https://github.com/orgs/tooka-org/discussions) for:
 
 * Feature ideas
 * Help and usage tips
@@ -85,25 +85,3 @@ Join the [**GitHub Discussions**](https://github.com/Benji377/tooka/discussions)
 Got thoughts, bugs, or praise?
 
 **👉 [Submit feedback via this form](https://tally.so/r/mBVyLe)** – no GitHub account needed.
-
-[clippy]: https://img.shields.io/github/actions/workflow/status/Benji377/tooka/clippy.yml?label=Clippy&logo=rust&style=for-the-badge&labelColor=555555
-[test]: https://img.shields.io/github/actions/workflow/status/Benji377/tooka/test.yml?label=Tests&logo=githubactions&style=for-the-badge&labelColor=555555
-[crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&labelColor=555555&logo=rust
-[docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs
-[feedback]: https://img.shields.io/badge/feedback-Tally-blueviolet?style=for-the-badge&labelColor=555555&logo=googleforms
-
----
-
-## 🌟 Stargazers
-
-[![Stargazers repo roster for @Benji377/tooka](https://reporoster.com/stars/dark/Benji377/tooka)](https://github.com/Benji377/tooka/stargazers)
-[![Forkers repo roster for @Benji377/tooka](https://reporoster.com/forks/dark/Benji377/tooka)](https://github.com/Benji377/tooka/network/members)
-## Star History
-
-<a href="https://www.star-history.com/#Benji377/tooka&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Benji377/tooka&type=Date" />
- </picture>
-</a>
