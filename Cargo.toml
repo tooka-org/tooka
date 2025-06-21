@@ -34,33 +34,33 @@ product-name = "tooka"
 identifier = "io.github.tooka-org.tooka"
 category = "Utility"
 homepage = "https://tooka.deno.dev"
-icons = ["../assets/logo.png"]
-licenseFile = "../LICENSE"
+icons = ["assets/logo.png"]
+licenseFile = "LICENSE"
 formats = ["all"]
 
 [package.metadata.packager.linux]
 generate-desktop-entry = false
 
 [package.metadata.packager.appimage.files]
-"../README.md" = "usr/share/doc/tooka/README.md"
-"../LICENSE" = "usr/share/doc/tooka/LICENSE"
-"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
-"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
-"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+"README.md" = "usr/share/doc/tooka/README.md"
+"LICENSE" = "usr/share/doc/tooka/LICENSE"
+"data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.deb.files]
-"../README.md" = "usr/share/doc/tooka/README.md"
-"../LICENSE" = "usr/share/doc/tooka/LICENSE"
-"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
-"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
-"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+"README.md" = "usr/share/doc/tooka/README.md"
+"LICENSE" = "usr/share/doc/tooka/LICENSE"
+"data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.packager.pacman.files]
-"../README.md" = "usr/share/doc/tooka/README.md"
-"../LICENSE" = "usr/share/doc/tooka/LICENSE"
-"../data/tooka.desktop" = "usr/share/applications/tooka.desktop"
-"../data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
-"../data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
+"README.md" = "usr/share/doc/tooka/README.md"
+"LICENSE" = "usr/share/doc/tooka/LICENSE"
+"data/tooka.desktop" = "usr/share/applications/tooka.desktop"
+"data/tooka.svg" = "usr/share/icons/hicolor/scalable/apps/tooka.svg"
+"data/tooka.metainfo.xml" = "usr/share/metainfo/tooka.metainfo.xml"
 
 [package.metadata.generate-rpm]
 assets = [
