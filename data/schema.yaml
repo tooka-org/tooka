@@ -1,0 +1,72 @@
+id: str()
+name: str()
+enabled: bool()
+description: str(required=False)
+priority: int()
+when: map(include('conditions'))
+then: list(include('action'))
+
+---
+conditions:
+  any: bool(required=False)
+  filename: str(required=False)
+  extensions: list(str(), required=False)
+  path: str(required=False)
+  size_kb: map(include('range'), required=False)
+  mime_type: str(required=False)
+  created_date: map(include('date_range'), required=False)
+  modified_date: map(include('date_range'), required=False)
+  is_symlink: bool(required=False)
+  metadata: list(include('metadata_field'), required=False)
+
+---
+range:
+  min: int(required=False)
+  max: int(required=False)
+
+---
+date_range:
+  from: str(required=False)
+  to: str(required=False)
+
+---
+metadata_field:
+  key: str()
+  value: str(required=False)
+
+---
+action:
+  map(include('move_action'), required=False)
+  map(include('copy_action'), required=False)
+  map(include('rename_action'), required=False)
+  map(include('delete_action'), required=False)
+  map(include('execute_action'), required=False)
+  skip: null(required=False)
+
+---
+move_action:
+  action: str(regex='^move$')
+  to: str()
+  preserve_structure: bool(required=False)
+
+---
+copy_action:
+  action: str(regex='^copy$')
+  to: str()
+  preserve_structure: bool(required=False)
+
+---
+rename_action:
+  action: str(regex='^rename$')
+  to: str()
+
+---
+delete_action:
+  action: str(regex='^delete$')
+  trash: bool(required=False)
+
+---
+execute_action:
+  action: str(regex='^execute$')
+  command: str()
+  args: list(str())

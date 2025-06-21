@@ -6,3 +6,4 @@ pub mod remove;
 pub mod sort;
 pub mod template;
 pub mod toggle;
+pub mod validate;

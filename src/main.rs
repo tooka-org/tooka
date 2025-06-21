@@ -31,6 +31,7 @@ enum Commands {
     Sort(commands::sort::SortArgs),
     Toggle(commands::toggle::ToggleArgs),
     Template(commands::template::TemplateArgs),
+    Validate(commands::validate::ValidateArgs),
 }
 
 fn main() -> Result<()> {
@@ -61,6 +62,7 @@ fn run() -> Result<()> {
         Commands::Toggle(args) => commands::toggle::run(&args)?,
         Commands::Completions(args) => completions::run(&args)?,
         Commands::Template(args) => commands::template::run(args)?,
+        Commands::Validate(args) => commands::validate::run(&args)?,
     }
 
     Ok(())
