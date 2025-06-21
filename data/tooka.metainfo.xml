@@ -55,6 +55,12 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 	</provides>
 
 	<releases>
+		<release version="1.0.3" date="2025-06-21">
+		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.3</url>
+		<description>
+			<p>Improved packaging and distribution</p>
+		</description>
+		</release>
 		<release version="1.0.2" date="2025-06-11">
 		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.2</url>
 		<description>

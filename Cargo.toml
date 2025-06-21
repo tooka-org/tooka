@@ -1,6 +1,6 @@
 [package]
 name = "tooka"
-version = "1.0.2"
+version = "1.0.3"
 description = "A fast, rule-based CLI tool for organizing your files"
 authors = ["Benjamin Demetz"]
 license-file = "LICENSE"
