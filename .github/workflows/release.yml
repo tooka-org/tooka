@@ -83,14 +83,14 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: swatinem/rust-cache@v2
+#      - uses: swatinem/rust-cache@v2
 
       - name: Install Rust target (cross only)
         if: matrix.cross
         run: rustup target add ${{ matrix.rust_target }}
 
       - name: Set PKG_CONFIG_SYSROOT_DIR (cross only)
-        if: matrix.cross
+        if: matrix.cross && matrix.sysroot != ""
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
       - name: Install app dependencies
@@ -102,8 +102,10 @@ jobs:
       - name: Package Binary
         shell: bash
         run: |
-          if [ "${{ matrix.cross }}" = "true"  ] && [ "${{ matrix.sysroot }}" != "" ]; then
+          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ matrix.sysroot }}" != "" ]; then
             cargo packager --target=${{ matrix.rust_target }} --formats=deb --release --verbose
+          elif [ "${{ matrix.cross }}" = "true" ] && [ -z "${{ matrix.sysroot }}" ]; then
+            cargo packager --target=${{ matrix.rust_target }} --release --verbose
           else
             cargo packager --release --verbose
           fi
