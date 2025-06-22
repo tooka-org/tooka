@@ -1,0 +1,33 @@
+name: Test musl static build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-musl:
+    runs-on: ubuntu-latest
+
+    env:
+      RUST_TARGET: x86_64-unknown-linux-musl
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install musl target and linker
+        run: |
+          rustup target add $RUST_TARGET
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+
+      - name: Build with musl
+        run: cargo build --release --target=$RUST_TARGET
+
+      - name: Upload musl binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: tooka-musl-binary
+          path: target/${{ env.RUST_TARGET }}/release/tooka
