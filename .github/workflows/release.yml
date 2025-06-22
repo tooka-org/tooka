@@ -26,11 +26,19 @@ jobs:
           - platform: ubuntu-latest
             artifact_paths: |
               target/release/PKGBUILD
-              target/release/tooka*_amd64.deb
-              target/release/tooka*_x86_64.AppImage
               target/generate-rpm/tooka*.rpm
             build_args: ""
             cross: false
+          - platform: ubuntu-latest
+            artifact_paths: |
+              target/x86_64-unknown-linux-musl/release/tooka*_amd64.deb
+              target/x86_64-unknown-linux-musl/release/tooka*_x86_64.AppImage
+            build_args: "--target=x86_64-unknown-linux-musl"
+            cross: true
+            apt: musl-tools
+            sysroot: ""
+            pkg_arch: musl
+            rust_target: x86_64-unknown-linux-musl
           - platform: windows-latest
             artifact_paths: |
               target/release/tooka*_x64_en-US.msi
@@ -92,17 +100,16 @@ jobs:
         run: cargo build --release ${{ matrix.build_args }}
 
       - name: Package Binary
-        if: (!matrix.cross) || (matrix.cross && matrix.build_args != '')
         shell: bash
         run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
+          if [ "${{ matrix.cross }}" = "true"  ] && [ "${{ matrix.sysroot }}" != "" ]; then
             cargo packager --target=${{ matrix.rust_target }} --formats=deb --release --verbose
           else
             cargo packager --release --verbose
           fi
 
       - name: Package RPM
-        if: matrix.platform == 'ubuntu-latest'
+        if: matrix.platform == 'ubuntu-latest' || matrix.platform == 'ubuntu-22.04'
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
             cargo generate-rpm --target=${{ matrix.rust_target }}
