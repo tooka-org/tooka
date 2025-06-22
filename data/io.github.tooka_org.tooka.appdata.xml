@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-	<id>io.github.tooka-org.tooka</id>
+	<id>io.github.tooka_org.tooka</id>
 
 	<developer id="io.github.benji377">
 		<name>Benjamin Demetz</name>
@@ -17,7 +17,7 @@ You write the rules. Tooka does the sorting.
 With a minimal CLI interface, Tooka enables automated file handling through filters like filename, extension, metadata, and file age.</p>
 	</description>
 
-	<launchable type="desktop-id">tooka.desktop</launchable>
+	<launchable type="desktop-id">io.github.tooka_org.tooka.desktop</launchable>
 
 	<url type="homepage">https://tooka.deno.dev/</url>
 	<url type="bugtracker">https://github.com/tooka-org/cli/issues</url>
