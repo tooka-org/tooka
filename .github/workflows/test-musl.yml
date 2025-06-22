@@ -23,11 +23,17 @@ jobs:
 
       - uses: swatinem/rust-cache@v2
 
+      - name: Install app dependencies
+        run: cargo install cargo-packager --locked
+
       - name: Build with musl
         run: cargo build --release --target=$RUST_TARGET
+
+      - name: Package
+        run: cargo packager --target=$RUST_TARGET --release --verbose
 
       - name: Upload musl binary
         uses: actions/upload-artifact@v4
         with:
           name: tooka-musl-binary
-          path: target/${{ env.RUST_TARGET }}/release/tooka
+          path: target/${{ env.RUST_TARGET }}/release/tooka*
