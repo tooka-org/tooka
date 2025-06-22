@@ -90,7 +90,7 @@ jobs:
         run: rustup target add ${{ matrix.rust_target }}
 
       - name: Set PKG_CONFIG_SYSROOT_DIR (cross only)
-        if: matrix.cross && matrix.sysroot != ""
+        if: matrix.cross && matrix.sysroot != ''
         run: echo "PKG_CONFIG_SYSROOT_DIR=${{ matrix.sysroot }}" >> $GITHUB_ENV
 
       - name: Install app dependencies
