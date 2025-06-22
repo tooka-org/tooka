@@ -23,7 +23,7 @@ jobs:
             artifact_paths: target/release/tooka*_x64.dmg
             build_args: ""
             cross: false
-          - platform: ubuntu-latest
+          - platform: ubuntu-22.04
             artifact_paths: |
               target/x86_64-unknown-linux-musl/release/tooka*_amd64.deb
               target/x86_64-unknown-linux-musl/release/tooka*_x86_64.AppImage
@@ -100,7 +100,7 @@ jobs:
           fi
 
       - name: Package RPM
-        if: matrix.platform == 'ubuntu-latest' || matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
             cargo generate-rpm --target=${{ matrix.rust_target }}
