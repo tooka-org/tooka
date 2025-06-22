@@ -25,14 +25,9 @@ jobs:
             cross: false
           - platform: ubuntu-latest
             artifact_paths: |
-              target/release/PKGBUILD
-              target/generate-rpm/tooka*.rpm
-            build_args: ""
-            cross: false
-          - platform: ubuntu-latest
-            artifact_paths: |
               target/x86_64-unknown-linux-musl/release/tooka*_amd64.deb
               target/x86_64-unknown-linux-musl/release/tooka*_x86_64.AppImage
+              target/x86_64-unknown-linux-musl/generate-rpm/tooka*.rpm
             build_args: "--target=x86_64-unknown-linux-musl"
             cross: true
             apt: musl-tools
@@ -69,12 +64,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest' && !matrix.cross
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential curl pkg-config
-
       - name: Install cross dependencies (cross only)
         if: matrix.cross
         run: |
@@ -83,7 +72,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-#      - uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@v2
 
       - name: Install Rust target (cross only)
         if: matrix.cross
