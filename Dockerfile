@@ -1,5 +1,5 @@
 ### ---- Stage 1: Build Tooka ----
-FROM rust:1.87 AS builder
+FROM rust:1.88 AS builder
 
 # Install build tools
 RUN apt-get update && apt-get install -y musl-tools pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
