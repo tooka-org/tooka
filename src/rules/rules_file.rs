@@ -152,8 +152,7 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found",
-                rule_id
+                "Rule with id '{rule_id}' not found"
             )))
         }
     }
@@ -189,8 +188,7 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found",
-                rule_id
+                "Rule with id '{rule_id}' not found"
             )))
         }
     }
@@ -215,8 +213,7 @@ impl RulesFile {
             Ok(())
         } else {
             Err(TookaError::RuleNotFound(format!(
-                "Rule with id '{}' not found",
-                rule_id
+                "Rule with id '{rule_id}' not found"
             )))
         }
     }
@@ -230,8 +227,7 @@ impl RulesFile {
                     filtered.push(rule.clone());
                 } else {
                     return Err(TookaError::RuleNotFound(format!(
-                        "Rule with id '{}' not found",
-                        rule_id
+                        "Rule with id '{rule_id}' not found"
                     )));
                 }
             }
@@ -259,7 +255,7 @@ impl RulesFile {
     /// Helper function to get the path to the rules file
     fn rules_file_path() -> Result<PathBuf, TookaError> {
         let config = context::get_locked_config()
-            .map_err(|e| TookaError::ConfigError(format!("Failed to get config: {}", e)))?;
+            .map_err(|e| TookaError::ConfigError(format!("Failed to get config: {e}")))?;
 
         Ok(Path::new(&config.rules_file).to_path_buf())
     }

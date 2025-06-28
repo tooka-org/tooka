@@ -94,7 +94,7 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
 
             write_text(
                 &mut content,
-                &format!("> Rule: {}", rule_id),
+                &format!("> Rule: {rule_id}"),
                 FONT_SIZE + 2.0,
                 MARGIN_X,
                 y,
@@ -137,7 +137,7 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
                 if let Some(rule_id) = &last_rule_id {
                     write_text(
                         &mut content,
-                        &format!("> Rule: {}", rule_id),
+                        &format!("> Rule: {rule_id}"),
                         FONT_SIZE + 2.0,
                         MARGIN_X,
                         y,
@@ -208,7 +208,7 @@ fn write_text(content: &mut Content, text: &str, font_size: f32, x: f32, y: f32,
 fn draw_footer(content: &mut Content, page_num: usize, font_name: Name) {
     write_text(
         content,
-        &format!("Page {}", page_num),
+        &format!("Page {page_num}"),
         FONT_SIZE - 1.0,
         PAGE_WIDTH / 2.0 - 20.0,
         8.0,
@@ -238,7 +238,7 @@ fn draw_header(content: &mut Content, total_changes: usize, font_name: Name) {
 
     write_text(
         content,
-        &format!("Total changes: {}", total_changes),
+        &format!("Total changes: {total_changes}"),
         FONT_SIZE,
         TITLE_POS_X,
         TITLE_POS_Y - 15.0,
@@ -281,7 +281,7 @@ fn draw_match_result_block(
 
     write_text(
         content,
-        &format!("From: {}", from_path),
+        &format!("From: {from_path}"),
         FONT_SIZE,
         MARGIN_X + 15.0,
         y_top - 15.0,
@@ -289,7 +289,7 @@ fn draw_match_result_block(
     );
     write_text(
         content,
-        &format!("To:     {}", to_path),
+        &format!("To:     {to_path}"),
         FONT_SIZE,
         MARGIN_X + 15.0,
         y_top - 30.0,
@@ -326,8 +326,7 @@ fn truncate_path(path: &Path, max_len: f32) -> String {
             .unwrap_or_else(|| parent.display().to_string());
 
         return format!(
-            "[truncated].../{}/{}",
-            parent_str,
+            "[truncated].../{parent_str}/{}",
             file_name.to_string_lossy()
         );
     }

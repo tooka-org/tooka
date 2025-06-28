@@ -129,8 +129,7 @@ fn sort_file(
 
         let log_prefix = if dry_run { "DRY" } else { "" };
         log_file_operation(&format!(
-            "{log_prefix}[{:?}] '{}' to '{}'",
-            action,
+            "{log_prefix}[{action:?}] '{}' to '{}'",
             current_path.display(),
             op_result.new_path.display()
         ));
@@ -184,5 +183,5 @@ pub fn collect_files(dir: &Path) -> Result<Vec<PathBuf>, TookaError> {
         })
         .collect();
 
-    files.map_err(|e| TookaError::FileOperationError(format!("Failed to collect files: {}", e)))
+    files.map_err(|e| TookaError::FileOperationError(format!("Failed to collect files: {e}")))
 }

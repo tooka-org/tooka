@@ -89,9 +89,7 @@ pub(crate) fn extract_metadata(file_path: &Path) -> Result<HashMap<String, Strin
     if let Ok(file) = fs::File::open(file_path) {
         if let Ok(reader) = Reader::new().read_from_container(&mut std::io::BufReader::new(file)) {
             for field in reader.fields() {
-                let tag = format!("{:?}", field.tag);
-                let ifd = format!("{:?}", field.ifd_num);
-                let key = format!("EXIF:{}:{}", ifd, tag); // e.g., EXIF:In:DateTime
+                let key = format!("EXIF:{:?}:{:?}", field.ifd_num, field.tag); // e.g., EXIF:In:DateTime
                 let value = field.display_value().with_unit(&reader).to_string();
                 map.insert(key, value);
             }

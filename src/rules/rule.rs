@@ -163,9 +163,8 @@ impl Rule {
     /// Constructs rules from a YAML file.
     /// Supports both single-rule files and multi-rule files (under `rules:` key).
     pub fn new_from_file<P: AsRef<Path>>(path: P) -> Result<Vec<Self>, RuleValidationError> {
-        let content = fs::read_to_string(path).map_err(|e| {
-            RuleValidationError::InvalidFormat(format!("Failed to read file: {}", e))
-        })?;
+        let content = fs::read_to_string(path)
+            .map_err(|e| RuleValidationError::InvalidFormat(format!("Failed to read file: {e}")))?;
 
         if content.trim_start().starts_with("rules:") {
             // Multiple rules
@@ -240,7 +239,7 @@ impl Rule {
                     if let Err(e) = chrono::DateTime::parse_from_rfc3339(from) {
                         return Err(RuleValidationError::InvalidCondition(
                             self.id.clone(),
-                            format!("Invalid {} 'from' date: {}", label, e),
+                            format!("Invalid {label} 'from' date: {e}"),
                         ));
                     }
                 }
@@ -248,7 +247,7 @@ impl Rule {
                     if let Err(e) = chrono::DateTime::parse_from_rfc3339(to) {
                         return Err(RuleValidationError::InvalidCondition(
                             self.id.clone(),
-                            format!("Invalid {} 'to' date: {}", label, e),
+                            format!("Invalid {label} 'to' date: {e}"),
                         ));
                     }
                 }

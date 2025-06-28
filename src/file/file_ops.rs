@@ -166,7 +166,7 @@ pub(crate) fn handle_delete(
         log::info!("Moving file to trash: {}", file_path.display());
 
         trash::delete(file_path).map_err(|e| {
-            TookaError::FileOperationError(format!("Failed to move file to trash: {}", e))
+            TookaError::FileOperationError(format!("Failed to move file to trash: {e}"))
         })?;
     } else {
         log::info!("Deleting file permanently: {}", file_path.display());
@@ -203,7 +203,7 @@ pub(crate) fn handle_execute(
             .args(&action.args)
             .output()
             .map_err(|e| {
-                TookaError::FileOperationError(format!("Failed to execute command: {}", e))
+                TookaError::FileOperationError(format!("Failed to execute command: {e}"))
             })?;
 
         if !output.status.success() {

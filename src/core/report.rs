@@ -64,8 +64,7 @@ pub fn generate_report(
         }
         other => {
             return Err(TookaError::Other(format!(
-                "Unsupported report format: {}",
-                other
+                "Unsupported report format: {other}"
             )));
         }
     }
