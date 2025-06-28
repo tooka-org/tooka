@@ -59,6 +59,9 @@ codegen-units = 1
 strip = true
 panic = "abort"
 
+[[bin]]
+name = "tooka"
+path = "src/main.rs"
 
 [package.metadata.packager]
 product-name = "tooka"
