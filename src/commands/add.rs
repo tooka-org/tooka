@@ -1,6 +1,6 @@
+use crate::core::context;
 use anyhow::Result;
 use clap::Args;
-use tooka_core::context;
 
 #[derive(Args)]
 #[command(about = "Adds a new rule by importing a YAML snippet file")]

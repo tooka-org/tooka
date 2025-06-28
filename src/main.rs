@@ -1,10 +1,15 @@
 mod commands;
+mod common;
 mod completions;
+mod core;
+mod file;
+mod rules;
+mod utils;
 
+use crate::common::logger::init_logger;
+use crate::core::context::{init_config, init_rules_file};
 use anyhow::Result;
 use clap::Parser;
-use tooka_core::context;
-use tooka_core::logger::init_logger;
 
 #[derive(Parser)]
 #[clap(
@@ -45,10 +50,21 @@ fn main() -> Result<()> {
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
-    // Init everything
-    context::init_config()?;
-    init_logger()?;
-    context::init_rules_file()?;
+
+    // Only initialize what's needed based on the command
+    match &cli.command {
+        Commands::Sort(_) => {
+            // For sort command, we'll handle config/rules loading directly
+            // for better performance
+            init_logger()?;
+        }
+        _ => {
+            // For other commands, use the traditional global context approach
+            init_config()?;
+            init_logger()?;
+            init_rules_file()?;
+        }
+    }
 
     log::info!("Tooka CLI started");
 

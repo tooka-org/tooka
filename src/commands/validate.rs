@@ -1,6 +1,6 @@
+use crate::rules::rule::Rule;
 use anyhow::Result;
 use clap::Args;
-use tooka_core::rule::Rule;
 
 #[derive(Args)]
 #[command(about = "validates a rule YAML file against the schema")]
@@ -45,7 +45,10 @@ pub fn run(args: &ValidateArgs) -> Result<()> {
     if err_count > 0 {
         log::error!("Validation completed with {} errors", err_count);
         println!("Validation completed with {} errors", err_count);
-        return Err(anyhow::anyhow!("Validation failed with {} errors", err_count));
+        return Err(anyhow::anyhow!(
+            "Validation failed with {} errors",
+            err_count
+        ));
     }
 
     log::info!("All rules are valid");

@@ -1,6 +1,6 @@
+use crate::rules::template::generate_rule_template_yaml;
 use anyhow::{Result, anyhow};
 use clap::Args;
-use tooka_core::template::generate_rule_template_yaml;
 
 #[derive(Args)]
 #[command(about = "Exports a template rule to a YAML file")]

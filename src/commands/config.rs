@@ -1,6 +1,6 @@
+use crate::core::context;
 use anyhow::{Context, Result, anyhow};
 use clap::Args;
-use tooka_core::context;
 
 #[derive(Args)]
 #[command(about = "Manages the Tooka configuration file")]

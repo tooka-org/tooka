@@ -2,13 +2,13 @@ PackageIdentifier: Benji377.Tooka
 PackageVersion: <VERSION>
 PackageLocale: en-US
 Publisher: Benjamin Demetz
-PublisherUrl: https://github.com/tooka-org/cli
-PublisherSupportUrl: https://github.com/tooka-org/cli/issues
+PublisherUrl: https://github.com/tooka-org/tooka
+PublisherSupportUrl: https://github.com/tooka-org/tooka/issues
 Author: Benjamin Demetz
 PackageName: Tooka
 PackageUrl: https://tooka.deno.dev
 License: GPL-3.0-only
-LicenseUrl: https://github.com/tooka-org/cli/raw/main/LICENSE
+LicenseUrl: https://github.com/tooka-org/tooka/raw/main/LICENSE
 ShortDescription: A fast, rule-based CLI tool for organizing your files
 Moniker: tooka
 Tags:
@@ -20,7 +20,7 @@ Tags:
   - "tooka"
 Documentations: 
   - DocumentLabel: GitHub Wiki
-    DocumentUrl: https://github.com/tooka-org/cli/wiki
+    DocumentUrl: https://github.com/tooka-org/tooka/wiki
 ManifestType: defaultLocale
 ManifestVersion: 1.9.0
-ReleaseNotesUrl: https://github.com/tooka-org/cli/releases/tag/v<VERSION>
+ReleaseNotesUrl: https://github.com/tooka-org/tooka/releases/tag/v<VERSION>

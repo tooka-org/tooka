@@ -1,6 +1,6 @@
+use crate::core::context;
 use anyhow::{Result, anyhow};
 use clap::Args;
-use tooka_core::context;
 
 #[derive(Args)]
 #[command(about = "Lists all current rules with their metadata")]

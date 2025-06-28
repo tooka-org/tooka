@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
+use crate::common::config::Config;
+use crate::core::{report, sorter};
+use crate::rules::rules_file::RulesFile;
 use anyhow::Result;
 use clap::Args;
 use indicatif::{ProgressBar, ProgressStyle};
-use tooka_core::{report, sorter};
 
 #[derive(Args)]
 #[command(about = "Manually runs the sorter on the source folder")]
@@ -34,11 +36,37 @@ pub fn run(args: SortArgs) -> Result<()> {
         args.dry_run
     );
 
-    let source = args.source.unwrap_or_else(|| "<default>".to_string());
-    let rules = args.rules.unwrap_or_else(|| "<all>".to_string());
-    let dry_run = args.dry_run;
+    // Load config and rules directly instead of using global context
+    let config = Config::load()?;
+    let source_path = if let Some(source) = args.source {
+        if source == "<default>" {
+            config.source_folder.clone()
+        } else {
+            PathBuf::from(source)
+        }
+    } else {
+        config.source_folder.clone()
+    };
 
-    let (source_path, rules_file, files) = sorter::prepare_sort(&source, &rules)?;
+    let rules_file = RulesFile::load()?;
+
+    // Parse rule filter
+    let rule_filter = args.rules.as_ref().and_then(|r| {
+        if r == "<all>" {
+            None
+        } else {
+            Some(
+                r.split(',')
+                    .map(|s| s.trim().to_string())
+                    .collect::<Vec<_>>(),
+            )
+        }
+    });
+
+    let optimized_rules = rules_file.optimized_with_filter(rule_filter.as_deref())?;
+
+    // Collect files first to show progress bar
+    let files = sorter::collect_files(&source_path)?;
 
     let pb = ProgressBar::new(files.len() as u64);
     pb.set_style(
@@ -48,11 +76,12 @@ pub fn run(args: SortArgs) -> Result<()> {
         .unwrap(),
     );
 
+    // Use the main sort_files function with optimized rules
     let results = sorter::sort_files(
         files,
         source_path,
-        &rules_file,
-        dry_run,
+        &optimized_rules,
+        args.dry_run,
         Some(|| {
             pb.inc(1);
         }),

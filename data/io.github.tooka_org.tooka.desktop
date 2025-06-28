@@ -8,3 +8,4 @@ Type=Application
 Icon=io.github.tooka_org.tooka
 Categories=Utility;ConsoleOnly;FileTools
 StartupNotify=true
+c

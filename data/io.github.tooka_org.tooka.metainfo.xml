@@ -20,7 +20,7 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 	<launchable type="desktop-id">io.github.tooka_org.tooka.desktop</launchable>
 
 	<url type="homepage">https://tooka.deno.dev/</url>
-	<url type="bugtracker">https://github.com/tooka-org/cli/issues</url>
+	<url type="bugtracker">https://github.com/tooka-org/tooka/issues</url>
 	<url type="donation">https://github.com/sponsors/Benji377</url>
 	<url type="vcs-browser">https://github.com/tooka-org</url>
 	<url type="contribute">https://github.com/orgs/tooka-org/discussions</url>
@@ -28,7 +28,7 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 
 	<screenshots>
 		<screenshot type="default">
-			<image>https://github.com/tooka-org/cli/blob/ed193aa4ab049fa8b8775589ea32aa620d04e238/assets/logo-banner.png</image>
+			<image>https://github.com/tooka-org/tooka/blob/422fcde052a5b789582bfa6482ebe5707397cfef/assets/logo-banner.png</image>
 		</screenshot>
 	</screenshots>
 
@@ -56,55 +56,55 @@ With a minimal CLI interface, Tooka enables automated file handling through filt
 
 	<releases>
 		<release version="1.0.3" date="2025-06-21">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.3</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v1.0.3</url>
 		<description>
 			<p>Improved packaging and distribution</p>
 		</description>
 		</release>
 		<release version="1.0.2" date="2025-06-11">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.2</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v1.0.2</url>
 		<description>
 			<p>Improved PDF generation and report output</p>
 		</description>
 		</release>
 		<release version="1.0.1" date="2025-06-11">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.1</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v1.0.1</url>
 		<description>
 			<p>Fixed publishing binaries to use correct metadata</p>
 		</description>
 		</release>
 		<release version="1.0.0" date="2025-06-10">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v1.0.0</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v1.0.0</url>
 		<description>
 			<p>First full release with a working product.</p>
 		</description>
 		</release>
 		<release version="0.1.4" date="2025-06-5">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v0.1.4</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v0.1.4</url>
 		<description>
 			<p>BETA: Made logic more stable. General bug fixes</p>
 		</description>
 		</release>
 		<release version="0.1.3" date="2025-06-04">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v0.1.3</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v0.1.3</url>
 		<description>
 			<p>BETA: Changed the rule structure to have a better overview</p>
 		</description>
 		</release>
 		<release version="0.1.2" date="2025-05-28">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v0.1.2</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v0.1.2</url>
 		<description>
 			<p>BETA: Added Docker support and use of env variables</p>
 		</description>
 		</release>
 		<release version="0.1.1" date="2025-05-27">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v0.1.1</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v0.1.1</url>
 		<description>
 			<p>BETA: Added website with builder and globalized configs</p>
 		</description>
 		</release>
 		<release version="0.1.0" date="2025-05-25">
-		<url type="details">https://github.com/tooka-org/cli/releases/tag/v0.1.0</url>
+		<url type="details">https://github.com/tooka-org/tooka/releases/tag/v0.1.0</url>
 		<description>
 			<p>ALPHA: First release, general logic</p>
 		</description>
