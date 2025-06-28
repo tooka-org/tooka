@@ -63,6 +63,9 @@ panic = "abort"
 name = "tooka"
 path = "src/main.rs"
 
+[lib]
+path = ""
+
 [package.metadata.packager]
 product-name = "tooka"
 identifier = "io.github.tooka-org.tooka"
