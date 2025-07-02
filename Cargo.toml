@@ -24,7 +24,7 @@ trash = "5.2.2"
 walkdir = "2.5.0"
 rayon = "1.10.0"
 serde = {version = "1.0.219", features = ["derive"]}
-serde_yml = "0.0.12"
+serde_yaml = "0.9.34"
 # Config, Logging and Error handling
 anyhow = "1.0.98"
 log = "0.4.27"
