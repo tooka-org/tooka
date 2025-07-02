@@ -92,7 +92,7 @@ impl Config {
         if config_path.exists() {
             let file = fs::File::open(&config_path)?;
             let reader = std::io::BufReader::new(file);
-            let config: Config = serde_yaml::from_reader(reader)?;
+            let config: Config = serde_yml::from_reader(reader)?;
             Ok(config)
         } else {
             let config = Config::new_with_fallbacks()?;
@@ -111,7 +111,7 @@ impl Config {
             fs::create_dir_all(parent)?;
         }
         let file = fs::File::create(&config_path)?;
-        serde_yaml::to_writer(file, self)?;
+        serde_yml::to_writer(file, self)?;
         Ok(())
     }
 
@@ -143,7 +143,7 @@ impl Config {
     ///
     /// If serialization fails, a fallback error message is returned.
     pub fn show_config(&self) -> String {
-        serde_yaml::to_string(self).unwrap_or_else(|_| "Failed to serialize config".into())
+        serde_yml::to_string(self).unwrap_or_else(|_| "Failed to serialize config".into())
     }
 
     /// Returns the path to the configuration file, creating it if necessary

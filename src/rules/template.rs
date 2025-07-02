@@ -3,7 +3,7 @@ use crate::{
     rules::rule::{Action, Conditions, DateRange, MetadataField, MoveAction, Range, Rule},
 };
 
-use serde_yaml;
+use serde_yml;
 
 /// Generates a YAML template for a Tooka rule.
 pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
@@ -40,5 +40,5 @@ pub fn generate_rule_template_yaml() -> Result<String, TookaError> {
         })],
     };
 
-    Ok(serde_yaml::to_string(&rule)?)
+    Ok(serde_yml::to_string(&rule)?)
 }

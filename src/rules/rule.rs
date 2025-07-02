@@ -168,7 +168,7 @@ impl Rule {
 
         if content.trim_start().starts_with("rules:") {
             // Multiple rules
-            let parsed: Result<RulesWrapper, _> = serde_yaml::from_str(&content);
+            let parsed: Result<RulesWrapper, _> = serde_yml::from_str(&content);
             match parsed {
                 Ok(wrapper) => Ok(wrapper.rules),
                 Err(e) => Err(RuleValidationError::InvalidFormat(format!(
@@ -177,7 +177,7 @@ impl Rule {
             }
         } else {
             // Single rule
-            let rule: Result<Rule, _> = serde_yaml::from_str(&content);
+            let rule: Result<Rule, _> = serde_yml::from_str(&content);
             match rule {
                 Ok(r) => Ok(vec![r]),
                 Err(e) => Err(RuleValidationError::InvalidFormat(format!(
