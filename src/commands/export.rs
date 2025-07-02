@@ -3,14 +3,14 @@ use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
-#[command(about = "Exports a single rule by ID to a YAML file")]
+#[command(about = "📤 Export a rule to a YAML file")]
 pub struct ExportArgs {
     /// ID of the rule to export
-    #[arg(value_name = "ID")]
+    #[arg(value_name = "ID", help = "The unique identifier of the rule to export")]
     pub id: String,
 
     /// Output file path, optional; defaults to stdout
-    #[arg(long)]
+    #[arg(long, help = "Output file path (defaults to stdout if not specified)")]
     pub output: Option<String>,
 }
 

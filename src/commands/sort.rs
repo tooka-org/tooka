@@ -1,34 +1,41 @@
 use std::path::PathBuf;
 
+use crate::cli::display;
 use crate::common::config::Config;
 use crate::core::{report, sorter};
 use crate::rules::rules_file::RulesFile;
 use anyhow::Result;
 use clap::Args;
-use indicatif::{ProgressBar, ProgressStyle};
+use colored::*;
+use indicatif::ProgressBar;
 
 #[derive(Args)]
-#[command(about = "Manually runs the sorter on the source folder")]
+#[command(about = "🚀 Sort files in the source folder using defined rules")]
 pub struct SortArgs {
     /// Override default source folder
-    #[arg(long)]
+    #[arg(long, help = "Override the default source folder path")]
     pub source: Option<String>,
     /// Comma-separated rule IDs to run
-    #[arg(long)]
+    #[arg(long, help = "Comma-separated list of rule IDs to execute (use '<all>' for all rules)")]
     pub rules: Option<String>,
     /// Output report format: pdf, csv, json
-    #[arg(long)]
+    #[arg(long, help = "Generate a report in the specified format (pdf, csv, json)")]
     pub report: Option<String>,
     /// Output directory for the report
-    #[arg(long)]
+    #[arg(long, help = "Directory where the report will be saved")]
     pub output: Option<String>,
     /// Simulate the sorting without making changes
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, help = "Preview what would happen without actually moving files")]
     pub dry_run: bool,
 }
 
 pub fn run(args: SortArgs) -> Result<()> {
-    println!("Running sort...");
+    if args.dry_run {
+        display::warning("🔍 Running in dry-run mode - no files will be moved");
+    } else {
+        display::info("🚀 Starting file sorting...");
+    }
+    
     log::info!(
         "Running sort with source: {:?}, rules: {:?}, dry_run: {}",
         args.source,
@@ -69,12 +76,7 @@ pub fn run(args: SortArgs) -> Result<()> {
     let files = sorter::collect_files(&source_path)?;
 
     let pb = ProgressBar::new(files.len() as u64);
-    pb.set_style(
-        ProgressStyle::with_template(
-            "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} files sorted",
-        )
-        .unwrap(),
-    );
+    pb.set_style(display::progress_style());
 
     // Use the main sort_files function with optimized rules
     let results = sorter::sort_files(
@@ -87,26 +89,34 @@ pub fn run(args: SortArgs) -> Result<()> {
         }),
     )?;
 
-    pb.finish_with_message("Sorting complete");
+    pb.finish_with_message("✅ Sorting complete");
 
-    println!("Sorting completed.");
+    display::success("Sorting completed successfully!");
     log::info!("Sorting completed, found {} matches", results.len());
 
-    if args.report.is_none() {
+    if args.report.is_none() && !results.is_empty() {
+        display::header("📁 Sorted Files");
+        
         println!(
-            "{:<40} | {:<30} | {:<40} | New Path",
-            "File", "Matched Rule", "Current Path"
+            "{} | {} | {} | {}",
+            "File".bright_cyan().bold(),
+            "Matched Rule".bright_cyan().bold(), 
+            "Current Path".bright_cyan().bold(),
+            "New Path".bright_cyan().bold()
         );
+        println!("{}", "─".repeat(120).bright_black());
 
         for result in &results {
             println!(
                 "{:<40} | {:<30} | {:<40} | {}",
-                result.file_name,
-                result.matched_rule_id,
-                result.current_path.display(),
-                result.new_path.display()
+                result.file_name.bright_white(),
+                result.matched_rule_id.green(),
+                result.current_path.display().to_string().yellow(),
+                result.new_path.display().to_string().blue()
             );
         }
+    } else if results.is_empty() {
+        display::info("No files matched the sorting rules.");
     }
 
     // Handle report generation
@@ -117,10 +127,7 @@ pub fn run(args: SortArgs) -> Result<()> {
         });
 
         report::generate_report(report_type, &output_dir, &results)?;
-        println!(
-            "Report generated successfully in {:?}",
-            output_dir.display()
-        );
+        display::success(&format!("Report generated successfully in {}", output_dir.display()));
     }
 
     Ok(())

@@ -1,3 +1,4 @@
+mod cli;
 mod commands;
 mod common;
 mod completions;
@@ -6,6 +7,7 @@ mod file;
 mod rules;
 mod utils;
 
+use crate::cli::display;
 use crate::common::logger::init_logger;
 use crate::core::context::{init_config, init_rules_file};
 use anyhow::Result;
@@ -15,11 +17,10 @@ use clap::Parser;
 #[clap(
     name = "tooka",
     version,
-    about = "Tooka CLI",
-    long_about = "tooka is a command-line tool for managing and organizing files based on user-defined rules. 
-    It allows you to add, remove, list, and sort files according to various criteria such as file extensions, 
-    MIME types, patterns, and metadata."
+    about = "🚀 A fast, rule-based CLI tool for organizing your files",
+    long_about = "tooka is a powerful command-line tool for automatically managing and organizing files based on user-defined rules."
 )]
+#[command(disable_version_flag = true)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
@@ -40,9 +41,20 @@ enum Commands {
 }
 
 fn main() -> Result<()> {
+    // Check if no arguments are provided
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() == 1 {
+        display::show_banner();
+        return Ok(());
+    }
+    if args.len() == 2 && args[1] == "--version" {
+        display::show_version();
+        return Ok(());
+    }
+
     // Top-level error handling
     if let Err(e) = run() {
-        eprintln!("❌ Error: {e}");
+        display::error(&format!("Error: {e}"));
         std::process::exit(1);
     }
     Ok(())
@@ -51,20 +63,9 @@ fn main() -> Result<()> {
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
-    // Only initialize what's needed based on the command
-    match &cli.command {
-        Commands::Sort(_) => {
-            // For sort command, we'll handle config/rules loading directly
-            // for better performance
-            init_logger()?;
-        }
-        _ => {
-            // For other commands, use the traditional global context approach
-            init_config()?;
-            init_logger()?;
-            init_rules_file()?;
-        }
-    }
+    init_config()?;
+    init_logger()?;
+    init_rules_file()?;
 
     log::info!("Tooka CLI started");
 

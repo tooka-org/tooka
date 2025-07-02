@@ -17,7 +17,8 @@ rust-version = "1.87"
 # CLI dependencies
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4.5.50"
-indicatif = "0.17.11"
+indicatif = "0.17.12"
+colored = "3.0.0"
 # Core functionality
 trash = "5.2.2"
 walkdir = "2.5.0"
@@ -62,6 +63,9 @@ path = "src/main.rs"
 [[bench]]
 name = "sorter_bench"
 harness = false
+
+[lints.clippy]
+uninlined_format_args = "allow"
 
 
 [package.metadata.packager]

@@ -3,14 +3,14 @@ use anyhow::Result;
 use clap::Args;
 
 #[derive(Args)]
-#[command(about = "validates a rule YAML file against the schema")]
+#[command(about = "✅ Validate a rule YAML file against the schema")]
 pub struct ValidateArgs {
     /// Path to the rule YAML file
-    #[arg(value_name = "FILE")]
+    #[arg(value_name = "FILE", help = "Path to the YAML file to validate")]
     pub file: String,
 
     /// Optional flag to do a full validation, including value limits
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, help = "Perform deep validation including value limits")]
     pub deep: bool,
 }
 

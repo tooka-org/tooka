@@ -5,10 +5,10 @@ use clap_complete::{generate, shells::Shell};
 use std::io;
 
 #[derive(Args)]
-#[command(about = "Generate shell completions")]
+#[command(about = "🔧 Generate shell completions")]
 pub struct CompletionsArgs {
     /// The `shell` field specifies the target shell and must be provided as a value enum.
-    #[arg(value_enum)]
+    #[arg(value_enum, help = "Target shell for completion generation")]
     pub shell: Shell,
 }
 

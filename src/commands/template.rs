@@ -3,10 +3,10 @@ use anyhow::{Result, anyhow};
 use clap::Args;
 
 #[derive(Args)]
-#[command(about = "Exports a template rule to a YAML file")]
+#[command(about = "📋 Generate a template rule YAML file")]
 pub struct TemplateArgs {
     /// Output file path
-    #[arg(long)]
+    #[arg(long, help = "Output file path (defaults to 'rule_template.yaml')")]
     pub output: Option<String>,
 }
 
