@@ -22,7 +22,7 @@ jobs:
       - uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: Benji377.Tooka
-          fork: Benji377
+          fork-user: Benji377
           installers-regex: '\.msi$'
           token: ${{ secrets.WINGETCREATE_TOKEN }}
           release-tag: ${{ github.event.release.tag_name || steps.get-latest-release.outputs.tag }}
