@@ -7,11 +7,18 @@ use clap::Args;
 #[command(about = "📝 Add a new rule by importing a YAML file")]
 pub struct AddArgs {
     /// Path to the rule YAML file
-    #[arg(value_name = "FILE", help = "Path to the YAML file containing the rule definition")]
+    #[arg(
+        value_name = "FILE",
+        help = "Path to the YAML file containing the rule definition"
+    )]
     pub file: String,
 
     /// Optional flag to overwrite existing rules
-    #[arg(long, default_value_t = false, help = "Overwrite existing rule if it already exists")]
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Overwrite existing rule if it already exists"
+    )]
     pub overwrite: bool,
 }
 

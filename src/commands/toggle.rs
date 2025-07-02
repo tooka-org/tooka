@@ -7,7 +7,10 @@ use clap::Args;
 #[command(about = "🔄 Toggle the enabled/disabled state of a rule")]
 pub struct ToggleArgs {
     /// ID of the rule to toggle
-    #[arg(value_name = "ID", help = "The unique identifier of the rule to toggle")]
+    #[arg(
+        value_name = "ID",
+        help = "The unique identifier of the rule to toggle"
+    )]
     pub rule_id: String,
 }
 
@@ -30,7 +33,10 @@ pub fn run(args: &ToggleArgs) -> Result<()> {
         .map_err(|e| anyhow!("Failed to toggle rule with ID '{}': {}", args.rule_id, e))?;
 
     let status = if was_enabled { "disabled" } else { "enabled" };
-    display::success(&format!("Rule with ID '{}' is now {}.", args.rule_id, status));
+    display::success(&format!(
+        "Rule with ID '{}' is now {}.",
+        args.rule_id, status
+    ));
 
     Ok(())
 }

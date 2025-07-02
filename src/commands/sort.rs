@@ -16,16 +16,26 @@ pub struct SortArgs {
     #[arg(long, help = "Override the default source folder path")]
     pub source: Option<String>,
     /// Comma-separated rule IDs to run
-    #[arg(long, help = "Comma-separated list of rule IDs to execute (use '<all>' for all rules)")]
+    #[arg(
+        long,
+        help = "Comma-separated list of rule IDs to execute (use '<all>' for all rules)"
+    )]
     pub rules: Option<String>,
     /// Output report format: pdf, csv, json
-    #[arg(long, help = "Generate a report in the specified format (pdf, csv, json)")]
+    #[arg(
+        long,
+        help = "Generate a report in the specified format (pdf, csv, json)"
+    )]
     pub report: Option<String>,
     /// Output directory for the report
     #[arg(long, help = "Directory where the report will be saved")]
     pub output: Option<String>,
     /// Simulate the sorting without making changes
-    #[arg(long, default_value_t = false, help = "Preview what would happen without actually moving files")]
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Preview what would happen without actually moving files"
+    )]
     pub dry_run: bool,
 }
 
@@ -35,7 +45,7 @@ pub fn run(args: SortArgs) -> Result<()> {
     } else {
         display::info("🚀 Starting file sorting...");
     }
-    
+
     log::info!(
         "Running sort with source: {:?}, rules: {:?}, dry_run: {}",
         args.source,
@@ -96,11 +106,11 @@ pub fn run(args: SortArgs) -> Result<()> {
 
     if args.report.is_none() && !results.is_empty() {
         display::header("📁 Sorted Files");
-        
+
         println!(
             "{} | {} | {} | {}",
             "File".bright_cyan().bold(),
-            "Matched Rule".bright_cyan().bold(), 
+            "Matched Rule".bright_cyan().bold(),
             "Current Path".bright_cyan().bold(),
             "New Path".bright_cyan().bold()
         );
@@ -127,7 +137,10 @@ pub fn run(args: SortArgs) -> Result<()> {
         });
 
         report::generate_report(report_type, &output_dir, &results)?;
-        display::success(&format!("Report generated successfully in {}", output_dir.display()));
+        display::success(&format!(
+            "Report generated successfully in {}",
+            output_dir.display()
+        ));
     }
 
     Ok(())

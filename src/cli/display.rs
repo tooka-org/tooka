@@ -11,10 +11,19 @@ pub fn show_banner() {
 "#;
 
     println!("{}", banner.bright_cyan().bold());
-    println!("{}", "🚀 A fast, rule-based CLI tool for organizing your files".bright_white());
+    println!(
+        "{}",
+        "🚀 A fast, rule-based CLI tool for organizing your files".bright_white()
+    );
     println!();
-    println!("{}", "Run `tooka --help` for usage information".bright_yellow());
-    println!("{}", "Visit https://github.com/tooka-org/tooka for documentation".bright_blue());
+    println!(
+        "{}",
+        "Run `tooka --help` for usage information".bright_yellow()
+    );
+    println!(
+        "{}",
+        "Visit https://github.com/tooka-org/tooka for documentation".bright_blue()
+    );
     println!();
 }
 
@@ -40,7 +49,6 @@ pub fn header(title: &str) {
     println!();
 }
 
-
 //pub fn subheader(title: &str) {
 //    println!("{}", title.bright_white().bold());
 //}
@@ -61,7 +69,7 @@ pub fn rule_table_row(id: &str, name: &str, enabled: bool) {
     } else {
         "✗ Disabled".red()
     };
-    
+
     println!(
         "{:<30} | {:<30} | {}",
         id.bright_white(),
@@ -91,7 +99,15 @@ pub fn show_version() {
     println!();
     println!("{}", "🚀 Tooka".bright_cyan().bold());
     println!("{} {}", "Version:".bright_white(), version.green().bold());
-    println!("{} {}", "Repository:".bright_white(), "https://github.com/tooka-org/tooka".blue());
-    println!("{} {}", "Website:".bright_white(), "https://tooka.deno.dev".blue());
+    println!(
+        "{} {}",
+        "Repository:".bright_white(),
+        "https://github.com/tooka-org/tooka".blue()
+    );
+    println!(
+        "{} {}",
+        "Website:".bright_white(),
+        "https://tooka.deno.dev".blue()
+    );
     println!();
 }

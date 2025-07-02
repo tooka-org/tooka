@@ -6,7 +6,10 @@ use clap::Args;
 #[command(about = "📤 Export a rule to a YAML file")]
 pub struct ExportArgs {
     /// ID of the rule to export
-    #[arg(value_name = "ID", help = "The unique identifier of the rule to export")]
+    #[arg(
+        value_name = "ID",
+        help = "The unique identifier of the rule to export"
+    )]
     pub id: String,
 
     /// Output file path, optional; defaults to stdout

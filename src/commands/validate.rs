@@ -10,7 +10,11 @@ pub struct ValidateArgs {
     pub file: String,
 
     /// Optional flag to do a full validation, including value limits
-    #[arg(long, default_value_t = false, help = "Perform deep validation including value limits")]
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Perform deep validation including value limits"
+    )]
     pub deep: bool,
 }
 
