@@ -1,13 +1,31 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use tempfile::tempdir;
-use tooka::core::error::TookaError;
-use tooka::core::sorter::sort_files;
-use tooka::rules::rule::{Action, Conditions, MoveAction, Range, Rule};
-use tooka::rules::rules_file::RulesFile;
 
 use std::fs::{File, create_dir_all};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+
+// Include the necessary modules directly from the source
+#[path = "../src/core/mod.rs"]
+mod core;
+
+#[path = "../src/rules/mod.rs"]
+mod rules;
+
+#[path = "../src/file/mod.rs"]
+mod file;
+
+#[path = "../src/common/mod.rs"]
+mod common;
+
+#[path = "../src/utils/mod.rs"]
+mod utils;
+
+// Re-export the specific items we need for the benchmark
+use crate::core::error::TookaError;
+use crate::core::sorter::sort_files;
+use crate::rules::rule::{Action, Conditions, MoveAction, Range, Rule};
+use crate::rules::rules_file::RulesFile;
 
 /// Generates temporary files of various types (some matching, some not)
 fn generate_mixed_temp_files(base_dir: &Path, count: usize, avg_kb: usize) -> Vec<PathBuf> {

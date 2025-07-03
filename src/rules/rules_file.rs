@@ -219,6 +219,7 @@ impl RulesFile {
     }
 
     /// Creates an optimized rules file with rule filtering and priority sorting
+    /// Only includes enabled rules in the result
     pub fn optimized_with_filter(self, rule_filter: Option<&[String]>) -> Result<Self, TookaError> {
         let filtered_rules = if let Some(rule_ids) = rule_filter {
             let mut filtered = Vec::with_capacity(rule_ids.len());
@@ -236,15 +237,21 @@ impl RulesFile {
             self.rules
         };
 
-        if filtered_rules.is_empty() {
+        // Filter out disabled rules
+        let enabled_rules: Vec<Rule> = filtered_rules
+            .into_iter()
+            .filter(|rule| rule.enabled)
+            .collect();
+
+        if enabled_rules.is_empty() {
             return Err(TookaError::RuleNotFound(
-                "No rules found to apply.".to_string(),
+                "No enabled rules found to apply.".to_string(),
             ));
         }
 
-        // Sort by priority
+        // Sort by priority (higher priority numbers come first)
         let mut indexed_rules: Vec<(usize, Rule)> =
-            filtered_rules.into_iter().enumerate().collect();
+            enabled_rules.into_iter().enumerate().collect();
         indexed_rules.sort_by(|a, b| b.1.priority.cmp(&a.1.priority).then(a.0.cmp(&b.0)));
 
         Ok(Self {
