@@ -1,16 +1,28 @@
 name: Publish to WinGet
+
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: windows-latest
     steps:
+      # Only fetch latest tag when run manually
+      - name: Get latest release tag name
+        if: github.event_name == 'workflow_dispatch'
+        id: get-latest-release
+        run: |
+          "tag=$((gh api repos/${{ github.repository }}/releases/latest | ConvertFrom-Json).tag_name)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: Benji377.Tooka
-          fork: Benji377
-          installers-regex: '\.msi$' # Only .msi file
+          fork-user: Benji377
+          installers-regex: '\.msi$'
           token: ${{ secrets.WINGETCREATE_TOKEN }}
-
+          release-tag: ${{ github.event.release.tag_name || steps.get-latest-release.outputs.tag }}
