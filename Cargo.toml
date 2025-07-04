@@ -17,7 +17,7 @@ rust-version = "1.87"
 # CLI dependencies
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4.5.50"
-indicatif = "0.17.12"
+indicatif = "0.18.0"
 colored = "3.0.0"
 # Core functionality
 trash = "5.2.2"
