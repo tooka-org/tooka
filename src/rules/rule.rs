@@ -5,6 +5,7 @@
 use std::{fs, path::Path};
 
 use crate::core::error::RuleValidationError;
+use crate::utils::date_parser::parse_date;
 use serde::{Deserialize, Serialize};
 
 /// Represents a rule for file operations, specifying when it applies and what actions to take.
@@ -236,7 +237,7 @@ impl Rule {
         ] {
             if let Some(range) = date_range {
                 if let Some(from) = &range.from {
-                    if let Err(e) = chrono::DateTime::parse_from_rfc3339(from) {
+                    if let Err(e) = parse_date(from) {
                         return Err(RuleValidationError::InvalidCondition(
                             self.id.clone(),
                             format!("Invalid {label} 'from' date: {e}"),
@@ -244,7 +245,7 @@ impl Rule {
                     }
                 }
                 if let Some(to) = &range.to {
-                    if let Err(e) = chrono::DateTime::parse_from_rfc3339(to) {
+                    if let Err(e) = parse_date(to) {
                         return Err(RuleValidationError::InvalidCondition(
                             self.id.clone(),
                             format!("Invalid {label} 'to' date: {e}"),

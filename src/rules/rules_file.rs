@@ -250,8 +250,7 @@ impl RulesFile {
         }
 
         // Sort by priority (higher priority numbers come first)
-        let mut indexed_rules: Vec<(usize, Rule)> =
-            enabled_rules.into_iter().enumerate().collect();
+        let mut indexed_rules: Vec<(usize, Rule)> = enabled_rules.into_iter().enumerate().collect();
         indexed_rules.sort_by(|a, b| b.1.priority.cmp(&a.1.priority).then(a.0.cmp(&b.0)));
 
         Ok(Self {

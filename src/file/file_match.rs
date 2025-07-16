@@ -7,6 +7,7 @@
 use crate::{
     core::error::TookaError,
     rules::rule::{self, Conditions, DateRange, Range},
+    utils::date_parser::parse_date,
 };
 
 use chrono::{NaiveDate, Utc};
@@ -98,14 +99,25 @@ pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: Date
 
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
-        let from = NaiveDate::parse_from_str(
-            date_range.from.as_deref().unwrap_or("1970-01-01"),
-            "%Y-%m-%d",
-        )
-        .unwrap_or_else(|_| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-        let to =
-            NaiveDate::parse_from_str(date_range.to.as_deref().unwrap_or("9999-12-31"), "%Y-%m-%d")
-                .unwrap_or_else(|_| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
+        
+        let from = if let Some(from_str) = &date_range.from {
+            parse_date(from_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
+                log::warn!("Invalid 'from' date format: {}, using 1970-01-01", from_str);
+                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+            })
+        } else {
+            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+        };
+        
+        let to = if let Some(to_str) = &date_range.to {
+            parse_date(to_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
+                log::warn!("Invalid 'to' date format: {}, using 9999-12-31", to_str);
+                NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+            })
+        } else {
+            NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+        };
+        
         let created_date = created_datetime.date_naive();
         created_date >= from && created_date <= to
     })
@@ -117,14 +129,25 @@ pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRang
 
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
-        let from = NaiveDate::parse_from_str(
-            date_range.from.as_deref().unwrap_or("1970-01-01"),
-            "%Y-%m-%d",
-        )
-        .unwrap_or_else(|_| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-        let to =
-            NaiveDate::parse_from_str(date_range.to.as_deref().unwrap_or("9999-12-31"), "%Y-%m-%d")
-                .unwrap_or_else(|_| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
+        
+        let from = if let Some(from_str) = &date_range.from {
+            parse_date(from_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
+                log::warn!("Invalid 'from' date format: {}, using 1970-01-01", from_str);
+                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+            })
+        } else {
+            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+        };
+        
+        let to = if let Some(to_str) = &date_range.to {
+            parse_date(to_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
+                log::warn!("Invalid 'to' date format: {}, using 9999-12-31", to_str);
+                NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+            })
+        } else {
+            NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+        };
+        
         let modified_date = modified_datetime.date_naive();
         modified_date >= from && modified_date <= to
     })
