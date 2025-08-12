@@ -62,7 +62,7 @@ jobs:
             rust_target: armv7-unknown-linux-gnueabihf
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install cross dependencies (cross only)
         if: matrix.cross
