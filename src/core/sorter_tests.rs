@@ -133,8 +133,8 @@ mod tests {
 
         // Sort files in dry run mode
         let results = sort_files(
-            files.clone(),
-            source_path.clone(),
+            &files,
+            &source_path,
             &rules_file,
             true,
             None::<fn()>,
@@ -184,8 +184,8 @@ mod tests {
 
         // Sort files with actual execution (not dry run)
         let results = sort_files(
-            files.clone(),
-            source_path.clone(),
+            &files,
+            &source_path,
             &rules_file,
             false,
             None::<fn()>,
@@ -298,8 +298,8 @@ mod tests {
 
         // Sort the file
         let results = sort_files(
-            vec![test_file],
-            source_path,
+            &[test_file],
+            &source_path,
             &optimized_rules,
             true,
             None::<fn()>,
@@ -330,8 +330,8 @@ mod tests {
 
         // Sort files with progress callback
         let results = sort_files(
-            files.clone(),
-            source_path,
+            &files,
+            &source_path,
             &rules_file,
             true,
             Some(progress_callback),
@@ -396,8 +396,8 @@ mod tests {
 
         // Sort the file
         let results = sort_files(
-            vec![test_file],
-            source_path,
+            &[test_file],
+            &source_path,
             &rules_file,
             true,
             None::<fn()>,
@@ -470,7 +470,7 @@ mod tests {
         let rules_file = create_test_rules(&source_path);
 
         // Sort empty file list
-        let results = sort_files(vec![], source_path, &rules_file, true, None::<fn()>)
+        let results = sort_files(&[], &source_path, &rules_file, true, None::<fn()>)
             .expect("sort_files should succeed with empty list");
 
         assert_eq!(results.len(), 0);
@@ -593,8 +593,8 @@ mod tests {
 
         // Sort the file
         let results = sort_files(
-            vec![test_file],
-            source_path,
+            &[test_file.clone()],
+            &source_path,
             &optimized_rules,
             true,
             None::<fn()>,
