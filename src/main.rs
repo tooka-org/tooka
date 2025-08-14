@@ -40,16 +40,16 @@ enum Commands {
     Validate(commands::validate::ValidateArgs),
 }
 
-fn main() -> Result<()> {
+fn main() {
     // Check if no arguments are provided
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 1 {
         display::show_banner();
-        return Ok(());
+        return;
     }
     if args.len() == 2 && args[1] == "--version" {
         display::show_version();
-        return Ok(());
+        return;
     }
 
     // Top-level error handling
@@ -57,7 +57,6 @@ fn main() -> Result<()> {
         display::error(&format!("Error: {e}"));
         std::process::exit(1);
     }
-    Ok(())
 }
 
 fn run() -> Result<()> {

@@ -6,7 +6,7 @@ use crate::core::{report, sorter};
 use crate::rules::rules_file::RulesFile;
 use anyhow::Result;
 use clap::Args;
-use colored::*;
+use colored::Colorize;
 use indicatif::ProgressBar;
 
 #[derive(Args)]
@@ -90,8 +90,8 @@ pub fn run(args: SortArgs) -> Result<()> {
 
     // Use the main sort_files function with optimized rules
     let results = sorter::sort_files(
-        files,
-        source_path,
+        &files,
+        &source_path,
         &optimized_rules,
         args.dry_run,
         Some(|| {
@@ -131,10 +131,11 @@ pub fn run(args: SortArgs) -> Result<()> {
 
     // Handle report generation
     if let Some(report_type) = &args.report {
-        log::info!("Generating report of type: {}", report_type);
-        let output_dir = args.output.as_ref().map(PathBuf::from).unwrap_or_else(|| {
-            std::env::current_dir().expect("Cannot get current working directory")
-        });
+        log::info!("Generating report of type: {report_type}");
+        let output_dir = args.output.as_ref().map_or_else(
+            || std::env::current_dir().expect("Cannot get current working directory"),
+            PathBuf::from,
+        );
 
         report::generate_report(report_type, &output_dir, &results)?;
         display::success(&format!(

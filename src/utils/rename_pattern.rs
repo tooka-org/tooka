@@ -11,7 +11,7 @@ pub(crate) fn evaluate_template(
     template: &str,
     file_path: &Path,
     metadata: &HashMap<String, String>,
-) -> Result<String, TookaError> {
+) -> std::string::String {
     let re = Regex::new(r"\{\{(.*?)\}\}").unwrap();
     let file_name = file_path
         .file_stem()
@@ -44,7 +44,7 @@ pub(crate) fn evaluate_template(
         result = result.replace(full_match, &final_value);
     }
 
-    Ok(result)
+    result
 }
 
 fn apply_filters(value: String, filters: &[&str]) -> String {

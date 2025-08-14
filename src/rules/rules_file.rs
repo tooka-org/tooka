@@ -99,12 +99,11 @@ impl RulesFile {
                 self.rules[pos] = rule;
                 self.save()?;
                 return Ok(());
-            } else {
-                return Err(TookaError::InvalidRule(format!(
-                    "Rule ID '{}' already exists",
-                    rule.id
-                )));
             }
+            return Err(TookaError::InvalidRule(format!(
+                "Rule ID '{}' already exists",
+                rule.id
+            )));
         }
 
         self.rules.push(rule);

@@ -19,15 +19,26 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
     let mut alloc = Ref::new(1);
     let mut pdf = Pdf::new();
 
+    let font_name = init_fonts(&mut pdf, &mut alloc);
+    let page_tree_id = alloc.bump();
+
+    let flat_entries = prepare_entries(results);
+
+    let page_ids = render_pages(&mut pdf, &mut alloc, page_tree_id, &flat_entries, results.len(), font_name);
+
+    finalize_pdf(&mut pdf, &mut alloc, page_tree_id, &page_ids);
+
+    std::fs::write(path, pdf.finish())?;
+    Ok(())
+}
+
+fn init_fonts(pdf: &mut Pdf, alloc: &mut Ref) -> Name<'static> {
     let font_id = alloc.bump();
     pdf.type1_font(font_id).base_font(Name(b"Helvetica"));
-    let font_name = Name(b"Helvetica");
+    Name(b"Helvetica")
+}
 
-    let mut secondary = Chunk::new();
-    let page_tree_id = alloc.bump();
-    let mut page_ids = vec![];
-
-    // Group results by rule and sort each group by file name
+fn prepare_entries(results: &[MatchResult]) -> Vec<(Option<String>, Option<&MatchResult>)> {
     let mut grouped: BTreeMap<String, Vec<&MatchResult>> = BTreeMap::new();
     for result in results {
         grouped
@@ -35,20 +46,30 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
             .or_default()
             .push(result);
     }
-
-    // Sort entries by file_name within each rule_id group
     for entries in grouped.values_mut() {
         entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
     }
 
-    // Flatten into display order: sorted by rule_id (already sorted in BTreeMap), then file_name
     let mut flat_entries = vec![];
     for (rule_id, entries) in grouped {
-        flat_entries.push((Some(rule_id), None)); // Section header marker
+        flat_entries.push((Some(rule_id), None));
         for entry in entries {
             flat_entries.push((None, Some(entry)));
         }
     }
+    flat_entries
+}
+
+fn render_pages(
+    pdf: &mut Pdf,
+    alloc: &mut Ref,
+    page_tree_id: Ref,
+    flat_entries: &[(Option<String>, Option<&MatchResult>)],
+    total_results: usize,
+    font_name: Name<'static>,
+) -> Vec<Ref> {
+    let secondary = Chunk::new();
+    let mut page_ids = vec![];
 
     let mut page_number = 1;
     let mut y = PAGE_HEIGHT - MARGIN_TOP - 50.0;
@@ -56,41 +77,24 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
     let mut content = Content::new();
     let mut extg_states = vec![];
     let mut first_page = true;
-
     let mut last_rule_id: Option<String> = None;
 
     for (rule_id_opt, entry_opt) in flat_entries {
-        // Section header
         if let Some(rule_id) = rule_id_opt {
-            // If not enough space for section header, start new page
-            if y < min_y + 30.0 {
-                // Finish current page
-                let page_id = alloc.bump();
-                page_ids.push(page_id);
-                let mut page = pdf.page(page_id);
-                page.media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT));
-                page.parent(page_tree_id);
-
-                if first_page {
-                    draw_header(&mut content, results.len(), font_name);
-                    first_page = false;
-                }
-                draw_footer(&mut content, page_number, font_name);
-
-                let content_id = alloc.bump();
-                secondary.stream(content_id, &content.finish());
-                page.contents(content_id);
-                page.resources().ext_g_states().pairs(
-                    extg_states
-                        .iter()
-                        .map(|(n, id): &(String, Ref)| (Name(n.as_bytes()), *id)),
-                );
-
-                page_number += 1;
-                y = PAGE_HEIGHT - MARGIN_TOP - 50.0;
-                content = Content::new();
-                extg_states = vec![];
-            }
+            page_break_if_needed(
+                pdf,
+                alloc,
+                page_tree_id,
+                &mut page_ids,
+                &mut content,
+                &mut extg_states,
+                &mut page_number,
+                &mut y,
+                min_y + 30.0,
+                font_name,
+                total_results,
+                &mut first_page,
+            );
 
             write_text(
                 &mut content,
@@ -101,39 +105,26 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
                 font_name,
             );
             y -= 30.0;
-            last_rule_id = Some(rule_id);
+            last_rule_id = Some(rule_id.clone());
         }
 
-        // Entry
         if let Some(entry) = entry_opt {
-            // If not enough space for entry, start new page
-            if y < min_y + 50.0 {
-                // Finish current page
-                let page_id = alloc.bump();
-                page_ids.push(page_id);
-                let mut page = pdf.page(page_id);
-                page.media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT));
-                page.parent(page_tree_id);
+            page_break_if_needed(
+                pdf,
+                alloc,
+                page_tree_id,
+                &mut page_ids,
+                &mut content,
+                &mut extg_states,
+                &mut page_number,
+                &mut y,
+                min_y + 50.0,
+                font_name,
+                total_results,
+                &mut first_page,
+            );
 
-                if first_page {
-                    draw_header(&mut content, results.len(), font_name);
-                    first_page = false;
-                }
-                draw_footer(&mut content, page_number, font_name);
-
-                let content_id = alloc.bump();
-                secondary.stream(content_id, &content.finish());
-                page.contents(content_id);
-                page.resources()
-                    .ext_g_states()
-                    .pairs(extg_states.iter().map(|(n, id)| (Name(n.as_bytes()), id)));
-
-                page_number += 1;
-                y = PAGE_HEIGHT - MARGIN_TOP - 50.0;
-                content = Content::new();
-                extg_states = vec![];
-
-                // Optionally, repeat section header at top of new page
+            if y == PAGE_HEIGHT - MARGIN_TOP - 50.0 {
                 if let Some(rule_id) = &last_rule_id {
                     write_text(
                         &mut content,
@@ -164,38 +155,99 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
         }
     }
 
-    // Write the last page if it has content
     if !extg_states.is_empty() {
-        let page_id = alloc.bump();
-        page_ids.push(page_id);
-        let mut page = pdf.page(page_id);
-        page.media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT));
-        page.parent(page_tree_id);
-
-        if first_page {
-            draw_header(&mut content, results.len(), font_name);
-        }
-        draw_footer(&mut content, page_number, font_name);
-
-        let content_id = alloc.bump();
-        secondary.stream(content_id, &content.finish());
-        page.contents(content_id);
-        page.resources()
-            .ext_g_states()
-            .pairs(extg_states.iter().map(|(n, id)| (Name(n.as_bytes()), id)));
+        finish_page(
+            pdf,
+            alloc,
+            page_tree_id,
+            &mut page_ids,
+            &mut content,
+            &mut extg_states,
+            page_number,
+            font_name,
+            total_results,
+            first_page,
+        );
     }
 
     pdf.extend(&secondary);
+    page_ids
+}
 
+fn page_break_if_needed(
+    pdf: &mut Pdf,
+    alloc: &mut Ref,
+    page_tree_id: Ref,
+    page_ids: &mut Vec<Ref>,
+    content: &mut Content,
+    extg_states: &mut Vec<(String, Ref)>,
+    page_number: &mut i32,
+    y: &mut f32,
+    min_y: f32,
+    font_name: Name<'static>,
+    total_results: usize,
+    first_page: &mut bool,
+) {
+    if *y < min_y {
+        finish_page(
+            pdf,
+            alloc,
+            page_tree_id,
+            page_ids,
+            content,
+            extg_states,
+            *page_number,
+            font_name,
+            total_results,
+            *first_page,
+        );
+        *page_number += 1;
+        *y = PAGE_HEIGHT - MARGIN_TOP - 50.0;
+        *content = Content::new();
+        *extg_states = vec![];
+        *first_page = false;
+    }
+}
+
+fn finish_page(
+    pdf: &mut Pdf,
+    alloc: &mut Ref,
+    page_tree_id: Ref,
+    page_ids: &mut Vec<Ref>,
+    content: &mut Content,
+    extg_states: &mut [(String, Ref)],
+    page_number: i32,
+    font_name: Name<'static>,
+    total_results: usize,
+    first_page: bool,
+) {
+    let page_id = alloc.bump();
+    page_ids.push(page_id);
+    let mut page = pdf.page(page_id);
+    page.media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT));
+    page.parent(page_tree_id);
+
+    if first_page {
+        draw_header(content, total_results, font_name);
+    }
+    draw_footer(content, page_number.try_into().unwrap(), font_name);
+
+    let content_id = alloc.bump();
+    page.contents(content_id);
+    page.resources().ext_g_states().pairs(
+        extg_states
+            .iter()
+            .map(|(n, id): &(String, Ref)| (Name(n.as_bytes()), *id)),
+    );
+}
+
+fn finalize_pdf(pdf: &mut Pdf, alloc: &mut Ref, page_tree_id: Ref, page_ids: &[Ref]) {
     pdf.pages(page_tree_id)
         .kids(page_ids.iter().copied())
-        .count(page_ids.len() as i32);
-
+        .count(i32::try_from(page_ids.len()).unwrap_or(0));
     pdf.catalog(alloc.bump()).pages(page_tree_id);
-
-    std::fs::write(path, pdf.finish())?;
-    Ok(())
 }
+
 
 fn write_text(content: &mut Content, text: &str, font_size: f32, x: f32, y: f32, font_name: Name) {
     content.begin_text();
@@ -321,9 +373,7 @@ fn truncate_path(path: &Path, max_len: f32) -> String {
     if let (Some(parent), Some(file_name)) = (path.parent(), path.file_name()) {
         let parent_str = parent
             .file_name()
-            .or(Some(parent.as_os_str()))
-            .map(|s| s.to_string_lossy().to_string())
-            .unwrap_or_else(|| parent.display().to_string());
+            .or(Some(parent.as_os_str())).map_or_else(|| parent.display().to_string(), |s| s.to_string_lossy().to_string());
 
         return format!(
             "[truncated].../{parent_str}/{}",

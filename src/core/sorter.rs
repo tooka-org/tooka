@@ -46,8 +46,8 @@ pub struct MatchResult {
 /// # Errors
 /// Returns `TookaError` if file operations fail.
 pub fn sort_files<F>(
-    files: Vec<PathBuf>,
-    source_path: PathBuf,
+    files: &[PathBuf],
+    source_path: &Path,
     rules_file: &RulesFile,
     dry_run: bool,
     on_progress: Option<F>,
@@ -60,7 +60,7 @@ where
     let results: Result<Vec<_>, TookaError> = files
         .par_iter()
         .map(|file_path| {
-            let res = sort_file(file_path, rules_file, dry_run, &source_path);
+            let res = sort_file(file_path, rules_file, dry_run, source_path);
             if let Some(ref cb) = *progress {
                 cb();
             }
@@ -97,18 +97,16 @@ fn sort_file(
         .iter()
         .find(|rule| file_match::match_rule_matcher(file_path, &rule.when));
 
-    let rule = match rule {
-        Some(r) => r,
-        None => {
-            log::debug!("No matching rules found for file '{}'", file_name);
-            return Ok(vec![MatchResult {
-                file_name: file_name.to_string(),
-                action: "skip".to_string(),
-                matched_rule_id: "none".to_string(),
-                current_path: file_path.to_path_buf(),
-                new_path: file_path.to_path_buf(),
-            }]);
-        }
+    let Some(rule) = rule else {
+        log::debug!("No matching rules found for file '{file_name}'");
+        return Ok(vec![MatchResult {
+            file_name: file_name.to_string(),
+            action: "skip".to_string(),
+            matched_rule_id: "none".to_string(),
+            current_path: file_path.to_path_buf(),
+            new_path: file_path.to_path_buf(),
+        }]);
+    
     };
 
     log::debug!(
@@ -152,7 +150,7 @@ fn sort_file(
             break;
         }
 
-        current_path = op_result.new_path.clone();
+        current_path.clone_from(&op_result.new_path);
     }
 
     Ok(results)
@@ -176,7 +174,7 @@ pub fn collect_files(dir: &Path) -> Result<Vec<PathBuf>, TookaError> {
                 Ok(e) if e.file_type().is_file() => Some(Ok(e.path().to_path_buf())),
                 Ok(_) => None, // Skip directories
                 Err(err) => {
-                    log::warn!("Error reading directory entry: {}", err);
+                    log::warn!("Error reading directory entry: {err}");
                     None // Skip problematic entries instead of failing
                 }
             }

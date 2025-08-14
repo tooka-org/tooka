@@ -83,8 +83,8 @@ fn test_match_size_kb() {
         max: Some(20),
     };
 
-    assert!(!file_match::match_size_kb(&small_meta, range.clone()));
-    assert!(file_match::match_size_kb(&large_meta, range));
+    assert!(!file_match::match_size_kb(&small_meta, &range));
+    assert!(file_match::match_size_kb(&large_meta, &range));
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_match_date_range_mod() {
         to: Some(today.format("%Y-%m-%d").to_string()),
     };
 
-    assert!(file_match::match_date_range_mod(&meta, range));
+    assert!(file_match::match_date_range_mod(&meta, &range));
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_match_date_range_created() {
     };
 
     // Note: On Linux, `created()` may return an error depending on FS.
-    let result = file_match::match_date_range_created(&meta, range);
+    let result = file_match::match_date_range_created(&meta, &range);
     // Allow either true or false, but make sure it doesn't panic
     assert!(matches!(result, true | false));
 }

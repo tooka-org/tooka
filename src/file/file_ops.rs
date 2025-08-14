@@ -130,8 +130,8 @@ pub(crate) fn handle_rename(
 
     let metadata = extract_metadata(file_path)?;
 
-    let new_name = evaluate_template(&action.to, file_path, &metadata)?;
-    log::debug!("New file name: {}", new_name);
+    let new_name = evaluate_template(&action.to, file_path, &metadata);
+    log::debug!("New file name: {new_name}");
 
     let new_path = file_path.with_file_name(new_name);
 
@@ -229,15 +229,15 @@ where
     let preserve_structure = action.preserve_structure();
 
     let destination = if to.starts_with('.') {
-        log::debug!("Destination is a relative path: {}", to);
+        log::debug!("Destination is a relative path: {to}");
         PathBuf::from(to)
     } else if to.starts_with('~') {
-        log::debug!("Destination is a home directory path: {}", to);
+        log::debug!("Destination is a home directory path: {to}");
         let home_dir = std::env::home_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
         let stripped = to.trim_start_matches('~').trim_start_matches('/');
         home_dir.join(stripped)
     } else {
-        log::debug!("Destination is an absolute path: {}", to);
+        log::debug!("Destination is an absolute path: {to}");
         PathBuf::from("/").join(to.trim_start_matches('/'))
     };
 

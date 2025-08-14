@@ -6,10 +6,7 @@
 //! It includes logic to fall back to default locations if environment variables
 //! or system directories are unavailable.
 
-use crate::{
-    core::context::{APP_NAME, APP_ORG, APP_QUALIFIER},
-    core::error::TookaError,
-};
+use crate::core::context::{APP_NAME, APP_ORG, APP_QUALIFIER};
 use directories_next::{ProjectDirs, UserDirs};
 use std::{
     env,
@@ -29,22 +26,22 @@ pub fn get_dir_with_env<F>(
     project_dir_fn: F,
     home: &Path,
     fallback_subdir: &str,
-) -> Result<PathBuf, TookaError>
+) -> std::path::PathBuf
 where
     F: Fn(&ProjectDirs) -> &Path,
 {
     if let Ok(path) = env::var(env_var).map(PathBuf::from) {
-        return Ok(path);
+        return path;
     }
 
     if let Some(proj_dirs) = ProjectDirs::from(APP_QUALIFIER, APP_ORG, APP_NAME) {
-        return Ok(project_dir_fn(&proj_dirs).to_path_buf());
+        return project_dir_fn(&proj_dirs).to_path_buf();
     }
 
     // Fallback
     let fallback = home.join(fallback_subdir).join(APP_NAME.to_lowercase());
     log::warn!("Using fallback for {}: {}", env_var, fallback.display());
-    Ok(fallback)
+    fallback
 }
 
 /// Returns the source folder path, usually pointing to the Downloads directory.
@@ -54,14 +51,14 @@ where
 ///
 /// # Errors
 /// Returns [`TookaError`] if path resolution fails.
-pub fn get_source_folder(home: &Path) -> Result<PathBuf, TookaError> {
+pub fn get_source_folder(home: &Path) -> std::path::PathBuf {
     if let Ok(path) = env::var("TOOKA_SOURCE_FOLDER").map(PathBuf::from) {
-        return Ok(path);
+        return path;
     }
 
     if let Some(user_dirs) = UserDirs::new() {
         if let Some(downloads) = user_dirs.download_dir() {
-            return Ok(downloads.to_path_buf());
+            return downloads.to_path_buf();
         }
     }
 
@@ -71,5 +68,5 @@ pub fn get_source_folder(home: &Path) -> Result<PathBuf, TookaError> {
         "Could not find user downloads dir; using fallback: {}",
         fallback.display()
     );
-    Ok(fallback)
+    fallback
 }

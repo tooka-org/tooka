@@ -15,7 +15,7 @@ pub fn run(args: TemplateArgs) -> Result<()> {
         .output
         .unwrap_or_else(|| "rule_template.yaml".to_string());
 
-    log::info!("Generating rule template YAML to {}", output_path);
+    log::info!("Generating rule template YAML to {output_path}");
 
     let rule_template = generate_rule_template_yaml()
         .map_err(|e| anyhow!("Failed to generate rule template: {}", e))?;
@@ -24,8 +24,7 @@ pub fn run(args: TemplateArgs) -> Result<()> {
         .map_err(|e| anyhow!("Failed to write rule template to file: {}", e))?;
 
     println!(
-        "Rule template YAML generated successfully at {}",
-        output_path
+        "Rule template YAML generated successfully at {output_path}"
     );
 
     Ok(())

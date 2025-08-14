@@ -1,4 +1,4 @@
-use crate::cli::display;
+use crate::{cli::display, common::config::Config};
 use crate::core::context;
 use anyhow::{Context, Result, anyhow};
 use clap::Args;
@@ -53,8 +53,7 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
     if args.locate {
         display::info("📍 Locating config file...");
         log::info!("Locating config file...");
-        let path = conf
-            .locate_config_file()
+        let path = Config::locate_config_file()
             .context("Failed to locate config file")?;
         display::success(&format!("Config file found at: {}", path.display()));
         log::info!("Config file found at: {}", path.display());

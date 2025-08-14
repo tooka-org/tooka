@@ -35,7 +35,7 @@ pub fn parse_date(date_str: &str) -> Result<DateTime<Utc>, String> {
         return Ok(dt);
     }
     
-    Err(format!("Invalid date format: '{}'. Expected RFC3339, ISO 8601 (YYYY-MM-DD), or relative format (e.g., 'now', '-7d', '+2w')", date_str))
+    Err(format!("Invalid date format: '{date_str}'. Expected RFC3339, ISO 8601 (YYYY-MM-DD), or relative format (e.g., 'now', '-7d', '+2w')"))
 }
 
 /// Parses relative date formats like "-7d", "+2w", "-1m", "+3y"
@@ -59,7 +59,7 @@ fn parse_relative_date(date_str: &str) -> Result<DateTime<Utc>, String> {
     let number_str = &date_str[..date_str.len() - 1];
     
     let number: i64 = number_str.parse()
-        .map_err(|_| format!("Invalid number in relative date: '{}'", number_str))?;
+        .map_err(|_| format!("Invalid number in relative date: '{number_str}'"))?;
     
     let number = if is_negative { -number } else { number };
     
@@ -70,7 +70,7 @@ fn parse_relative_date(date_str: &str) -> Result<DateTime<Utc>, String> {
         'y' => Duration::days(number * 365), // Approximate year as 365 days
         'h' => Duration::hours(number),
         's' => Duration::seconds(number),
-        _ => return Err(format!("Invalid time unit '{}'. Supported units: d (days), w (weeks), m (months), y (years), h (hours), s (seconds)", unit_char)),
+        _ => return Err(format!("Invalid time unit '{unit_char}'. Supported units: d (days), w (weeks), m (months), y (years), h (hours), s (seconds)")),
     };
     
     Ok(Utc::now() + duration)

@@ -29,7 +29,7 @@ pub fn run(args: ExportArgs) -> Result<()> {
 
     if output_path.is_some() {
         println!("Rule exported successfully!");
-        log::info!("Rule exported successfully to: {:?}", output_path);
+        log::info!("Rule exported successfully to: {output_path:?}");
     } else {
         log::info!("Rule exported successfully to stdout");
     }

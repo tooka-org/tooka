@@ -47,8 +47,8 @@ pub fn run(args: &ValidateArgs) -> Result<()> {
     }
 
     if err_count > 0 {
-        log::error!("Validation completed with {} errors", err_count);
-        println!("Validation completed with {} errors", err_count);
+        log::error!("Validation completed with {err_count} errors");
+        println!("Validation completed with {err_count} errors");
         return Err(anyhow::anyhow!(
             "Validation failed with {} errors",
             err_count

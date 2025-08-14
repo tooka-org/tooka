@@ -1,14 +1,14 @@
-use colored::*;
+use colored::Colorize;
 
 pub fn show_banner() {
-    let banner = r#"
+    let banner = r"
 ████████  ██████   ██████  ██   ██  █████  
    ██    ██    ██ ██    ██ ██  ██  ██   ██ 
    ██    ██    ██ ██    ██ █████   ███████ 
    ██    ██    ██ ██    ██ ██  ██  ██   ██ 
    ██     ██████   ██████  ██   ██ ██   ██ 
                                            
-"#;
+";
 
     println!("{}", banner.bright_cyan().bold());
     println!(

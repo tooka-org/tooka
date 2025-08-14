@@ -62,23 +62,23 @@ pub fn run(args: &AddArgs) -> Result<()> {
 
         for file_path in yaml_files {
             let file_path_str = file_path.to_string_lossy();
-            log::info!("Processing file: {}", file_path_str);
+            log::info!("Processing file: {file_path_str}");
             
             match rf.add_rule_from_file(&file_path_str, args.overwrite) {
                 Ok(()) => {
                     display::success(&format!("  ✅ Added rules from: {}", file_path.file_name().unwrap().to_string_lossy()));
-                    log::info!("Successfully added rules from: {}", file_path_str);
+                    log::info!("Successfully added rules from: {file_path_str}");
                     added_count += 1;
                 }
                 Err(e) => {
                     // Check if it's a duplicate rule error and not overwriting
                     if e.to_string().contains("already exists") && !args.overwrite {
                         display::warning(&format!("  ⚠️  Skipped (rule exists): {}", file_path.file_name().unwrap().to_string_lossy()));
-                        log::warn!("Skipped file due to existing rule: {}", file_path_str);
+                        log::warn!("Skipped file due to existing rule: {file_path_str}");
                         skipped_count += 1;
                     } else {
                         display::error(&format!("  ❌ Failed to add from: {} - {}", file_path.file_name().unwrap().to_string_lossy(), e));
-                        log::error!("Failed to add rules from: {} - {}", file_path_str, e);
+                        log::error!("Failed to add rules from: {file_path_str} - {e}");
                         failed_count += 1;
                     }
                 }
@@ -86,8 +86,8 @@ pub fn run(args: &AddArgs) -> Result<()> {
         }
 
         // Print summary
-        display::info(&format!("📊 Summary: {} added, {} skipped, {} failed", added_count, skipped_count, failed_count));
-        log::info!("Directory processing complete. Added: {}, Skipped: {}, Failed: {}", added_count, skipped_count, failed_count);
+        display::info(&format!("📊 Summary: {added_count} added, {skipped_count} skipped, {failed_count} failed"));
+        log::info!("Directory processing complete. Added: {added_count}, Skipped: {skipped_count}, Failed: {failed_count}");
 
         if failed_count > 0 {
             return Err(anyhow::anyhow!("Failed to process {} files", failed_count));

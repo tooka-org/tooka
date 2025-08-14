@@ -85,9 +85,9 @@ fn custom_format(
     )
 }
 
-/// Implementation of the DualWriter
+/// Implementation of the `DualWriter`
 impl DualWriter {
-    /// Creates a new DualWriter with the specified base path
+    /// Creates a new `DualWriter` with the specified base path
     fn new(base: &Path) -> Self {
         Self {
             main_dir: base.to_path_buf(),
@@ -101,13 +101,13 @@ impl DualWriter {
     }
 
     // Ops log path: figure out today's file, add -1, -2 if needed
-    fn get_ops_log_path(&self) -> std::io::Result<PathBuf> {
+    fn get_ops_log_path(&self) -> std::path::PathBuf {
         let date_str = Local::now().format("%Y-%m-%d").to_string();
         let base_path = self.ops_dir.join(format!("{date_str}.log"));
 
         // If base_path does not exist, use it directly
         if !base_path.exists() {
-            return Ok(base_path);
+            return base_path;
         }
 
         // Otherwise, check for -1, -2, ... suffixes, find latest file
@@ -115,12 +115,12 @@ impl DualWriter {
             let candidate = self.ops_dir.join(format!("{date_str}-{i}.log"));
             if !candidate.exists() {
                 // Use the first non-existent file
-                return Ok(candidate);
+                return candidate;
             }
         }
 
         // If all numbered files exist, just return the last one
-        Ok(self.ops_dir.join(format!("{date_str}-{MAX_LOG_FILES}.log")))
+        self.ops_dir.join(format!("{date_str}-{MAX_LOG_FILES}.log"))
     }
 
     // Helper: check if file modified less than 1 hour ago
@@ -135,7 +135,7 @@ impl DualWriter {
     }
 }
 
-/// Implementation of the LogWriter trait for DualWriter
+/// Implementation of the `LogWriter` trait for `DualWriter`
 impl LogWriter for DualWriter {
     /// Writes a log record to the appropriate file based on its target
     fn write(
@@ -152,7 +152,7 @@ impl LogWriter for DualWriter {
 
         if record.target() == "file_ops" {
             // Ops logger: use numbered daily file
-            let path = self.get_ops_log_path()?;
+            let path = self.get_ops_log_path();
             // Rotate ops logs: keep only MAX_LOG_FILES newest files
             let dir = path.parent().unwrap();
 
