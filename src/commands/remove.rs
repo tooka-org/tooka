@@ -39,7 +39,7 @@ pub fn run(args: &RemoveArgs) -> Result<()> {
     } else {
         let error_msg = format!("Rule with ID '{}' not found.", args.rule_id);
         display::error(&error_msg);
-        log::warn!("{}", error_msg);
+        log::warn!("{error_msg}");
         Err(anyhow!(error_msg))
     }
 }
