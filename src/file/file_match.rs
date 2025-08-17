@@ -84,12 +84,23 @@ pub(crate) fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
         .first()
         .is_some_and(|mime| {
             let mime_essence = mime.essence_str();
-            if let Some(prefix) = mime_type.strip_suffix("/*") {
-                mime_essence.starts_with(prefix)
-            } else {
-                mime_essence == mime_type
-            }
+            mime_type
+                .strip_suffix("/*")
+                .map_or(mime_essence == mime_type, |prefix| {
+                    mime_essence.starts_with(prefix)
+                })
         })
+}
+
+/// Helper function to parse date with fallback
+fn parse_date_with_fallback(date_str: &str, fallback: NaiveDate) -> NaiveDate {
+    parse_date(date_str).map_or_else(
+        |_| {
+            log::warn!("Invalid date format: {date_str}, using fallback");
+            fallback
+        },
+        |dt| dt.date_naive(),
+    )
 }
 
 /// Matches a file's metadata against a date range
@@ -98,32 +109,22 @@ pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &Dat
 
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
-
-        let from = if let Some(from_str) = &date_range.from {
-            parse_date(from_str).map_or_else(
-                |_| {
-                    log::warn!("Invalid 'from' date format: {from_str}, using 1970-01-01");
-                    NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-                },
-                |dt| dt.date_naive(),
-            )
-        } else {
-            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-        };
-
-        let to = if let Some(to_str) = &date_range.to {
-            parse_date(to_str).map_or_else(
-                |_| {
-                    log::warn!("Invalid 'to' date format: {to_str}, using 9999-12-31");
-                    NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-                },
-                |dt| dt.date_naive(),
-            )
-        } else {
-            NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-        };
-
         let created_date = created_datetime.date_naive();
+
+        let from = date_range.from.as_ref().map_or_else(
+            || NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
+            |from_str| {
+                parse_date_with_fallback(from_str, NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
+            },
+        );
+
+        let to = date_range.to.as_ref().map_or_else(
+            || NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
+            |to_str| {
+                parse_date_with_fallback(to_str, NaiveDate::from_ymd_opt(9999, 12, 31).unwrap())
+            },
+        );
+
         created_date >= from && created_date <= to
     })
 }
@@ -134,34 +135,22 @@ pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: &DateRan
 
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
+        let modified_date = modified_datetime.date_naive();
 
         let from = date_range.from.as_ref().map_or_else(
             || NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             |from_str| {
-                parse_date(from_str).map_or_else(
-                    |_| {
-                        log::warn!("Invalid 'from' date format: {from_str}, using 1970-01-01");
-                        NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-                    },
-                    |dt| dt.date_naive(),
-                )
+                parse_date_with_fallback(from_str, NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
             },
         );
 
         let to = date_range.to.as_ref().map_or_else(
             || NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
             |to_str| {
-                parse_date(to_str).map_or_else(
-                    |_| {
-                        log::warn!("Invalid 'to' date format: {to_str}, using 9999-12-31");
-                        NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-                    },
-                    |dt| dt.date_naive(),
-                )
+                parse_date_with_fallback(to_str, NaiveDate::from_ymd_opt(9999, 12, 31).unwrap())
             },
         );
 
-        let modified_date = modified_datetime.date_naive();
         modified_date >= from && modified_date <= to
     })
 }

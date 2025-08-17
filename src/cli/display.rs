@@ -49,10 +49,6 @@ pub fn header(title: &str) {
     println!();
 }
 
-//pub fn subheader(title: &str) {
-//    println!("{}", title.bright_white().bold());
-//}
-
 pub fn rule_table_header() {
     println!(
         "{} | {} | {}",
@@ -84,15 +80,6 @@ pub fn progress_style() -> indicatif::ProgressStyle {
         .unwrap()
         .progress_chars("#>-")
 }
-
-/*
-pub fn spinner_style() -> indicatif::ProgressStyle {
-    indicatif::ProgressStyle::default_spinner()
-        .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
-        .template("{spinner:.green} {msg}")
-        .unwrap()
-}
-*/
 
 pub fn show_version() {
     let version = env!("CARGO_PKG_VERSION");

@@ -45,12 +45,11 @@ fn parse_relative_date(date_str: &str) -> Result<DateTime<Utc>, String> {
     let date_str = date_str.trim();
 
     // Must start with + or - for relative dates
-    if !date_str.starts_with('+') && !date_str.starts_with('-') {
-        return Err("Relative dates must start with + or -".to_string());
-    }
-
-    let is_negative = date_str.starts_with('-');
-    let date_str = &date_str[1..]; // Remove the sign
+    let (is_negative, date_str) = match date_str.chars().next() {
+        Some('+') => (false, &date_str[1..]),
+        Some('-') => (true, &date_str[1..]),
+        _ => return Err("Relative dates must start with + or -".to_string()),
+    };
 
     if date_str.is_empty() {
         return Err("Empty relative date".to_string());

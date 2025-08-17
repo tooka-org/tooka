@@ -20,27 +20,26 @@ pub fn run(args: &RemoveArgs) -> Result<()> {
 
     let mut rf = context::get_locked_rules_file()?;
 
-    let rule = rf.find_rule(&args.rule_id);
-    if rule.is_none() {
-        display::error(&format!("Rule with ID '{}' not found.", args.rule_id));
-        log::warn!("Rule with ID '{}' not found.", args.rule_id);
-        return Err(anyhow!("Rule with ID '{}' not found.", args.rule_id));
+    if let Some(rule) = rf.find_rule(&args.rule_id) {
+        log::debug!(
+            "Found rule: ID={}, Name={}, Enabled={}",
+            rule.id,
+            rule.name,
+            rule.enabled
+        );
+
+        rf.remove_rule(&args.rule_id)
+            .map_err(|e| anyhow!("Failed to remove rule with ID '{}': {}", args.rule_id, e))?;
+
+        display::success(&format!(
+            "Rule with ID '{}' removed successfully.",
+            args.rule_id
+        ));
+        Ok(())
+    } else {
+        let error_msg = format!("Rule with ID '{}' not found.", args.rule_id);
+        display::error(&error_msg);
+        log::warn!("{}", error_msg);
+        Err(anyhow!(error_msg))
     }
-
-    log::debug!(
-        "Found rule: ID={}, Name={}, Enabled={}",
-        rule.as_ref().unwrap().id,
-        rule.as_ref().unwrap().name,
-        rule.as_ref().unwrap().enabled
-    );
-
-    rf.remove_rule(&args.rule_id)
-        .map_err(|e| anyhow!("Failed to remove rule with ID '{}': {}", args.rule_id, e))?;
-
-    display::success(&format!(
-        "Rule with ID '{}' removed successfully.",
-        args.rule_id
-    ));
-
-    Ok(())
 }

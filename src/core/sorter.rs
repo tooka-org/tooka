@@ -92,12 +92,11 @@ fn sort_file(
         })?;
 
     // Since rules are pre-sorted by priority, we can take the first match
-    let rule = rules_file
+    let Some(rule) = rules_file
         .rules
         .iter()
-        .find(|rule| file_match::match_rule_matcher(file_path, &rule.when));
-
-    let Some(rule) = rule else {
+        .find(|rule| file_match::match_rule_matcher(file_path, &rule.when))
+    else {
         log::debug!("No matching rules found for file '{file_name}'");
         return Ok(vec![MatchResult {
             file_name: file_name.to_string(),

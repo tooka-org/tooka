@@ -224,21 +224,25 @@ pub(crate) fn compute_destination<A>(file_path: &Path, action: &A, source_path: 
 where
     A: HasToAndPreserveStructure,
 {
-    log::debug!("Computing destination for file: {}", file_path.display(),);
+    log::debug!("Computing destination for file: {}", file_path.display());
     let to = action.to();
     let preserve_structure = action.preserve_structure();
 
-    let destination = if to.starts_with('.') {
-        log::debug!("Destination is a relative path: {to}");
-        PathBuf::from(to)
-    } else if to.starts_with('~') {
-        log::debug!("Destination is a home directory path: {to}");
-        let home_dir = std::env::home_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
-        let stripped = to.trim_start_matches('~').trim_start_matches('/');
-        home_dir.join(stripped)
-    } else {
-        log::debug!("Destination is an absolute path: {to}");
-        PathBuf::from("/").join(to.trim_start_matches('/'))
+    let destination = match to.chars().next() {
+        Some('.') => {
+            log::debug!("Destination is a relative path: {to}");
+            PathBuf::from(to)
+        }
+        Some('~') => {
+            log::debug!("Destination is a home directory path: {to}");
+            let home_dir = std::env::home_dir().unwrap_or_else(|| std::env::current_dir().unwrap());
+            let stripped = to.trim_start_matches('~').trim_start_matches('/');
+            home_dir.join(stripped)
+        }
+        _ => {
+            log::debug!("Destination is an absolute path: {to}");
+            PathBuf::from("/").join(to.trim_start_matches('/'))
+        }
     };
 
     if preserve_structure {
@@ -246,7 +250,6 @@ where
             "Preserving directory structure for file: {}",
             file_path.display()
         );
-        // Preserve the directory structure using the source_path as the base
         let relative_path = file_path.strip_prefix(source_path).unwrap_or(file_path);
         destination.join(relative_path)
     } else {
@@ -254,7 +257,6 @@ where
             "Not preserving directory structure for file: {}",
             file_path.display()
         );
-        // Move to the destination directory directly
         destination.join(file_path.file_name().unwrap_or_default())
     }
 }

@@ -47,13 +47,10 @@ impl Default for Config {
 impl Config {
     /// Creates a new configuration with fallback paths
     fn new_with_fallbacks() -> Self {
-        let home_dir = env::var("HOME").map_or_else(
-            |_| {
-                log::warn!("$HOME not set; using current directory as fallback.");
-                PathBuf::from(".")
-            },
-            PathBuf::from,
-        );
+        let home_dir = env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| {
+            log::warn!("$HOME not set; using current directory as fallback.");
+            PathBuf::from(".")
+        });
 
         let source_folder = get_source_folder(&home_dir);
         let data_dir = get_dir_with_env(
@@ -142,7 +139,9 @@ impl Config {
 
     /// Returns the path to the configuration file, creating it if necessary
     fn config_path() -> std::path::PathBuf {
-        let home_dir = env::var("HOME").map_or_else(|_| PathBuf::from("."), PathBuf::from);
+        let home_dir = env::var("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("."));
 
         let config_dir =
             get_dir_with_env("TOOKA_CONFIG_DIR", |d| d.config_dir(), &home_dir, ".config");
