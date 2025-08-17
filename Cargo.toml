@@ -64,9 +64,6 @@ path = "src/main.rs"
 name = "sorter_bench"
 harness = false
 
-[lints.clippy]
-uninlined_format_args = "allow"
-
 
 [package.metadata.packager]
 product-name = "tooka"
