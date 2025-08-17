@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
     use crate::core::error::TookaError;
-    use crate::core::sorter::{collect_files, sort_files};
+    use crate::core::sorter::{collect_files, sort_files, MatchResult};
     use crate::rules::rule::{Action, Conditions, CopyAction, MoveAction, Rule};
     use crate::rules::rules_file::RulesFile;
+    use crate::utils::gen_pdf::generate_pdf;
     use std::fs::{File, create_dir_all};
     use std::io::Write;
     use tempfile::tempdir;
@@ -611,5 +612,266 @@ mod tests {
                 .to_string_lossy()
                 .contains("enabled_dest")
         );
+    }
+
+    #[test]
+    fn test_pdf_generation() {
+        let temp_dir = tempdir().unwrap();
+        let source_path = temp_dir.path().to_path_buf();
+
+        // Create test files
+        let files = create_test_files(&source_path);
+        let rules_file = create_test_rules(&source_path);
+
+        // Sort files to get MatchResults
+        let results = sort_files(
+            &files,
+            &source_path,
+            &rules_file,
+            true, // dry run
+            None::<fn()>,
+        )
+        .expect("sort_files should succeed");
+
+        // Ensure we have some results to generate a PDF from
+        assert!(!results.is_empty(), "Should have some match results");
+
+        // Generate PDF
+        let pdf_path = temp_dir.path().join("test_report.pdf");
+        generate_pdf(&pdf_path, &results).expect("PDF generation should succeed");
+
+        // Verify PDF file was created
+        assert!(pdf_path.exists(), "PDF file should be created");
+
+        // Check that the PDF file has reasonable size (not empty)
+        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
+        assert!(metadata.len() > 500, "PDF should have reasonable size (> 500 bytes), actual size: {} bytes", metadata.len());
+
+        // Print the path for manual inspection
+        println!("Generated PDF at: {}", pdf_path.display());
+        println!("PDF size: {} bytes", metadata.len());
+        println!("Match results count: {}", results.len());
+
+        // Verify the results contain expected data
+        let txt_result = results.iter().find(|r| r.file_name == "test1.txt");
+        let log_result = results.iter().find(|r| r.file_name == "test2.log");
+        let data_result = results.iter().find(|r| r.file_name == "test3.data");
+        let unknown_result = results.iter().find(|r| r.file_name == "test5.unknown");
+
+        assert!(txt_result.is_some(), "Should have txt result");
+        assert!(log_result.is_some(), "Should have log result");
+        assert!(data_result.is_some(), "Should have data result");
+        assert!(unknown_result.is_some(), "Should have unknown result");
+
+        if let Some(txt) = txt_result {
+            assert_eq!(txt.action, "move");
+            assert_eq!(txt.matched_rule_id, "txt_rule");
+        }
+
+        if let Some(log) = log_result {
+            assert_eq!(log.action, "copy");
+            assert_eq!(log.matched_rule_id, "log_rule");
+        }
+
+        if let Some(data) = data_result {
+            assert_eq!(data.action, "move");
+            assert_eq!(data.matched_rule_id, "data_rule");
+        }
+
+        if let Some(unknown) = unknown_result {
+            assert_eq!(unknown.action, "skip");
+            assert_eq!(unknown.matched_rule_id, "none");
+        }
+    }
+
+    #[test]
+    fn test_pdf_generation_with_large_dataset() {
+        let temp_dir = tempdir().unwrap();
+        let source_path = temp_dir.path().to_path_buf();
+
+        // Create multiple results to test pagination and grouping
+        let mut mock_results = Vec::new();
+        
+        // Create results for multiple rules with different actions
+        for i in 0..50 {
+            mock_results.push(MatchResult {
+                file_name: format!("file{}.txt", i),
+                current_path: source_path.join(format!("file{}.txt", i)),
+                new_path: source_path.join("txt_files").join(format!("file{}.txt", i)),
+                matched_rule_id: "txt_rule".to_string(),
+                action: "move".to_string(),
+            });
+        }
+
+        for i in 0..30 {
+            mock_results.push(MatchResult {
+                file_name: format!("log{}.log", i),
+                current_path: source_path.join(format!("log{}.log", i)),
+                new_path: source_path.join("log_files").join(format!("log{}.log", i)),
+                matched_rule_id: "log_rule".to_string(),
+                action: "copy".to_string(),
+            });
+        }
+
+        for i in 0..20 {
+            mock_results.push(MatchResult {
+                file_name: format!("data{}.data", i),
+                current_path: source_path.join(format!("data{}.data", i)),
+                new_path: source_path.join("data_files").join(format!("data{}.data", i)),
+                matched_rule_id: "data_rule".to_string(),
+                action: "move".to_string(),
+            });
+        }
+
+        for i in 0..10 {
+            mock_results.push(MatchResult {
+                file_name: format!("executable{}.exe", i),
+                current_path: source_path.join(format!("executable{}.exe", i)),
+                new_path: source_path.join("executed").join(format!("executed_{}.exe", i)),
+                matched_rule_id: "execute_rule".to_string(),
+                action: "execute".to_string(),
+            });
+        }
+
+        for i in 0..15 {
+            mock_results.push(MatchResult {
+                file_name: format!("unknown{}.unknown", i),
+                current_path: source_path.join(format!("unknown{}.unknown", i)),
+                new_path: source_path.join(format!("unknown{}.unknown", i)), // Same path for skip
+                matched_rule_id: "none".to_string(),
+                action: "skip".to_string(),
+            });
+        }
+
+        // Generate PDF with large dataset
+        let pdf_path = temp_dir.path().join("large_test_report.pdf");
+        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed with large dataset");
+
+        // Verify PDF file was created
+        assert!(pdf_path.exists(), "Large PDF file should be created");
+
+        // Check that the PDF file has reasonable size
+        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read large PDF metadata");
+        assert!(metadata.len() > 5000, "Large PDF should have substantial size (> 5KB), actual size: {} bytes", metadata.len());
+
+        println!("Generated large PDF at: {}", pdf_path.display());
+        println!("Large PDF size: {} bytes", metadata.len());
+        println!("Total match results: {}", mock_results.len());
+
+        // Verify we have the expected number of results
+        assert_eq!(mock_results.len(), 125); // 50+30+20+10+15
+
+        // Verify different action types are present
+        let move_count = mock_results.iter().filter(|r| r.action == "move").count();
+        let copy_count = mock_results.iter().filter(|r| r.action == "copy").count();
+        let execute_count = mock_results.iter().filter(|r| r.action == "execute").count();
+        let skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
+
+        assert_eq!(move_count, 70); // txt + data files
+        assert_eq!(copy_count, 30); // log files
+        assert_eq!(execute_count, 10); // executable files
+        assert_eq!(skip_count, 15); // unknown files
+    }
+
+    #[test]
+    fn test_pdf_generation_for_inspection() {
+        // Create PDF in the project directory for easy inspection
+        let pdf_path = std::path::Path::new("test_report_refactored.pdf");
+        
+        // Create mock results with various actions to test all features
+        let mut mock_results = Vec::new();
+        let base_path = std::path::Path::new("/example/source");
+        
+        // Create results for different rule types and actions
+        for i in 0..15 {
+            mock_results.push(MatchResult {
+                file_name: format!("document_{}.txt", i),
+                current_path: base_path.join(format!("documents/document_{}.txt", i)),
+                new_path: base_path.join("organized/documents").join(format!("document_{}.txt", i)),
+                matched_rule_id: "document_organization_rule".to_string(),
+                action: "move".to_string(),
+            });
+        }
+
+        for i in 0..12 {
+            mock_results.push(MatchResult {
+                file_name: format!("backup_{}.log", i),
+                current_path: base_path.join(format!("logs/backup_{}.log", i)),
+                new_path: base_path.join("archive/logs").join(format!("backup_{}.log", i)),
+                matched_rule_id: "log_backup_rule".to_string(),
+                action: "copy".to_string(),
+            });
+        }
+
+        for i in 0..8 {
+            mock_results.push(MatchResult {
+                file_name: format!("temp_{}.tmp", i),
+                current_path: base_path.join(format!("temp/temp_{}.tmp", i)),
+                new_path: base_path.join("temp").join(format!("temp_{}.tmp", i)), // Same path for delete
+                matched_rule_id: "cleanup_rule".to_string(),
+                action: "delete".to_string(),
+            });
+        }
+
+        for i in 0..6 {
+            mock_results.push(MatchResult {
+                file_name: format!("old_file_{}.dat", i),
+                current_path: base_path.join(format!("data/old_file_{}.dat", i)),
+                new_path: base_path.join("data").join(format!("new_file_{}.dat", i)),
+                matched_rule_id: "rename_rule".to_string(),
+                action: "rename".to_string(),
+            });
+        }
+
+        for i in 0..5 {
+            mock_results.push(MatchResult {
+                file_name: format!("script_{}.sh", i),
+                current_path: base_path.join(format!("scripts/script_{}.sh", i)),
+                new_path: base_path.join("executed").join(format!("executed_script_{}.result", i)),
+                matched_rule_id: "script_execution_rule".to_string(),
+                action: "execute".to_string(),
+            });
+        }
+
+        for i in 0..10 {
+            mock_results.push(MatchResult {
+                file_name: format!("unknown_{}.xyz", i),
+                current_path: base_path.join(format!("misc/unknown_{}.xyz", i)),
+                new_path: base_path.join("misc").join(format!("unknown_{}.xyz", i)), // Same path for skip
+                matched_rule_id: "none".to_string(),
+                action: "skip".to_string(),
+            });
+        }
+
+        // Generate PDF
+        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed");
+
+        // Verify PDF file was created
+        assert!(pdf_path.exists(), "PDF file should be created");
+
+        // Check file size
+        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
+        
+        println!("Generated PDF for inspection at: {}", pdf_path.display());
+        println!("PDF size: {} bytes", metadata.len());
+        println!("Total match results: {}", mock_results.len());
+        
+        // Show action breakdown
+        let move_count = mock_results.iter().filter(|r| r.action == "move").count();
+        let copy_count = mock_results.iter().filter(|r| r.action == "copy").count();
+        let delete_count = mock_results.iter().filter(|r| r.action == "delete").count();
+        let rename_count = mock_results.iter().filter(|r| r.action == "rename").count();
+        let execute_count = mock_results.iter().filter(|r| r.action == "execute").count();
+        let _skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
+        
+        println!("Action breakdown:");
+        println!("  Move: {}", move_count);
+        println!("  Copy: {}", copy_count);
+        println!("  Delete: {}", delete_count);
+        println!("  Rename: {}", rename_count);
+        println!("  Execute: {}", execute_count);
+        println!("  Skip: {}", _skip_count);
+
+        assert!(metadata.len() > 2000, "PDF should be substantial for inspection");
     }
 }
