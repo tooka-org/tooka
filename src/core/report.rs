@@ -33,7 +33,7 @@ pub fn generate_report(
         "json" => {
             let path = output_dir.join("tooka_report.json");
             let file = File::create(&path)?;
-            serde_json::to_writer_pretty(file, results)?
+            serde_json::to_writer_pretty(file, results)?;
         }
         "csv" => {
             let path = output_dir.join("tooka_report.csv");
@@ -55,7 +55,7 @@ pub fn generate_report(
                     r.new_path.display().to_string(),
                 ))?;
             }
-            wtr.flush()?
+            wtr.flush()?;
         }
         "pdf" => {
             let path = output_dir.join("tooka_report.pdf");

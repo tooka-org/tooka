@@ -39,8 +39,7 @@ pub(crate) fn match_extensions(file_path: &Path, extensions: &[String]) -> bool 
     file_path
         .extension()
         .and_then(|ext| ext.to_str())
-        .map(|ext_str| extensions.iter().any(|ext| ext == ext_str))
-        .unwrap_or(false)
+        .is_some_and(|ext_str| extensions.iter().any(|ext| ext == ext_str))
 }
 
 /// Matches a file path against a glob pattern
@@ -56,7 +55,7 @@ pub(crate) fn match_path(file_path: &Path, pattern: &str) -> Result<bool, TookaE
 }
 
 /// Matches a file's size against a given size range in kilobytes
-pub(crate) fn match_size_kb(metadata: &fs::Metadata, size_kb: Range) -> bool {
+pub(crate) fn match_size_kb(metadata: &fs::Metadata, size_kb: &Range) -> bool {
     log::debug!(
         "Matching file size: {} against range: {:?}",
         metadata.len(),
@@ -94,64 +93,79 @@ pub(crate) fn match_mime_type(file_path: &Path, mime_type: &str) -> bool {
 }
 
 /// Matches a file's metadata against a date range
-pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: DateRange) -> bool {
-    log::debug!("Matching against created date range: {:?}", date_range);
+pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &DateRange) -> bool {
+    log::debug!("Matching against created date range: {date_range:?}");
 
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
         
         let from = if let Some(from_str) = &date_range.from {
-            parse_date(from_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
-                log::warn!("Invalid 'from' date format: {}, using 1970-01-01", from_str);
-                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-            })
+            parse_date(from_str).map_or_else(
+                |_| {
+                    log::warn!("Invalid 'from' date format: {from_str}, using 1970-01-01");
+                    NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+                },
+                |dt| dt.date_naive(),
+            )
         } else {
             NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
         };
-        
+
         let to = if let Some(to_str) = &date_range.to {
-            parse_date(to_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
-                log::warn!("Invalid 'to' date format: {}, using 9999-12-31", to_str);
-                NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-            })
+            parse_date(to_str).map_or_else(
+                |_| {
+                    log::warn!("Invalid 'to' date format: {to_str}, using 9999-12-31");
+                    NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+                },
+                |dt| dt.date_naive()
+            )
         } else {
             NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
         };
-        
+            
         let created_date = created_datetime.date_naive();
         created_date >= from && created_date <= to
     })
 }
 
 /// Matches a file's metadata against a date range
-pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: DateRange) -> bool {
-    log::debug!("Matching against modified date range: {:?}", date_range);
+pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: &DateRange) -> bool {
+    log::debug!("Matching against modified date range: {date_range:?}");
 
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
-        
-        let from = if let Some(from_str) = &date_range.from {
-            parse_date(from_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
-                log::warn!("Invalid 'from' date format: {}, using 1970-01-01", from_str);
-                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-            })
-        } else {
-            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-        };
-        
-        let to = if let Some(to_str) = &date_range.to {
-            parse_date(to_str).map(|dt| dt.date_naive()).unwrap_or_else(|_| {
-                log::warn!("Invalid 'to' date format: {}, using 9999-12-31", to_str);
-                NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-            })
-        } else {
-            NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
-        };
-        
+
+        let from = date_range.from.as_ref().map_or_else(
+            || NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
+            |from_str| {
+                parse_date(from_str).map_or_else(
+                    |_| {
+                        log::warn!("Invalid 'from' date format: {from_str}, using 1970-01-01");
+                        NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+                    },
+                    |dt| dt.date_naive(),
+                )
+            },
+        );
+
+        let to = date_range.to.as_ref().map_or_else(
+            || NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
+            |to_str| {
+                parse_date(to_str).map_or_else(
+                    |_| {
+                        log::warn!("Invalid 'to' date format: {to_str}, using 9999-12-31");
+                        NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+                    },
+                    |dt| dt.date_naive(),
+                )
+            },
+        );
+
         let modified_date = modified_datetime.date_naive();
         modified_date >= from && modified_date <= to
     })
 }
+
 
 /// Matches a file's symlink status against a boolean value
 pub(crate) fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
@@ -195,30 +209,23 @@ pub(crate) fn match_metadata_field(file_path: &Path, field: &rule::MetadataField
         let value_str = f.display_value().with_unit(&exif).to_string();
 
         if exif_key == requested_key {
-            log::debug!("Found EXIF key match: '{}'", exif_key);
+            log::debug!("Found EXIF key match: '{exif_key}'");
 
-            match &field.value {
-                Some(pattern_str) => match Pattern::new(pattern_str) {
-                    Ok(pattern) => {
-                        let is_match = pattern.matches(&value_str);
-                        log::debug!(
-                            "Comparing EXIF value '{}' with pattern '{}': {}",
-                            value_str,
-                            pattern_str,
-                            is_match
-                        );
-                        return is_match;
-                    }
-                    Err(e) => {
-                        log::warn!("Invalid glob pattern '{}': {}", pattern_str, e);
-                        return false;
-                    }
-                },
-                None => {
-                    log::debug!("EXIF key '{}' matched without value filter", exif_key);
-                    return true;
+            if let Some(pattern_str) = &field.value { match Pattern::new(pattern_str) {
+                Ok(pattern) => {
+                    let is_match = pattern.matches(&value_str);
+                    log::debug!(
+                        "Comparing EXIF value '{value_str}' with pattern '{pattern_str}': {is_match}"
+                    );
+                    return is_match;
                 }
-            }
+                Err(e) => {
+                    log::warn!("Invalid glob pattern '{pattern_str}': {e}");
+                    return false;
+                }
+            } }
+            log::debug!("EXIF key '{exif_key}' matched without value filter");
+            return true;
         }
     }
 
@@ -247,7 +254,7 @@ pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
             return false;
         }
     };
-    log::debug!("File metadata: {:?}", metadata);
+    log::debug!("File metadata: {metadata:?}");
 
     let matches = [
         conditions
@@ -265,7 +272,7 @@ pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
         conditions
             .size_kb
             .as_ref()
-            .map_or(Ok(true), |size| Ok(match_size_kb(&metadata, size.clone()))),
+            .map_or(Ok(true), |size| Ok(match_size_kb(&metadata, size))),
         conditions
             .mime_type
             .as_ref()
@@ -274,13 +281,13 @@ pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
             .created_date
             .as_ref()
             .map_or(Ok(true), |date_range| {
-                Ok(match_date_range_created(&metadata, date_range.clone()))
+                Ok(match_date_range_created(&metadata, date_range))
             }),
         conditions
             .modified_date
             .as_ref()
             .map_or(Ok(true), |date_range| {
-                Ok(match_date_range_mod(&metadata, date_range.clone()))
+                Ok(match_date_range_mod(&metadata, date_range))
             }),
         conditions
             .is_symlink
@@ -295,7 +302,7 @@ pub fn match_rule_matcher(file_path: &Path, conditions: &Conditions) -> bool {
             }),
     ];
     let any_conditions = conditions.any.unwrap_or(false);
-    log::debug!("Conditions any: {}, matches: {:?}", any_conditions, matches);
+    log::debug!("Conditions any: {any_conditions}, matches: {matches:?}");
     if any_conditions {
         log::debug!("Using OR logic for conditions");
         matches.into_iter().any(|m| m.unwrap_or(false))

@@ -37,7 +37,7 @@ fn generate_mixed_temp_files(base_dir: &Path, count: usize, avg_kb: usize) -> Ve
         let subdir = base_dir.join(format!("subdir_{}", i % 5));
         create_dir_all(&subdir).unwrap();
 
-        let file_path = subdir.join(format!("file_{}.{}", i, ext));
+        let file_path = subdir.join(format!("file_{i}.{ext}"));
         let mut file = File::create(&file_path).unwrap();
 
         let content = vec![b'x'; avg_kb * 1024];
@@ -54,18 +54,18 @@ fn create_complex_dummy_rules(dest: &Path) -> RulesFile {
     let mut rules = vec![];
     let extensions = ["txt", "log", "data", "bin"];
     for ext in extensions {
-        let target_dir = dest.join(format!("matched_{}", ext));
+        let target_dir = dest.join(format!("matched_{ext}"));
         create_dir_all(&target_dir).unwrap();
 
         rules.push(Rule {
-            id: format!("{}_move", ext),
-            name: format!("Move .{} files", ext),
+            id: format!("{ext}_move"),
+            name: format!("Move .{ext} files"),
             enabled: true,
-            description: Some(format!("Moves all .{} files", ext)),
+            description: Some(format!("Moves all .{ext} files")),
             priority: 10,
             when: Conditions {
                 any: Some(false),
-                filename: Some(format!(r".*\.{}$", ext)),
+                filename: Some(format!(r".*\.{ext}$")),
                 extensions: Some(vec![ext.into()]),
                 path: None,
                 size_kb: Some(Range {
@@ -97,7 +97,7 @@ fn benchmark_with_temp_data(file_count: usize, avg_kb: usize) -> Result<(), Took
 
     // Use the optimized version
     let optimized_rules = rules_file.optimized_with_filter(None)?;
-    let _results = sort_files(files, source_path, &optimized_rules, true, None::<fn()>)
+    let _results = sort_files(&files, &source_path, &optimized_rules, true, None::<fn()>)
         .expect("sort_files failed");
 
     Ok(())
@@ -116,7 +116,7 @@ fn sorter_benchmarks(c: &mut Criterion) {
     ];
 
     for (count, size_kb) in test_cases {
-        let label = format!("sort_files_{}files_{}KB", count, size_kb);
+        let label = format!("sort_files_{count}files_{size_kb}KB");
         c.bench_function(&label, |b| {
             b.iter(|| {
                 benchmark_with_temp_data(count, size_kb).unwrap();

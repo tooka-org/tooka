@@ -255,34 +255,43 @@ impl Rule {
             }
         }
 
+        if let Some(value) = self.action_validation() {
+            return value;
+        }
+        
+        Ok(())
+    }
+        
+
+    fn action_validation(&self) -> Option<Result<(), RuleValidationError>> {
         // Action validation
         for (i, action) in self.then.iter().enumerate() {
             match action {
                 Action::Move(inner) => {
                     if inner.to.trim().is_empty() {
-                        return Err(RuleValidationError::InvalidAction(
+                        return Some(Err(RuleValidationError::InvalidAction(
                             self.id.clone(),
                             i,
                             "Missing destination path".into(),
-                        ));
+                        )));
                     }
                 }
                 Action::Copy(inner) => {
                     if inner.to.trim().is_empty() {
-                        return Err(RuleValidationError::InvalidAction(
+                        return Some(Err(RuleValidationError::InvalidAction(
                             self.id.clone(),
                             i,
                             "Missing destination path".into(),
-                        ));
+                        )));
                     }
                 }
                 Action::Rename(inner) => {
                     if inner.to.trim().is_empty() {
-                        return Err(RuleValidationError::InvalidAction(
+                        return Some(Err(RuleValidationError::InvalidAction(
                             self.id.clone(),
                             i,
                             "Missing rename target path".into(),
-                        ));
+                        )));
                     }
                 }
                 Action::Delete(inner) => {
@@ -295,18 +304,17 @@ impl Rule {
                 }
                 Action::Execute(inner) => {
                     if inner.command.trim().is_empty() {
-                        return Err(RuleValidationError::InvalidAction(
+                        return Some(Err(RuleValidationError::InvalidAction(
                             self.id.clone(),
                             i,
                             "Missing command to execute".into(),
-                        ));
+                        )));
                     }
                 }
                 Action::Skip => {}
             }
         }
-
-        Ok(())
+        None
     }
 }
 

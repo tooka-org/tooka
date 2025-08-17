@@ -39,42 +39,36 @@ impl Default for Config {
     fn default() -> Self {
         log::debug!("Creating default configuration for Tooka");
 
-        Self::new_with_fallbacks().unwrap_or_else(|e| {
-            log::error!("Failed to construct default config: {}", e);
-            // Safe fallback to minimal config
-            Config {
-                version: CONFIG_VERSION,
-                source_folder: PathBuf::from("."),
-                rules_file: PathBuf::from(RULES_FILE_NAME),
-                logs_folder: PathBuf::from(DEFAULT_LOGS_FOLDER),
-            }
-        })
+        Self::new_with_fallbacks()
     }
 }
 
 /// Implementation of the Config struct
 impl Config {
     /// Creates a new configuration with fallback paths
-    fn new_with_fallbacks() -> Result<Self, TookaError> {
-        let home_dir = env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| {
-            log::warn!("$HOME not set; using current directory as fallback.");
-            PathBuf::from(".")
-        });
+    fn new_with_fallbacks() -> Self {
+        let home_dir = env::var("HOME").map_or_else(
+            |_| {
+                log::warn!("$HOME not set; using current directory as fallback.");
+                PathBuf::from(".")
+            },
+            PathBuf::from,
+        );
 
-        let source_folder = get_source_folder(&home_dir)?;
+        let source_folder = get_source_folder(&home_dir);
         let data_dir = get_dir_with_env(
             "TOOKA_DATA_DIR",
             |d| d.data_dir(),
             &home_dir,
             ".local/share",
-        )?;
+        );
 
-        Ok(Self {
+        Self {
             version: CONFIG_VERSION,
             source_folder,
             rules_file: data_dir.join(RULES_FILE_NAME),
             logs_folder: data_dir.join(DEFAULT_LOGS_FOLDER),
-        })
+        }
     }
 
     /// Loads the Tooka configuration from the default file path.
@@ -87,7 +81,7 @@ impl Config {
     /// Returns a [`TookaError`] if the configuration could not be loaded or saved.
     pub fn load() -> Result<Self, TookaError> {
         log::debug!("Loading configuration for Tooka");
-        let config_path = Self::config_path()?;
+        let config_path = Self::config_path();
 
         if config_path.exists() {
             let file = fs::File::open(&config_path)?;
@@ -95,7 +89,7 @@ impl Config {
             let config: Config = serde_yaml::from_reader(reader)?;
             Ok(config)
         } else {
-            let config = Config::new_with_fallbacks()?;
+            let config = Config::new_with_fallbacks();
             config.save()?;
             Ok(config)
         }
@@ -106,7 +100,7 @@ impl Config {
     /// # Errors
     /// Returns a [`TookaError`] if the configuration could not be written to disk.
     pub fn save(&self) -> Result<(), TookaError> {
-        let config_path = Self::config_path()?;
+        let config_path = Self::config_path();
         if let Some(parent) = config_path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -119,8 +113,8 @@ impl Config {
     ///
     /// # Errors
     /// Returns a [`TookaError`] if the path could not be determined or the file is missing.
-    pub fn locate_config_file(&self) -> Result<PathBuf, TookaError> {
-        let config_path = Self::config_path()?;
+    pub fn locate_config_file() -> Result<PathBuf, TookaError> {
+        let config_path = Self::config_path();
         if config_path.exists() {
             Ok(config_path)
         } else {
@@ -135,7 +129,7 @@ impl Config {
     /// # Errors
     /// Returns a [`TookaError`] if the default configuration cannot be created or saved.
     pub fn reset_config(&mut self) -> Result<(), TookaError> {
-        *self = Config::new_with_fallbacks()?;
+        *self = Config::new_with_fallbacks();
         self.save()
     }
 
@@ -147,14 +141,12 @@ impl Config {
     }
 
     /// Returns the path to the configuration file, creating it if necessary
-    fn config_path() -> Result<PathBuf, TookaError> {
-        let home_dir = env::var("HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| PathBuf::from("."));
+    fn config_path() -> std::path::PathBuf{
+        let home_dir = env::var("HOME").map_or_else(|_| PathBuf::from("."), PathBuf::from);
 
         let config_dir =
-            get_dir_with_env("TOOKA_CONFIG_DIR", |d| d.config_dir(), &home_dir, ".config")?;
+            get_dir_with_env("TOOKA_CONFIG_DIR", |d| d.config_dir(), &home_dir, ".config");
 
-        Ok(config_dir.join(CONFIG_FILE_NAME))
+        config_dir.join(CONFIG_FILE_NAME)
     }
 }
