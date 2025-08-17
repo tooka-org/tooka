@@ -874,4 +874,52 @@ mod tests {
 
         assert!(metadata.len() > 2000, "PDF should be substantial for inspection");
     }
+
+    #[test]
+    fn test_pdf_generation_with_long_paths() {
+        // Create PDF with extremely long paths to test wrapping
+        let pdf_path = std::path::Path::new("test_report_long_paths.pdf");
+        
+        let mut mock_results = Vec::new();
+        
+        // Create results with very long paths
+        mock_results.push(MatchResult {
+            file_name: "document_with_very_very_very_long_filename_that_should_be_handled_properly.txt".to_string(),
+            current_path: std::path::PathBuf::from("/home/user/documents/projects/rust/my_awesome_project/src/very/deeply/nested/directories/with/extremely/long/path/names/that/go/on/and/on/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt"),
+            new_path: std::path::PathBuf::from("/home/user/organized_files/documents/text_files/2024/august/important_documents/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt"),
+            matched_rule_id: "document_organization_with_very_long_rule_name".to_string(),
+            action: "move".to_string(),
+        });
+
+        mock_results.push(MatchResult {
+            file_name: "short.log".to_string(),
+            current_path: std::path::PathBuf::from("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/very/long/path/structure/short.log"),
+            new_path: std::path::PathBuf::from("/backup/logs/short.log"),
+            matched_rule_id: "log_backup".to_string(),
+            action: "copy".to_string(),
+        });
+
+        mock_results.push(MatchResult {
+            file_name: "file_in_normal_path.dat".to_string(),
+            current_path: std::path::PathBuf::from("/home/user/data/file_in_normal_path.dat"),
+            new_path: std::path::PathBuf::from("/home/user/archived/file_in_normal_path.dat"),
+            matched_rule_id: "normal_rule".to_string(),
+            action: "move".to_string(),
+        });
+
+        // Generate PDF
+        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed");
+
+        // Verify PDF file was created
+        assert!(pdf_path.exists(), "PDF file should be created");
+
+        // Check file size
+        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
+        
+        println!("Generated PDF with long paths at: {}", pdf_path.display());
+        println!("PDF size: {} bytes", metadata.len());
+        println!("Total match results: {}", mock_results.len());
+
+        assert!(metadata.len() > 1000, "PDF should be substantial for inspection");
+    }
 }
