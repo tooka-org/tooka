@@ -26,13 +26,13 @@ You define what files to match (by name, extension, metadata, size, etc.) and wh
 
 ## ✨ Features
 
-* **🎯 Rule-based automation** - Define custom file organization rules using declarative YAML
-* **⚡ High-performance** - Parallel recursive directory traversal and file operations
-* **🔍 Flexible filtering** - Match files by name patterns, extensions, MIME types, size, metadata, and timestamps
-* **🛠️ Multiple actions** - Move, copy, rename, delete, or skip files based on conditions
-* **📝 Template support** - Dynamic file naming with customizable templates
-* **🔒 Safe operations** - Dry-run mode and comprehensive logging for safety
-* **🌐 Cross-platform** - Works seamlessly on Windows, macOS, and Linux
+* **Rule-based automation** - Define custom file organization rules using declarative YAML
+* **High-performance** - Parallel recursive directory traversal and file operations
+* **Flexible filtering** - Match files by name patterns, extensions, MIME types, size, metadata, and timestamps
+* **Multiple actions** - Move, copy, rename, delete, or skip files based on conditions
+* **Template support** - Dynamic file naming with customizable templates
+* **Safe operations** - Dry-run mode and comprehensive logging for safety
+* **Cross-platform** - Works seamlessly on Windows, macOS, and Linux
 
 ---
 
@@ -48,10 +48,10 @@ We welcome contributions! Please see:
 
 ## 💬 Community & Support
 
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/tooka-org/tooka/issues)
-- **💡 Feature Requests**: [GitHub Discussions](https://github.com/tooka-org/tooka/discussions)
-- **📋 Quick Feedback**: [Feedback Form](https://tally.so/r/mBVyLe) (no account needed)
-- **📖 Documentation**: [Wiki](https://github.com/tooka-org/tooka/wiki)
+- **Bug Reports**: [GitHub Issues](https://github.com/tooka-org/tooka/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/tooka-org/tooka/discussions)
+- **Quick Feedback**: [Feedback Form](https://tally.so/r/mBVyLe) (no account needed)
+- **Documentation**: [Wiki](https://github.com/tooka-org/tooka/wiki)
 
 ---
 
@@ -62,5 +62,5 @@ Licensed under [GPLv3](LICENSE)
 ---
 
 <div align="center">
-  <sub>Built with ❤️ in Rust</sub>
+  <sub>Built with ❤️ in Italy 🇮🇹</sub>
 </div>
