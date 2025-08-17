@@ -28,7 +28,7 @@ const PAGE_NUMBER_X_OFFSET: f32 = 20.0;
 const CONTENT_START_OFFSET: f32 = 50.0;
 const MIN_Y_OFFSET: f32 = 40.0;
 const RULE_BEFORE_SPACING: f32 = 15.0; // Space before rule title when following content
-const RULE_AFTER_SPACING: f32 = 20.0;  // Space after rule title before next content
+const RULE_AFTER_SPACING: f32 = 20.0; // Space after rule title before next content
 const RULE_FONT_SIZE_OFFSET: f32 = 2.0;
 const TOTAL_CHANGES_Y_OFFSET: f32 = 15.0;
 
@@ -73,10 +73,10 @@ impl PDFGenerator {
     fn new(total_results: usize) -> Self {
         let mut alloc = Ref::new(1);
         let mut pdf = Pdf::new();
-        
+
         let (font_name, font_id) = Self::init_fonts(&mut pdf, &mut alloc);
         let page_tree_id = alloc.bump();
-        
+
         Self {
             pdf,
             alloc,
@@ -93,12 +93,12 @@ impl PDFGenerator {
             total_results,
         }
     }
-    
+
     fn generate(mut self, path: &Path, results: &[MatchResult]) -> Result<(), anyhow::Error> {
         let flat_entries = Self::prepare_entries(results);
         self.render_pages(&flat_entries);
         self.finalize();
-        
+
         std::fs::write(path, self.pdf.finish())?;
         Ok(())
     }
@@ -142,7 +142,7 @@ impl PDFGenerator {
                 if !first_rule && self.y < PAGE_HEIGHT - MARGIN_TOP - CONTENT_START_OFFSET {
                     self.y -= RULE_BEFORE_SPACING;
                 }
-                
+
                 self.page_break_if_needed(min_y + RULE_AFTER_SPACING);
 
                 self.write_text(
@@ -158,12 +158,14 @@ impl PDFGenerator {
 
             if let Some(entry) = entry_opt {
                 // Calculate needed space for this entry (considering path wrapping)
-                let from_lines = PDFGenerator::format_path_with_wrapping(&entry.current_path, MAX_PATH_LENGTH);
-                let to_lines = PDFGenerator::format_path_with_wrapping(&entry.new_path, MAX_PATH_LENGTH);
+                let from_lines =
+                    PDFGenerator::format_path_with_wrapping(&entry.current_path, MAX_PATH_LENGTH);
+                let to_lines =
+                    PDFGenerator::format_path_with_wrapping(&entry.new_path, MAX_PATH_LENGTH);
                 let total_lines = from_lines.len() + to_lines.len();
                 let content_height = CONTENT_BASE_HEIGHT + (total_lines as f32 * LINE_HEIGHT); // Header + path lines
                 let box_height = content_height + BOX_PADDING; // Add padding
-                
+
                 self.page_break_if_needed(min_y + box_height);
 
                 if self.y == PAGE_HEIGHT - MARGIN_TOP - CONTENT_START_OFFSET {
@@ -180,11 +182,11 @@ impl PDFGenerator {
 
                 let state_name = format!("G_{}_{}", entry.matched_rule_id, entry.file_name);
                 self.content.set_parameters(Name(state_name.as_bytes()));
-                
+
                 // Calculate box position (box goes from bottom to top in PDF coordinates)
                 let box_bottom = self.y - box_height;
                 let box_top = self.y;
-                
+
                 // Draw the background box
                 self.draw_colored_box(
                     MARGIN_X,
@@ -193,11 +195,11 @@ impl PDFGenerator {
                     box_height,
                     (0.9, 0.9, 0.9),
                 );
-                
+
                 // Draw content with proper positioning (text starts from top of box with padding)
                 let text_start_y = box_top - BOX_TOP_PADDING; // Start points from top of box
                 self.draw_match_result_block(entry, text_start_y);
-                
+
                 self.y = box_bottom - BOX_BOTTOM_SPACING; // Move position down past the box plus spacing
                 let state_id = self.alloc.bump();
                 self.extg_states.push((state_name, state_id));
@@ -225,7 +227,7 @@ impl PDFGenerator {
     fn finish_page(&mut self) {
         let page_id = self.alloc.bump();
         self.page_ids.push(page_id);
-        
+
         // Draw header and footer before creating the page
         if self.first_page {
             self.draw_header();
@@ -242,11 +244,11 @@ impl PDFGenerator {
         page.media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT));
         page.parent(self.page_tree_id);
         page.contents(content_id);
-        
+
         // Add font resources
         let mut resources = page.resources();
         resources.fonts().pair(self.font_name, self.font_id);
-        
+
         // Add graphics state resources if any
         if !self.extg_states.is_empty() {
             resources.ext_g_states().pairs(
@@ -258,7 +260,8 @@ impl PDFGenerator {
     }
 
     fn finalize(&mut self) {
-        self.pdf.pages(self.page_tree_id)
+        self.pdf
+            .pages(self.page_tree_id)
             .kids(self.page_ids.iter().copied())
             .count(i32::try_from(self.page_ids.len()).unwrap_or(0));
         self.pdf.catalog(self.alloc.bump()).pages(self.page_tree_id);
@@ -282,20 +285,10 @@ impl PDFGenerator {
     }
 
     fn draw_header(&mut self) {
-        self.write_text(
-            "Tooka Report",
-            TITLE_FONT_SIZE,
-            TITLE_POS_X,
-            TITLE_POS_Y,
-        );
+        self.write_text("Tooka Report", TITLE_FONT_SIZE, TITLE_POS_X, TITLE_POS_Y);
 
         let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-        self.write_text(
-            &timestamp,
-            TIMESTAMP_FONT_SIZE,
-            TIME_POS_X,
-            TIME_POS_Y,
-        );
+        self.write_text(&timestamp, TIMESTAMP_FONT_SIZE, TIME_POS_X, TIME_POS_Y);
 
         self.write_text(
             &format!("Total changes: {}", self.total_results),
@@ -306,7 +299,8 @@ impl PDFGenerator {
     }
 
     fn draw_match_result_block(&mut self, result: &MatchResult, y_start: f32) {
-        let from_path = PDFGenerator::format_path_with_wrapping(&result.current_path, MAX_PATH_LENGTH);
+        let from_path =
+            PDFGenerator::format_path_with_wrapping(&result.current_path, MAX_PATH_LENGTH);
         let to_path = PDFGenerator::format_path_with_wrapping(&result.new_path, MAX_PATH_LENGTH);
 
         // Set colors based on action
@@ -335,23 +329,31 @@ impl PDFGenerator {
 
         // Move down for the paths section
         current_y -= TEXT_SECTION_SPACING;
-        
+
         // Draw "From:" path
         self.write_text("From:", FONT_SIZE, MARGIN_X + FROM_TO_INDENT, current_y);
         for (i, line) in from_path.iter().enumerate() {
-            let x_offset = if i == 0 { PATH_VALUE_INDENT } else { PATH_CONTINUATION_INDENT }; // Indent continuation lines
+            let x_offset = if i == 0 {
+                PATH_VALUE_INDENT
+            } else {
+                PATH_CONTINUATION_INDENT
+            }; // Indent continuation lines
             self.write_text(line, FONT_SIZE, MARGIN_X + x_offset, current_y);
             if i < from_path.len() - 1 {
                 current_y -= LINE_HEIGHT; // Move to next line for wrapped text
             }
         }
-        
+
         current_y -= PATH_SECTION_SPACING; // Space between from and to
-        
-        // Draw "To:" path  
+
+        // Draw "To:" path
         self.write_text("To:", FONT_SIZE, MARGIN_X + FROM_TO_INDENT, current_y);
         for (i, line) in to_path.iter().enumerate() {
-            let x_offset = if i == 0 { PATH_VALUE_INDENT } else { PATH_CONTINUATION_INDENT }; // Indent continuation lines (align with "To:")
+            let x_offset = if i == 0 {
+                PATH_VALUE_INDENT
+            } else {
+                PATH_CONTINUATION_INDENT
+            }; // Indent continuation lines (align with "To:")
             self.write_text(line, FONT_SIZE, MARGIN_X + x_offset, current_y);
             if i < to_path.len() - 1 {
                 current_y -= LINE_HEIGHT; // Move to next line for wrapped text
@@ -364,7 +366,7 @@ impl PDFGenerator {
         let full_path = path.display().to_string();
         let approx_char_width = APPROX_CHAR_WIDTH; // Approximate character width in points for font size 12
         let max_chars_per_line = (max_width / approx_char_width) as usize;
-        
+
         if full_path.len() <= max_chars_per_line {
             return vec![full_path];
         }
@@ -372,14 +374,14 @@ impl PDFGenerator {
         // Try to break at path separators first
         let mut lines = Vec::new();
         let mut current_line = String::new();
-        
+
         // Split by path separators and try to fit segments
         let parts: Vec<&str> = full_path.split('/').collect();
-        
+
         for (i, part) in parts.iter().enumerate() {
             let separator = if i == 0 { "" } else { "/" };
             let potential_addition = format!("{separator}{part}");
-            
+
             // If adding this part would exceed the line length
             if current_line.len() + potential_addition.len() > max_chars_per_line {
                 // If current line is not empty, save it
@@ -387,7 +389,7 @@ impl PDFGenerator {
                     lines.push(current_line.clone());
                     current_line.clear();
                 }
-                
+
                 // If this single part is too long, truncate it
                 if part.len() > max_chars_per_line {
                     let truncated = if part.len() > max_chars_per_line - 3 {
@@ -403,23 +405,23 @@ impl PDFGenerator {
                 current_line.push_str(&potential_addition);
             }
         }
-        
+
         // Add the last line if it's not empty
         if !current_line.is_empty() {
             lines.push(current_line);
         }
-        
+
         // Ensure we don't have too many lines (max lines for readability)
         if lines.len() > MAX_PATH_LINES {
             lines.truncate(MAX_PATH_LINES - 1);
             lines.push("... (path continues)".to_string());
         }
-        
+
         // If still empty, return a fallback
         if lines.is_empty() {
             lines.push(truncate_path(path, max_width));
         }
-        
+
         lines
     }
 
@@ -432,49 +434,61 @@ impl PDFGenerator {
         color: (f32, f32, f32),
     ) {
         self.content.set_fill_rgb(color.0, color.1, color.2);
-        
+
         // Draw rounded rectangle using path operations
         let radius = BOX_CORNER_RADIUS; // Corner radius
-        
+
         // Start from top-left corner (after the radius)
         self.content.move_to(x + radius, y + height);
-        
+
         // Top edge
         self.content.line_to(x + width - radius, y + height);
         // Top-right corner (using cubic bezier curve)
         self.content.cubic_to(
-            x + width - radius + radius * BEZIER_CONTROL_RATIO, y + height,
-            x + width, y + height - radius + radius * BEZIER_CONTROL_RATIO,
-            x + width, y + height - radius,
+            x + width - radius + radius * BEZIER_CONTROL_RATIO,
+            y + height,
+            x + width,
+            y + height - radius + radius * BEZIER_CONTROL_RATIO,
+            x + width,
+            y + height - radius,
         );
-        
+
         // Right edge
         self.content.line_to(x + width, y + radius);
         // Bottom-right corner
         self.content.cubic_to(
-            x + width, y + radius - radius * BEZIER_CONTROL_RATIO,
-            x + width - radius + radius * BEZIER_CONTROL_RATIO, y,
-            x + width - radius, y,
+            x + width,
+            y + radius - radius * BEZIER_CONTROL_RATIO,
+            x + width - radius + radius * BEZIER_CONTROL_RATIO,
+            y,
+            x + width - radius,
+            y,
         );
-        
+
         // Bottom edge
         self.content.line_to(x + radius, y);
         // Bottom-left corner
         self.content.cubic_to(
-            x + radius - radius * BEZIER_CONTROL_RATIO, y,
-            x, y + radius - radius * BEZIER_CONTROL_RATIO,
-            x, y + radius,
+            x + radius - radius * BEZIER_CONTROL_RATIO,
+            y,
+            x,
+            y + radius - radius * BEZIER_CONTROL_RATIO,
+            x,
+            y + radius,
         );
-        
+
         // Left edge
         self.content.line_to(x, y + height - radius);
         // Top-left corner
         self.content.cubic_to(
-            x, y + height - radius + radius * BEZIER_CONTROL_RATIO,
-            x + radius - radius * BEZIER_CONTROL_RATIO, y + height,
-            x + radius, y + height,
+            x,
+            y + height - radius + radius * BEZIER_CONTROL_RATIO,
+            x + radius - radius * BEZIER_CONTROL_RATIO,
+            y + height,
+            x + radius,
+            y + height,
         );
-        
+
         self.content.fill_even_odd();
         self.content.set_fill_rgb(0.0, 0.0, 0.0); // Reset fill color to black
     }
@@ -493,10 +507,10 @@ fn truncate_path(path: &Path, max_len: f32) -> String {
 
     // Try to get parent and filename
     if let (Some(parent), Some(file_name)) = (path.parent(), path.file_name()) {
-        let parent_str = parent
-            .file_name()
-            .or(Some(parent.as_os_str()))
-            .map_or_else(|| parent.display().to_string(), |s| s.to_string_lossy().to_string());
+        let parent_str = parent.file_name().or(Some(parent.as_os_str())).map_or_else(
+            || parent.display().to_string(),
+            |s| s.to_string_lossy().to_string(),
+        );
 
         return format!(
             "[truncated].../{parent_str}/{}",

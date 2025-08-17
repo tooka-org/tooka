@@ -106,7 +106,6 @@ fn sort_file(
             current_path: file_path.to_path_buf(),
             new_path: file_path.to_path_buf(),
         }]);
-    
     };
 
     log::debug!(

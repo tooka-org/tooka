@@ -98,7 +98,7 @@ pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &Dat
 
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
-        
+
         let from = if let Some(from_str) = &date_range.from {
             parse_date(from_str).map_or_else(
                 |_| {
@@ -117,12 +117,12 @@ pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &Dat
                     log::warn!("Invalid 'to' date format: {to_str}, using 9999-12-31");
                     NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
                 },
-                |dt| dt.date_naive()
+                |dt| dt.date_naive(),
             )
         } else {
             NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
         };
-            
+
         let created_date = created_datetime.date_naive();
         created_date >= from && created_date <= to
     })
@@ -165,7 +165,6 @@ pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: &DateRan
         modified_date >= from && modified_date <= to
     })
 }
-
 
 /// Matches a file's symlink status against a boolean value
 pub(crate) fn match_is_symlink(metadata: &fs::Metadata, is_symlink: bool) -> bool {
@@ -211,19 +210,21 @@ pub(crate) fn match_metadata_field(file_path: &Path, field: &rule::MetadataField
         if exif_key == requested_key {
             log::debug!("Found EXIF key match: '{exif_key}'");
 
-            if let Some(pattern_str) = &field.value { match Pattern::new(pattern_str) {
-                Ok(pattern) => {
-                    let is_match = pattern.matches(&value_str);
-                    log::debug!(
-                        "Comparing EXIF value '{value_str}' with pattern '{pattern_str}': {is_match}"
-                    );
-                    return is_match;
+            if let Some(pattern_str) = &field.value {
+                match Pattern::new(pattern_str) {
+                    Ok(pattern) => {
+                        let is_match = pattern.matches(&value_str);
+                        log::debug!(
+                            "Comparing EXIF value '{value_str}' with pattern '{pattern_str}': {is_match}"
+                        );
+                        return is_match;
+                    }
+                    Err(e) => {
+                        log::warn!("Invalid glob pattern '{pattern_str}': {e}");
+                        return false;
+                    }
                 }
-                Err(e) => {
-                    log::warn!("Invalid glob pattern '{pattern_str}': {e}");
-                    return false;
-                }
-            } }
+            }
             log::debug!("EXIF key '{exif_key}' matched without value filter");
             return true;
         }

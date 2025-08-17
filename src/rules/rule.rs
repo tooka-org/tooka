@@ -258,10 +258,9 @@ impl Rule {
         if let Some(value) = self.action_validation() {
             return value;
         }
-        
+
         Ok(())
     }
-        
 
     fn action_validation(&self) -> Option<Result<(), RuleValidationError>> {
         // Action validation

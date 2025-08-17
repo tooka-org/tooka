@@ -23,9 +23,7 @@ pub fn run(args: TemplateArgs) -> Result<()> {
     std::fs::write(&output_path, rule_template)
         .map_err(|e| anyhow!("Failed to write rule template to file: {}", e))?;
 
-    println!(
-        "Rule template YAML generated successfully at {output_path}"
-    );
+    println!("Rule template YAML generated successfully at {output_path}");
 
     Ok(())
 }

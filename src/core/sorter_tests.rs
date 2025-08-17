@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::core::error::TookaError;
-    use crate::core::sorter::{collect_files, sort_files, MatchResult};
+    use crate::core::sorter::{MatchResult, collect_files, sort_files};
     use crate::rules::rule::{Action, Conditions, CopyAction, MoveAction, Rule};
     use crate::rules::rules_file::RulesFile;
     use crate::utils::gen_pdf::generate_pdf;
@@ -133,14 +133,8 @@ mod tests {
         let rules_file = create_test_rules(&source_path);
 
         // Sort files in dry run mode
-        let results = sort_files(
-            &files,
-            &source_path,
-            &rules_file,
-            true,
-            None::<fn()>,
-        )
-        .expect("sort_files should succeed");
+        let results = sort_files(&files, &source_path, &rules_file, true, None::<fn()>)
+            .expect("sort_files should succeed");
 
         // Check that we got results for all files
         assert_eq!(results.len(), files.len());
@@ -184,14 +178,8 @@ mod tests {
         let rules_file = create_test_rules(&source_path);
 
         // Sort files with actual execution (not dry run)
-        let results = sort_files(
-            &files,
-            &source_path,
-            &rules_file,
-            false,
-            None::<fn()>,
-        )
-        .expect("sort_files should succeed");
+        let results = sort_files(&files, &source_path, &rules_file, false, None::<fn()>)
+            .expect("sort_files should succeed");
 
         // Check that txt file was moved
         let txt_result = results.iter().find(|r| r.file_name == "test1.txt").unwrap();
@@ -396,14 +384,8 @@ mod tests {
         let rules_file = RulesFile { rules };
 
         // Sort the file
-        let results = sort_files(
-            &[test_file],
-            &source_path,
-            &rules_file,
-            true,
-            None::<fn()>,
-        )
-        .expect("sort_files should succeed");
+        let results = sort_files(&[test_file], &source_path, &rules_file, true, None::<fn()>)
+            .expect("sort_files should succeed");
 
         // Should have two results for the two actions
         assert_eq!(results.len(), 2);
@@ -645,7 +627,11 @@ mod tests {
 
         // Check that the PDF file has reasonable size (not empty)
         let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
-        assert!(metadata.len() > 500, "PDF should have reasonable size (> 500 bytes), actual size: {} bytes", metadata.len());
+        assert!(
+            metadata.len() > 500,
+            "PDF should have reasonable size (> 500 bytes), actual size: {} bytes",
+            metadata.len()
+        );
 
         // Print the path for manual inspection
         println!("Generated PDF at: {}", pdf_path.display());
@@ -691,7 +677,7 @@ mod tests {
 
         // Create multiple results to test pagination and grouping
         let mut mock_results = Vec::new();
-        
+
         // Create results for multiple rules with different actions
         for i in 0..50 {
             mock_results.push(MatchResult {
@@ -717,7 +703,9 @@ mod tests {
             mock_results.push(MatchResult {
                 file_name: format!("data{}.data", i),
                 current_path: source_path.join(format!("data{}.data", i)),
-                new_path: source_path.join("data_files").join(format!("data{}.data", i)),
+                new_path: source_path
+                    .join("data_files")
+                    .join(format!("data{}.data", i)),
                 matched_rule_id: "data_rule".to_string(),
                 action: "move".to_string(),
             });
@@ -727,7 +715,9 @@ mod tests {
             mock_results.push(MatchResult {
                 file_name: format!("executable{}.exe", i),
                 current_path: source_path.join(format!("executable{}.exe", i)),
-                new_path: source_path.join("executed").join(format!("executed_{}.exe", i)),
+                new_path: source_path
+                    .join("executed")
+                    .join(format!("executed_{}.exe", i)),
                 matched_rule_id: "execute_rule".to_string(),
                 action: "execute".to_string(),
             });
@@ -745,14 +735,20 @@ mod tests {
 
         // Generate PDF with large dataset
         let pdf_path = temp_dir.path().join("large_test_report.pdf");
-        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed with large dataset");
+        generate_pdf(&pdf_path, &mock_results)
+            .expect("PDF generation should succeed with large dataset");
 
         // Verify PDF file was created
         assert!(pdf_path.exists(), "Large PDF file should be created");
 
         // Check that the PDF file has reasonable size
-        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read large PDF metadata");
-        assert!(metadata.len() > 5000, "Large PDF should have substantial size (> 5KB), actual size: {} bytes", metadata.len());
+        let metadata =
+            std::fs::metadata(&pdf_path).expect("Should be able to read large PDF metadata");
+        assert!(
+            metadata.len() > 5000,
+            "Large PDF should have substantial size (> 5KB), actual size: {} bytes",
+            metadata.len()
+        );
 
         println!("Generated large PDF at: {}", pdf_path.display());
         println!("Large PDF size: {} bytes", metadata.len());
@@ -764,7 +760,10 @@ mod tests {
         // Verify different action types are present
         let move_count = mock_results.iter().filter(|r| r.action == "move").count();
         let copy_count = mock_results.iter().filter(|r| r.action == "copy").count();
-        let execute_count = mock_results.iter().filter(|r| r.action == "execute").count();
+        let execute_count = mock_results
+            .iter()
+            .filter(|r| r.action == "execute")
+            .count();
         let skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
 
         assert_eq!(move_count, 70); // txt + data files
@@ -777,17 +776,19 @@ mod tests {
     fn test_pdf_generation_for_inspection() {
         // Create PDF in the project directory for easy inspection
         let pdf_path = std::path::Path::new("test_report_refactored.pdf");
-        
+
         // Create mock results with various actions to test all features
         let mut mock_results = Vec::new();
         let base_path = std::path::Path::new("/example/source");
-        
+
         // Create results for different rule types and actions
         for i in 0..15 {
             mock_results.push(MatchResult {
                 file_name: format!("document_{}.txt", i),
                 current_path: base_path.join(format!("documents/document_{}.txt", i)),
-                new_path: base_path.join("organized/documents").join(format!("document_{}.txt", i)),
+                new_path: base_path
+                    .join("organized/documents")
+                    .join(format!("document_{}.txt", i)),
                 matched_rule_id: "document_organization_rule".to_string(),
                 action: "move".to_string(),
             });
@@ -797,7 +798,9 @@ mod tests {
             mock_results.push(MatchResult {
                 file_name: format!("backup_{}.log", i),
                 current_path: base_path.join(format!("logs/backup_{}.log", i)),
-                new_path: base_path.join("archive/logs").join(format!("backup_{}.log", i)),
+                new_path: base_path
+                    .join("archive/logs")
+                    .join(format!("backup_{}.log", i)),
                 matched_rule_id: "log_backup_rule".to_string(),
                 action: "copy".to_string(),
             });
@@ -827,7 +830,9 @@ mod tests {
             mock_results.push(MatchResult {
                 file_name: format!("script_{}.sh", i),
                 current_path: base_path.join(format!("scripts/script_{}.sh", i)),
-                new_path: base_path.join("executed").join(format!("executed_script_{}.result", i)),
+                new_path: base_path
+                    .join("executed")
+                    .join(format!("executed_script_{}.result", i)),
                 matched_rule_id: "script_execution_rule".to_string(),
                 action: "execute".to_string(),
             });
@@ -851,19 +856,22 @@ mod tests {
 
         // Check file size
         let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
-        
+
         println!("Generated PDF for inspection at: {}", pdf_path.display());
         println!("PDF size: {} bytes", metadata.len());
         println!("Total match results: {}", mock_results.len());
-        
+
         // Show action breakdown
         let move_count = mock_results.iter().filter(|r| r.action == "move").count();
         let copy_count = mock_results.iter().filter(|r| r.action == "copy").count();
         let delete_count = mock_results.iter().filter(|r| r.action == "delete").count();
         let rename_count = mock_results.iter().filter(|r| r.action == "rename").count();
-        let execute_count = mock_results.iter().filter(|r| r.action == "execute").count();
+        let execute_count = mock_results
+            .iter()
+            .filter(|r| r.action == "execute")
+            .count();
         let _skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
-        
+
         println!("Action breakdown:");
         println!("  Move: {}", move_count);
         println!("  Copy: {}", copy_count);
@@ -872,16 +880,19 @@ mod tests {
         println!("  Execute: {}", execute_count);
         println!("  Skip: {}", _skip_count);
 
-        assert!(metadata.len() > 2000, "PDF should be substantial for inspection");
+        assert!(
+            metadata.len() > 2000,
+            "PDF should be substantial for inspection"
+        );
     }
 
     #[test]
     fn test_pdf_generation_with_long_paths() {
         // Create PDF with extremely long paths to test wrapping
         let pdf_path = std::path::Path::new("test_report_long_paths.pdf");
-        
+
         let mut mock_results = Vec::new();
-        
+
         // Create results with very long paths
         mock_results.push(MatchResult {
             file_name: "document_with_very_very_very_long_filename_that_should_be_handled_properly.txt".to_string(),
@@ -915,11 +926,14 @@ mod tests {
 
         // Check file size
         let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
-        
+
         println!("Generated PDF with long paths at: {}", pdf_path.display());
         println!("PDF size: {} bytes", metadata.len());
         println!("Total match results: {}", mock_results.len());
 
-        assert!(metadata.len() > 1000, "PDF should be substantial for inspection");
+        assert!(
+            metadata.len() > 1000,
+            "PDF should be substantial for inspection"
+        );
     }
 }

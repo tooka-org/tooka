@@ -141,7 +141,7 @@ impl Config {
     }
 
     /// Returns the path to the configuration file, creating it if necessary
-    fn config_path() -> std::path::PathBuf{
+    fn config_path() -> std::path::PathBuf {
         let home_dir = env::var("HOME").map_or_else(|_| PathBuf::from("."), PathBuf::from);
 
         let config_dir =
