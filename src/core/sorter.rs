@@ -167,14 +167,12 @@ pub fn collect_files(dir: &Path) -> Result<Vec<PathBuf>, TookaError> {
         .follow_links(false)
         .into_iter()
         .par_bridge()
-        .filter_map(|entry| {
-            match entry {
-                Ok(e) if e.file_type().is_file() => Some(Ok(e.path().to_path_buf())),
-                Ok(_) => None, // Skip directories
-                Err(err) => {
-                    log::warn!("Error reading directory entry: {err}");
-                    None // Skip problematic entries instead of failing
-                }
+        .filter_map(|entry| match entry {
+            Ok(e) if e.file_type().is_file() => Some(Ok(e.path().to_path_buf())),
+            Ok(_) => None, // Skip directories
+            Err(err) => {
+                log::warn!("Error reading directory entry: {err}");
+                None // Skip problematic entries instead of failing
             }
         })
         .collect();

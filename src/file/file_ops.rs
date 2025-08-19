@@ -61,7 +61,7 @@ pub fn execute_action(
     }
 }
 
-pub(crate) fn handle_move(
+fn handle_move(
     file_path: &Path,
     action: &MoveAction,
     dry_run: bool,
@@ -79,7 +79,9 @@ pub(crate) fn handle_move(
         log::debug!("Dry run: would move file to: {}", new_path.display());
     } else {
         log::info!("Moving file to: {}", new_path.display());
-        fs::create_dir_all(new_path.parent().unwrap())?;
+        if let Some(parent) = new_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
         fs::rename(file_path, &new_path)?;
     }
 
@@ -89,7 +91,7 @@ pub(crate) fn handle_move(
     })
 }
 
-pub(crate) fn handle_copy(
+fn handle_copy(
     file_path: &Path,
     action: &CopyAction,
     dry_run: bool,
@@ -107,7 +109,9 @@ pub(crate) fn handle_copy(
         log::debug!("Dry run: would copy file to: {}", new_path.display());
     } else {
         log::info!("Copying file to: {}", new_path.display());
-        fs::create_dir_all(new_path.parent().unwrap())?;
+        if let Some(parent) = new_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
         fs::copy(file_path, &new_path)?;
     }
 
@@ -117,7 +121,7 @@ pub(crate) fn handle_copy(
     })
 }
 
-pub(crate) fn handle_rename(
+fn handle_rename(
     file_path: &Path,
     action: &RenameAction,
     dry_run: bool,
@@ -149,7 +153,7 @@ pub(crate) fn handle_rename(
 }
 
 /// Handles the delete action for a file, either performing the deletion or simulating it in dry run mode.
-pub(crate) fn handle_delete(
+fn handle_delete(
     file_path: &Path,
     action: &DeleteAction,
     dry_run: bool,
@@ -180,7 +184,7 @@ pub(crate) fn handle_delete(
 }
 
 /// Handles the execute action for a file, executing a command or script specified in the action.
-pub(crate) fn handle_execute(
+fn handle_execute(
     file_path: &Path,
     action: &ExecuteAction,
     dry_run: bool,
@@ -220,7 +224,7 @@ pub(crate) fn handle_execute(
     })
 }
 
-pub(crate) fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> PathBuf
+fn compute_destination<A>(file_path: &Path, action: &A, source_path: &Path) -> PathBuf
 where
     A: HasToAndPreserveStructure,
 {
@@ -257,11 +261,12 @@ where
             "Not preserving directory structure for file: {}",
             file_path.display()
         );
-        destination.join(file_path.file_name().unwrap_or_default())
+        let file_name = file_path.file_name().unwrap_or_default();
+        destination.join(file_name)
     }
 }
 
-pub(crate) trait HasToAndPreserveStructure {
+trait HasToAndPreserveStructure {
     fn to(&self) -> &str;
     fn preserve_structure(&self) -> bool;
 }

@@ -17,6 +17,9 @@ use std::fs;
 use std::io::BufReader;
 use std::path::Path;
 
+const MIN_DATE: (i32, u32, u32) = (1970, 1, 1);
+const MAX_DATE: (i32, u32, u32) = (9999, 12, 31);
+
 /// Matches a file's name against a regular expression pattern
 pub(crate) fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
     log::debug!(
@@ -111,18 +114,19 @@ pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &Dat
         let created_datetime: chrono::DateTime<Utc> = created.into();
         let created_date = created_datetime.date_naive();
 
+        let min_date = NaiveDate::from_ymd_opt(MIN_DATE.0, MIN_DATE.1, MIN_DATE.2)
+            .expect("MIN_DATE should be valid");
+        let max_date = NaiveDate::from_ymd_opt(MAX_DATE.0, MAX_DATE.1, MAX_DATE.2)
+            .expect("MAX_DATE should be valid");
+
         let from = date_range.from.as_ref().map_or_else(
-            || NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
-            |from_str| {
-                parse_date_with_fallback(from_str, NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
-            },
+            || min_date,
+            |from_str| parse_date_with_fallback(from_str, min_date),
         );
 
         let to = date_range.to.as_ref().map_or_else(
-            || NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
-            |to_str| {
-                parse_date_with_fallback(to_str, NaiveDate::from_ymd_opt(9999, 12, 31).unwrap())
-            },
+            || max_date,
+            |to_str| parse_date_with_fallback(to_str, max_date),
         );
 
         created_date >= from && created_date <= to
@@ -137,18 +141,19 @@ pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: &DateRan
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
         let modified_date = modified_datetime.date_naive();
 
+        let min_date = NaiveDate::from_ymd_opt(MIN_DATE.0, MIN_DATE.1, MIN_DATE.2)
+            .expect("MIN_DATE should be valid");
+        let max_date = NaiveDate::from_ymd_opt(MAX_DATE.0, MAX_DATE.1, MAX_DATE.2)
+            .expect("MAX_DATE should be valid");
+
         let from = date_range.from.as_ref().map_or_else(
-            || NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
-            |from_str| {
-                parse_date_with_fallback(from_str, NaiveDate::from_ymd_opt(1970, 1, 1).unwrap())
-            },
+            || min_date,
+            |from_str| parse_date_with_fallback(from_str, min_date),
         );
 
         let to = date_range.to.as_ref().map_or_else(
-            || NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
-            |to_str| {
-                parse_date_with_fallback(to_str, NaiveDate::from_ymd_opt(9999, 12, 31).unwrap())
-            },
+            || max_date,
+            |to_str| parse_date_with_fallback(to_str, max_date),
         );
 
         modified_date >= from && modified_date <= to

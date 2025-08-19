@@ -681,9 +681,9 @@ mod tests {
         // Create results for multiple rules with different actions
         for i in 0..50 {
             mock_results.push(MatchResult {
-                file_name: format!("file{}.txt", i),
-                current_path: source_path.join(format!("file{}.txt", i)),
-                new_path: source_path.join("txt_files").join(format!("file{}.txt", i)),
+                file_name: format!("file{i}.txt"),
+                current_path: source_path.join(format!("file{i}.txt")),
+                new_path: source_path.join("txt_files").join(format!("file{i}.txt")),
                 matched_rule_id: "txt_rule".to_string(),
                 action: "move".to_string(),
             });
@@ -691,9 +691,9 @@ mod tests {
 
         for i in 0..30 {
             mock_results.push(MatchResult {
-                file_name: format!("log{}.log", i),
-                current_path: source_path.join(format!("log{}.log", i)),
-                new_path: source_path.join("log_files").join(format!("log{}.log", i)),
+                file_name: format!("log{i}.log"),
+                current_path: source_path.join(format!("log{i}.log")),
+                new_path: source_path.join("log_files").join(format!("log{i}.log")),
                 matched_rule_id: "log_rule".to_string(),
                 action: "copy".to_string(),
             });
@@ -701,11 +701,9 @@ mod tests {
 
         for i in 0..20 {
             mock_results.push(MatchResult {
-                file_name: format!("data{}.data", i),
-                current_path: source_path.join(format!("data{}.data", i)),
-                new_path: source_path
-                    .join("data_files")
-                    .join(format!("data{}.data", i)),
+                file_name: format!("data{i}.data"),
+                current_path: source_path.join(format!("data{i}.data")),
+                new_path: source_path.join("data_files").join(format!("data{i}.data")),
                 matched_rule_id: "data_rule".to_string(),
                 action: "move".to_string(),
             });
@@ -713,11 +711,11 @@ mod tests {
 
         for i in 0..10 {
             mock_results.push(MatchResult {
-                file_name: format!("executable{}.exe", i),
-                current_path: source_path.join(format!("executable{}.exe", i)),
+                file_name: format!("executable{i}.exe"),
+                current_path: source_path.join(format!("executable{i}.exe")),
                 new_path: source_path
                     .join("executed")
-                    .join(format!("executed_{}.exe", i)),
+                    .join(format!("executed_{i}.exe")),
                 matched_rule_id: "execute_rule".to_string(),
                 action: "execute".to_string(),
             });
@@ -725,9 +723,9 @@ mod tests {
 
         for i in 0..15 {
             mock_results.push(MatchResult {
-                file_name: format!("unknown{}.unknown", i),
-                current_path: source_path.join(format!("unknown{}.unknown", i)),
-                new_path: source_path.join(format!("unknown{}.unknown", i)), // Same path for skip
+                file_name: format!("unknown{i}.unknown"),
+                current_path: source_path.join(format!("unknown{i}.unknown")),
+                new_path: source_path.join(format!("unknown{i}.unknown")), // Same path for skip
                 matched_rule_id: "none".to_string(),
                 action: "skip".to_string(),
             });
@@ -784,11 +782,11 @@ mod tests {
         // Create results for different rule types and actions
         for i in 0..15 {
             mock_results.push(MatchResult {
-                file_name: format!("document_{}.txt", i),
-                current_path: base_path.join(format!("documents/document_{}.txt", i)),
+                file_name: format!("document_{i}.txt"),
+                current_path: base_path.join(format!("documents/document_{i}.txt")),
                 new_path: base_path
                     .join("organized/documents")
-                    .join(format!("document_{}.txt", i)),
+                    .join(format!("document_{i}.txt")),
                 matched_rule_id: "document_organization_rule".to_string(),
                 action: "move".to_string(),
             });
@@ -796,11 +794,11 @@ mod tests {
 
         for i in 0..12 {
             mock_results.push(MatchResult {
-                file_name: format!("backup_{}.log", i),
-                current_path: base_path.join(format!("logs/backup_{}.log", i)),
+                file_name: format!("backup_{i}.log"),
+                current_path: base_path.join(format!("logs/backup_{i}.log")),
                 new_path: base_path
                     .join("archive/logs")
-                    .join(format!("backup_{}.log", i)),
+                    .join(format!("backup_{i}.log")),
                 matched_rule_id: "log_backup_rule".to_string(),
                 action: "copy".to_string(),
             });
@@ -808,9 +806,9 @@ mod tests {
 
         for i in 0..8 {
             mock_results.push(MatchResult {
-                file_name: format!("temp_{}.tmp", i),
-                current_path: base_path.join(format!("temp/temp_{}.tmp", i)),
-                new_path: base_path.join("temp").join(format!("temp_{}.tmp", i)), // Same path for delete
+                file_name: format!("temp_{i}.tmp"),
+                current_path: base_path.join(format!("temp/temp_{i}.tmp")),
+                new_path: base_path.join("temp").join(format!("temp_{i}.tmp")), // Same path for delete
                 matched_rule_id: "cleanup_rule".to_string(),
                 action: "delete".to_string(),
             });
@@ -818,9 +816,9 @@ mod tests {
 
         for i in 0..6 {
             mock_results.push(MatchResult {
-                file_name: format!("old_file_{}.dat", i),
-                current_path: base_path.join(format!("data/old_file_{}.dat", i)),
-                new_path: base_path.join("data").join(format!("new_file_{}.dat", i)),
+                file_name: format!("old_file_{i}.dat"),
+                current_path: base_path.join(format!("data/old_file_{i}.dat")),
+                new_path: base_path.join("data").join(format!("new_file_{i}.dat")),
                 matched_rule_id: "rename_rule".to_string(),
                 action: "rename".to_string(),
             });
@@ -828,11 +826,11 @@ mod tests {
 
         for i in 0..5 {
             mock_results.push(MatchResult {
-                file_name: format!("script_{}.sh", i),
-                current_path: base_path.join(format!("scripts/script_{}.sh", i)),
+                file_name: format!("script_{i}.sh"),
+                current_path: base_path.join(format!("scripts/script_{i}.sh")),
                 new_path: base_path
                     .join("executed")
-                    .join(format!("executed_script_{}.result", i)),
+                    .join(format!("executed_script_{i}.result")),
                 matched_rule_id: "script_execution_rule".to_string(),
                 action: "execute".to_string(),
             });
@@ -840,22 +838,22 @@ mod tests {
 
         for i in 0..10 {
             mock_results.push(MatchResult {
-                file_name: format!("unknown_{}.xyz", i),
-                current_path: base_path.join(format!("misc/unknown_{}.xyz", i)),
-                new_path: base_path.join("misc").join(format!("unknown_{}.xyz", i)), // Same path for skip
+                file_name: format!("unknown_{i}.xyz"),
+                current_path: base_path.join(format!("misc/unknown_{i}.xyz")),
+                new_path: base_path.join("misc").join(format!("unknown_{i}.xyz")), // Same path for skip
                 matched_rule_id: "none".to_string(),
                 action: "skip".to_string(),
             });
         }
 
         // Generate PDF
-        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed");
+        generate_pdf(pdf_path, &mock_results).expect("PDF generation should succeed");
 
         // Verify PDF file was created
         assert!(pdf_path.exists(), "PDF file should be created");
 
         // Check file size
-        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
+        let metadata = std::fs::metadata(pdf_path).expect("Should be able to read PDF metadata");
 
         println!("Generated PDF for inspection at: {}", pdf_path.display());
         println!("PDF size: {} bytes", metadata.len());
@@ -870,15 +868,15 @@ mod tests {
             .iter()
             .filter(|r| r.action == "execute")
             .count();
-        let _skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
+        let skip_count = mock_results.iter().filter(|r| r.action == "skip").count();
 
         println!("Action breakdown:");
-        println!("  Move: {}", move_count);
-        println!("  Copy: {}", copy_count);
-        println!("  Delete: {}", delete_count);
-        println!("  Rename: {}", rename_count);
-        println!("  Execute: {}", execute_count);
-        println!("  Skip: {}", _skip_count);
+        println!("  Move: {move_count}");
+        println!("  Copy: {copy_count}");
+        println!("  Delete: {delete_count}");
+        println!("  Rename: {rename_count}");
+        println!("  Execute: {execute_count}");
+        println!("  Skip: {skip_count}");
 
         assert!(
             metadata.len() > 2000,
@@ -891,41 +889,46 @@ mod tests {
         // Create PDF with extremely long paths to test wrapping
         let pdf_path = std::path::Path::new("test_report_long_paths.pdf");
 
-        let mut mock_results = Vec::new();
-
-        // Create results with very long paths
-        mock_results.push(MatchResult {
-            file_name: "document_with_very_very_very_long_filename_that_should_be_handled_properly.txt".to_string(),
-            current_path: std::path::PathBuf::from("/home/user/documents/projects/rust/my_awesome_project/src/very/deeply/nested/directories/with/extremely/long/path/names/that/go/on/and/on/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt"),
-            new_path: std::path::PathBuf::from("/home/user/organized_files/documents/text_files/2024/august/important_documents/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt"),
-            matched_rule_id: "document_organization_with_very_long_rule_name".to_string(),
-            action: "move".to_string(),
-        });
-
-        mock_results.push(MatchResult {
-            file_name: "short.log".to_string(),
-            current_path: std::path::PathBuf::from("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/very/long/path/structure/short.log"),
-            new_path: std::path::PathBuf::from("/backup/logs/short.log"),
-            matched_rule_id: "log_backup".to_string(),
-            action: "copy".to_string(),
-        });
-
-        mock_results.push(MatchResult {
-            file_name: "file_in_normal_path.dat".to_string(),
-            current_path: std::path::PathBuf::from("/home/user/data/file_in_normal_path.dat"),
-            new_path: std::path::PathBuf::from("/home/user/archived/file_in_normal_path.dat"),
-            matched_rule_id: "normal_rule".to_string(),
-            action: "move".to_string(),
-        });
+        let mock_results = vec![
+            MatchResult {
+                file_name:
+                    "document_with_very_very_very_long_filename_that_should_be_handled_properly.txt"
+                        .to_string(),
+                current_path: std::path::PathBuf::from(
+                    "/home/user/documents/projects/rust/my_awesome_project/src/very/deeply/nested/directories/with/extremely/long/path/names/that/go/on/and/on/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt",
+                ),
+                new_path: std::path::PathBuf::from(
+                    "/home/user/organized_files/documents/text_files/2024/august/important_documents/document_with_very_very_very_long_filename_that_should_be_handled_properly.txt",
+                ),
+                matched_rule_id: "document_organization_with_very_long_rule_name".to_string(),
+                action: "move".to_string(),
+            },
+            MatchResult {
+                file_name: "short.log".to_string(),
+                current_path: std::path::PathBuf::from(
+                    "/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/very/long/path/structure/short.log",
+                ),
+                new_path: std::path::PathBuf::from("/backup/logs/short.log"),
+                matched_rule_id: "log_backup".to_string(),
+                action: "copy".to_string(),
+            },
+            MatchResult {
+                file_name: "file_in_normal_path.dat".to_string(),
+                current_path: std::path::PathBuf::from("/home/user/data/file_in_normal_path.dat"),
+                new_path: std::path::PathBuf::from("/home/user/archived/file_in_normal_path.dat"),
+                matched_rule_id: "normal_rule".to_string(),
+                action: "move".to_string(),
+            },
+        ];
 
         // Generate PDF
-        generate_pdf(&pdf_path, &mock_results).expect("PDF generation should succeed");
+        generate_pdf(pdf_path, &mock_results).expect("PDF generation should succeed");
 
         // Verify PDF file was created
         assert!(pdf_path.exists(), "PDF file should be created");
 
         // Check file size
-        let metadata = std::fs::metadata(&pdf_path).expect("Should be able to read PDF metadata");
+        let metadata = std::fs::metadata(pdf_path).expect("Should be able to read PDF metadata");
 
         println!("Generated PDF with long paths at: {}", pdf_path.display());
         println!("PDF size: {} bytes", metadata.len());

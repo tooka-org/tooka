@@ -11,7 +11,7 @@ pub(crate) fn evaluate_template(
     template: &str,
     file_path: &Path,
     metadata: &HashMap<String, String>,
-) -> std::string::String {
+) -> String {
     let re = Regex::new(r"\{\{(.*?)\}\}").unwrap();
     let file_name = file_path
         .file_stem()
@@ -32,10 +32,7 @@ pub(crate) fn evaluate_template(
         let raw_value = if key == "filename" {
             file_name.clone()
         } else if let Some(metadata_key) = key.strip_prefix("metadata.") {
-            metadata
-                .get(metadata_key)
-                .cloned()
-                .unwrap_or_else(String::new)
+            metadata.get(metadata_key).cloned().unwrap_or_default()
         } else {
             String::new()
         };

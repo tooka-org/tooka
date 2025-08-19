@@ -154,26 +154,26 @@ impl LogWriter for DualWriter {
             // Ops logger: use numbered daily file
             let path = self.get_ops_log_path();
             // Rotate ops logs: keep only MAX_LOG_FILES newest files
-            let dir = path.parent().unwrap();
+            if let Some(dir) = path.parent() {
+                let mut log_files: Vec<_> = std::fs::read_dir(dir)?
+                    .filter_map(|entry| {
+                        let entry = entry.ok()?;
+                        let path = entry.path();
+                        if path.extension().and_then(|s| s.to_str()) == Some("log") {
+                            Some(path)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
 
-            let mut log_files: Vec<_> = std::fs::read_dir(dir)?
-                .filter_map(|entry| {
-                    let entry = entry.ok()?;
-                    let path = entry.path();
-                    if path.extension().and_then(|s| s.to_str()) == Some("log") {
-                        Some(path)
-                    } else {
-                        None
+                log_files.sort();
+
+                while log_files.len() > MAX_LOG_FILES {
+                    if let Some(oldest) = log_files.first() {
+                        let _ = std::fs::remove_file(oldest);
+                        log_files.remove(0);
                     }
-                })
-                .collect();
-
-            log_files.sort();
-
-            while log_files.len() > MAX_LOG_FILES {
-                if let Some(oldest) = log_files.first() {
-                    let _ = std::fs::remove_file(oldest);
-                    log_files.remove(0);
                 }
             }
 

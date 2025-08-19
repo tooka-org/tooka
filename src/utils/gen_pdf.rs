@@ -163,6 +163,7 @@ impl PDFGenerator {
                 let to_lines =
                     PDFGenerator::format_path_with_wrapping(&entry.new_path, MAX_PATH_LENGTH);
                 let total_lines = from_lines.len() + to_lines.len();
+                #[allow(clippy::cast_precision_loss)]
                 let content_height = CONTENT_BASE_HEIGHT + (total_lines as f32 * LINE_HEIGHT); // Header + path lines
                 let box_height = content_height + BOX_PADDING; // Add padding
 
@@ -365,6 +366,7 @@ impl PDFGenerator {
     fn format_path_with_wrapping(path: &Path, max_width: f32) -> Vec<String> {
         let full_path = path.display().to_string();
         let approx_char_width = APPROX_CHAR_WIDTH; // Approximate character width in points for font size 12
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let max_chars_per_line = (max_width / approx_char_width) as usize;
 
         if full_path.len() <= max_chars_per_line {
@@ -501,7 +503,10 @@ pub(crate) fn generate_pdf(path: &Path, results: &[MatchResult]) -> Result<(), a
 
 fn truncate_path(path: &Path, max_len: f32) -> String {
     let full = path.display().to_string();
-    if full.len() <= max_len as usize {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let max_len_usize = max_len as usize;
+
+    if full.len() <= max_len_usize {
         return full;
     }
 
@@ -519,8 +524,8 @@ fn truncate_path(path: &Path, max_len: f32) -> String {
     }
 
     // Fallback: just truncate the string with ellipsis
-    if full.len() > max_len as usize {
-        format!("{}...", &full[..max_len as usize - 3])
+    if full.len() > max_len_usize {
+        format!("{}...", &full[..max_len_usize - 3])
     } else {
         full
     }
