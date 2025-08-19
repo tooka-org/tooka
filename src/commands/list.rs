@@ -1,4 +1,4 @@
-use crate::cli::display;
+use crate::cli;
 use crate::core::context;
 use anyhow::Result;
 use clap::Args;
@@ -14,13 +14,13 @@ pub fn run(_args: ListArgs) -> Result<()> {
     let rules_list = rf.list_rules();
 
     if rules_list.is_empty() {
-        display::warning("No rules found.");
-        display::info("Use `tooka add` to create your first rule.");
+        cli::warning("No rules found.");
+        cli::info("Use `tooka add` to create your first rule.");
         return Ok(());
     }
 
-    display::header(&format!("📋 Found {} rules", rules_list.len()));
-    display::rule_table_header();
+    cli::header(&format!("📋 Found {} rules", rules_list.len()));
+    cli::rule_table_header();
 
     for rule in &rules_list {
         log::debug!(
@@ -29,11 +29,11 @@ pub fn run(_args: ListArgs) -> Result<()> {
             rule.name,
             rule.enabled
         );
-        display::rule_table_row(&rule.id, &rule.name, rule.enabled);
+        cli::rule_table_row(&rule.id, &rule.name, rule.enabled);
     }
 
     println!();
-    display::success("Rules listed successfully!");
+    cli::success("Rules listed successfully!");
 
     Ok(())
 }

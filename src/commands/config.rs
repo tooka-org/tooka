@@ -1,5 +1,5 @@
 use crate::core::context;
-use crate::{cli::display, common::config::Config};
+use crate::{cli, common::config::Config};
 use anyhow::{Context, Result, anyhow};
 use clap::Args;
 
@@ -33,7 +33,7 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
     );
 
     if flag_count == 0 {
-        display::warning("No action specified. Use one of: --locate, --reset, --show");
+        cli::warning("No action specified. Use one of: --locate, --reset, --show");
         log::warn!("No action specified. Use one of: --locate, --reset, --show");
         return Err(anyhow!(
             "No action specified. Use one of: --locate, --reset, --show"
@@ -41,7 +41,7 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
     }
 
     if flag_count > 1 {
-        display::error("Only one flag can be used at a time.");
+        cli::error("Only one flag can be used at a time.");
         log::warn!("Multiple flags used. Only one flag can be used at a time.");
         return Err(anyhow!(
             "Only one flag can be used at a time. Please choose one of: --locate, --reset, --show"
@@ -51,20 +51,20 @@ pub fn run(args: &ConfigArgs) -> Result<()> {
     let mut conf = context::get_locked_config()?;
 
     if args.locate {
-        display::info("📍 Locating config file...");
+        cli::info("📍 Locating config file...");
         log::info!("Locating config file...");
         let path = Config::locate_config_file().context("Failed to locate config file")?;
-        display::success(&format!("Config file found at: {}", path.display()));
+        cli::success(&format!("Config file found at: {}", path.display()));
         log::info!("Config file found at: {}", path.display());
     } else if args.reset {
-        display::warning("🔄 Resetting config to default...");
+        cli::warning("🔄 Resetting config to default...");
         log::info!("Resetting config to default...");
         conf.reset_config()
             .context("Failed to reset config to default")?;
-        display::success("Config reset to default values.");
+        cli::success("Config reset to default values.");
         log::info!("Config reset complete.");
     } else if args.show {
-        display::header("📋 Current Configuration");
+        cli::header("📋 Current Configuration");
         log::info!("Showing current config...");
         let config_str = conf.show_config(); // Assuming this can't fail
         println!("{config_str}");

@@ -1,4 +1,4 @@
-use crate::cli::display;
+use crate::cli;
 use crate::core::context;
 use anyhow::Result;
 use clap::Args;
@@ -29,7 +29,7 @@ pub fn run(args: &AddArgs) -> Result<()> {
 
     if path.is_file() {
         // Handle single file
-        display::info(&format!("📝 Adding rule from file: {}", args.path));
+        cli::info(&format!("📝 Adding rule from file: {}", args.path));
         log::info!("Adding rule from file: {}", args.path);
 
         let mut rf = context::get_locked_rules_file()?;
@@ -37,11 +37,11 @@ pub fn run(args: &AddArgs) -> Result<()> {
         rf.add_rule_from_file(&args.path, args.overwrite)
             .map_err(|e| anyhow::anyhow!("Failed to add rule from file: {}: {}", args.path, e))?;
 
-        display::success("Rule added successfully!");
+        cli::success("Rule added successfully!");
         log::info!("Rule added successfully from file: {}", args.path);
     } else if path.is_dir() {
         // Handle directory
-        display::info(&format!(
+        cli::info(&format!(
             "📂 Scanning directory for YAML files: {}",
             args.path
         ));
@@ -50,12 +50,12 @@ pub fn run(args: &AddArgs) -> Result<()> {
         let yaml_files = find_yaml_files(path)?;
 
         if yaml_files.is_empty() {
-            display::warning("No YAML files found in the directory");
+            cli::warning("No YAML files found in the directory");
             log::warn!("No YAML files found in directory: {}", args.path);
             return Ok(());
         }
 
-        display::info(&format!("Found {} YAML files", yaml_files.len()));
+        cli::info(&format!("Found {} YAML files", yaml_files.len()));
         log::info!(
             "Found {} YAML files in directory: {}",
             yaml_files.len(),
@@ -74,17 +74,17 @@ pub fn run(args: &AddArgs) -> Result<()> {
 
             match rf.add_rule_from_file(&file_path_str, args.overwrite) {
                 Ok(()) => {
-                    display::success(&format!("  ✅ Added rules from: {file_name}"));
+                    cli::success(&format!("  ✅ Added rules from: {file_name}"));
                     log::info!("Successfully added rules from: {file_path_str}");
                     added_count += 1;
                 }
                 Err(e) => {
                     if e.to_string().contains("already exists") && !args.overwrite {
-                        display::warning(&format!("  ⚠️  Skipped (rule exists): {file_name}"));
+                        cli::warning(&format!("  ⚠️  Skipped (rule exists): {file_name}"));
                         log::warn!("Skipped file due to existing rule: {file_path_str}");
                         skipped_count += 1;
                     } else {
-                        display::error(&format!("  ❌ Failed to add from: {file_name} - {e}"));
+                        cli::error(&format!("  ❌ Failed to add from: {file_name} - {e}"));
                         log::error!("Failed to add rules from: {file_path_str} - {e}");
                         failed_count += 1;
                     }
@@ -93,7 +93,7 @@ pub fn run(args: &AddArgs) -> Result<()> {
         }
 
         // Print summary
-        display::info(&format!(
+        cli::info(&format!(
             "📊 Summary: {added_count} added, {skipped_count} skipped, {failed_count} failed"
         ));
         log::info!(

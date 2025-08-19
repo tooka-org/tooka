@@ -1,4 +1,4 @@
-use crate::cli::display;
+use crate::cli;
 use crate::core::context;
 use anyhow::{Result, anyhow};
 use clap::Args;
@@ -15,7 +15,7 @@ pub struct RemoveArgs {
 }
 
 pub fn run(args: &RemoveArgs) -> Result<()> {
-    display::info(&format!("🗑️ Removing rule with ID: {}", args.rule_id));
+    cli::info(&format!("🗑️ Removing rule with ID: {}", args.rule_id));
     log::info!("Removing rule with ID: {}", args.rule_id);
 
     let mut rf = context::get_locked_rules_file()?;
@@ -31,14 +31,14 @@ pub fn run(args: &RemoveArgs) -> Result<()> {
         rf.remove_rule(&args.rule_id)
             .map_err(|e| anyhow!("Failed to remove rule with ID '{}': {}", args.rule_id, e))?;
 
-        display::success(&format!(
+        cli::success(&format!(
             "Rule with ID '{}' removed successfully.",
             args.rule_id
         ));
         Ok(())
     } else {
         let error_msg = format!("Rule with ID '{}' not found.", args.rule_id);
-        display::error(&error_msg);
+        cli::error(&error_msg);
         log::warn!("{error_msg}");
         Err(anyhow!(error_msg))
     }

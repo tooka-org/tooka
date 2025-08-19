@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::cli::display;
+use crate::cli;
 use crate::common::config::Config;
 use crate::core::{report, sorter};
 use crate::rules::rules_file::RulesFile;
@@ -41,9 +41,9 @@ pub struct SortArgs {
 
 pub fn run(args: SortArgs) -> Result<()> {
     if args.dry_run {
-        display::warning("🔍 Running in dry-run mode - no files will be moved");
+        cli::warning("🔍 Running in dry-run mode - no files will be moved");
     } else {
-        display::info("🚀 Starting file sorting...");
+        cli::info("🚀 Starting file sorting...");
     }
 
     log::info!(
@@ -86,7 +86,7 @@ pub fn run(args: SortArgs) -> Result<()> {
     let files = sorter::collect_files(&source_path)?;
 
     let pb = ProgressBar::new(files.len() as u64);
-    pb.set_style(display::progress_style());
+    pb.set_style(cli::progress_style());
 
     // Use the main sort_files function with optimized rules
     let results = sorter::sort_files(
@@ -101,11 +101,11 @@ pub fn run(args: SortArgs) -> Result<()> {
 
     pb.finish_with_message("✅ Sorting complete");
 
-    display::success("Sorting completed successfully!");
+    cli::success("Sorting completed successfully!");
     log::info!("Sorting completed, found {} matches", results.len());
 
     if args.report.is_none() && !results.is_empty() {
-        display::header("📁 Sorted Files");
+        cli::header("📁 Sorted Files");
 
         println!(
             "{} | {} | {} | {}",
@@ -126,7 +126,7 @@ pub fn run(args: SortArgs) -> Result<()> {
             );
         }
     } else if results.is_empty() {
-        display::info("No files matched the sorting rules.");
+        cli::info("No files matched the sorting rules.");
     }
 
     // Handle report generation
@@ -138,7 +138,7 @@ pub fn run(args: SortArgs) -> Result<()> {
         );
 
         report::generate_report(report_type, &output_dir, &results)?;
-        display::success(&format!(
+        cli::success(&format!(
             "Report generated successfully in {}",
             output_dir.display()
         ));

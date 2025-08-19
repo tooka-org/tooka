@@ -7,7 +7,6 @@ mod file;
 mod rules;
 mod utils;
 
-use crate::cli::display;
 use crate::common::logger::init_logger;
 use crate::core::context::{init_config, init_rules_file};
 use anyhow::Result;
@@ -44,17 +43,17 @@ fn main() {
     // Check if no arguments are provided
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 1 {
-        display::show_banner();
+        cli::show_banner();
         return;
     }
     if args.len() == 2 && args[1] == "--version" {
-        display::show_version();
+        cli::show_version();
         return;
     }
 
     // Top-level error handling
     if let Err(e) = run() {
-        display::error(&format!("Error: {e}"));
+        cli::error(&format!("Error: {e}"));
         std::process::exit(1);
     }
 }
