@@ -109,7 +109,7 @@ jobs:
           fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.platform }}${{ matrix.cross && format('-{0}', matrix.pkg_arch) || '' }}-release-artifacts
           path: ${{ matrix.artifact_paths }}
@@ -120,7 +120,7 @@ jobs:
     permissions: write-all
     needs: [build_and_package]
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           path: artifacts
           merge-multiple: true
