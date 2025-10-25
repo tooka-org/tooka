@@ -1,0 +1,252 @@
+%PDF-1.7
+%€€€€
+
+1 0 obj
+<<
+  /Type /Font
+  /Subtype /Type1
+  /BaseFont /Helvetica
+>>
+endobj
+
+7 0 obj
+<<
+  /Length 2809
+>>
+stream
+BT
+20 752 Td
+/Helvetica 14 Tf
+(> Rule: document_organization_with_very_long_rule_name) Tj
+ET
+/G_document_organization_with_very_long_rule_name_document_with_very_very_very_long_filename_that_should_be_handled_properly.txt gs
+0.9 0.9 0.9 rg
+24 732 m
+571 732 l
+573.208 732 575 730.208 575 728 c
+575 614 l
+575 611.792 573.208 610 571 610 c
+24 610 l
+21.792 610 20 611.792 20 614 c
+20 728 l
+20 730.208 21.792 732 24 732 c
+f*
+0 0 0 rg
+0.2 0.4 0.8 rg
+BT
+30 712 Td
+/Helvetica 12.5 Tf
+([move] - document_with_very_very_very_long_filename_that_should_be_handled_properly.txt) Tj
+ET
+0 0 0 rg
+BT
+35 692 Td
+/Helvetica 12 Tf
+(From:) Tj
+ET
+BT
+70 692 Td
+/Helvetica 12 Tf
+(/home/user/documents/projects/rust/my_awesome_project/src/very/deeply) Tj
+ET
+BT
+55 680 Td
+/Helvetica 12 Tf
+(/nested/directories/with/extremely/long/path/names/that/go/on/and/on) Tj
+ET
+BT
+55 668 Td
+/Helvetica 12 Tf
+(/document_with_very_very_very_long_filename_that_should_be_handled_proper...) Tj
+ET
+BT
+35 653 Td
+/Helvetica 12 Tf
+(To:) Tj
+ET
+BT
+70 653 Td
+/Helvetica 12 Tf
+(/home/user/organized_files/documents/text_files/2024/august) Tj
+ET
+BT
+55 641 Td
+/Helvetica 12 Tf
+(/important_documents) Tj
+ET
+BT
+55 629 Td
+/Helvetica 12 Tf
+(/document_with_very_very_very_long_filename_that_should_be_handled_proper...) Tj
+ET
+BT
+20 585 Td
+/Helvetica 14 Tf
+(> Rule: log_backup) Tj
+ET
+/G_log_backup_short.log gs
+0.9 0.9 0.9 rg
+24 565 m
+571 565 l
+573.208 565 575 563.208 575 561 c
+575 483 l
+575 480.792 573.208 479 571 479 c
+24 479 l
+21.792 479 20 480.792 20 483 c
+20 561 l
+20 563.208 21.792 565 24 565 c
+f*
+0 0 0 rg
+0.2 0.7 0.3 rg
+BT
+30 545 Td
+/Helvetica 12.5 Tf
+([copy] - short.log) Tj
+ET
+0 0 0 rg
+BT
+35 525 Td
+/Helvetica 12 Tf
+(From:) Tj
+ET
+BT
+70 525 Td
+/Helvetica 12 Tf
+(/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/very/long/path) Tj
+ET
+BT
+55 513 Td
+/Helvetica 12 Tf
+(/structure/short.log) Tj
+ET
+BT
+35 498 Td
+/Helvetica 12 Tf
+(To:) Tj
+ET
+BT
+70 498 Td
+/Helvetica 12 Tf
+(/backup/logs/short.log) Tj
+ET
+BT
+20 454 Td
+/Helvetica 14 Tf
+(> Rule: normal_rule) Tj
+ET
+/G_normal_rule_file_in_normal_path.dat gs
+0.9 0.9 0.9 rg
+24 434 m
+571 434 l
+573.208 434 575 432.208 575 430 c
+575 364 l
+575 361.792 573.208 360 571 360 c
+24 360 l
+21.792 360 20 361.792 20 364 c
+20 430 l
+20 432.208 21.792 434 24 434 c
+f*
+0 0 0 rg
+0.2 0.4 0.8 rg
+BT
+30 414 Td
+/Helvetica 12.5 Tf
+([move] - file_in_normal_path.dat) Tj
+ET
+0 0 0 rg
+BT
+35 394 Td
+/Helvetica 12 Tf
+(From:) Tj
+ET
+BT
+70 394 Td
+/Helvetica 12 Tf
+(/home/user/data/file_in_normal_path.dat) Tj
+ET
+BT
+35 379 Td
+/Helvetica 12 Tf
+(To:) Tj
+ET
+BT
+70 379 Td
+/Helvetica 12 Tf
+(/home/user/archived/file_in_normal_path.dat) Tj
+ET
+BT
+20 802 Td
+/Helvetica 20 Tf
+(Tooka Report) Tj
+ET
+BT
+485 827 Td
+/Helvetica 11 Tf
+(2025-10-25 16:36:02) Tj
+ET
+BT
+20 787 Td
+/Helvetica 12 Tf
+(Total changes: 3) Tj
+ET
+BT
+277.5 8 Td
+/Helvetica 11 Tf
+(Page 1) Tj
+ET
+endstream
+endobj
+
+6 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 595 842]
+  /Parent 2 0 R
+  /Contents 7 0 R
+  /Resources <<
+    /Font <<
+      /Helvetica 1 0 R
+    >>
+    /ExtGState <<
+      /G_document_organization_with_very_long_rule_name_document_with_very_very_very_long_filename_that_should_be_handled_properly.txt 3 0 R
+      /G_log_backup_short.log 4 0 R
+      /G_normal_rule_file_in_normal_path.dat 5 0 R
+    >>
+  >>
+>>
+endobj
+
+2 0 obj
+<<
+  /Type /Pages
+  /Kids [6 0 R]
+  /Count 1
+>>
+endobj
+
+8 0 obj
+<<
+  /Type /Catalog
+  /Pages 2 0 R
+>>
+endobj
+
+xref
+0 9
+0000000003 65535 f
+0000000016 00000 n
+0000003370 00000 n
+0000000004 00000 f
+0000000005 00000 f
+0000000000 00000 f
+0000002957 00000 n
+0000000093 00000 n
+0000003434 00000 n
+trailer
+<<
+  /Size 9
+  /Root 8 0 R
+>>
+startxref
+3488
+%%EOF
