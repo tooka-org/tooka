@@ -5,6 +5,12 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::sync::LazyLock;
+
+/// Cached regex pattern for template matching
+static TEMPLATE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\{\{(.*?)\}\}").expect("Failed to compile template regex")
+});
 
 /// Evaluates a template string with metadata and file information.
 pub(crate) fn evaluate_template(
@@ -12,7 +18,6 @@ pub(crate) fn evaluate_template(
     file_path: &Path,
     metadata: &HashMap<String, String>,
 ) -> String {
-    let re = Regex::new(r"\{\{(.*?)\}\}").unwrap();
     let file_name = file_path
         .file_stem()
         .and_then(|s| s.to_str())
@@ -21,7 +26,7 @@ pub(crate) fn evaluate_template(
 
     let mut result = template.to_string();
 
-    for caps in re.captures_iter(template) {
+    for caps in TEMPLATE_REGEX.captures_iter(template) {
         let full_match = &caps[0];
         let expr = &caps[1];
 

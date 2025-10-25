@@ -16,9 +16,22 @@ use glob::{self, Pattern};
 use std::fs;
 use std::io::BufReader;
 use std::path::Path;
+use std::sync::LazyLock;
 
 const MIN_DATE: (i32, u32, u32) = (1970, 1, 1);
 const MAX_DATE: (i32, u32, u32) = (9999, 12, 31);
+
+/// Cached minimum date for range comparisons
+static MIN_DATE_NAIVE: LazyLock<NaiveDate> = LazyLock::new(|| {
+    NaiveDate::from_ymd_opt(MIN_DATE.0, MIN_DATE.1, MIN_DATE.2)
+        .expect("MIN_DATE should be valid")
+});
+
+/// Cached maximum date for range comparisons
+static MAX_DATE_NAIVE: LazyLock<NaiveDate> = LazyLock::new(|| {
+    NaiveDate::from_ymd_opt(MAX_DATE.0, MAX_DATE.1, MAX_DATE.2)
+        .expect("MAX_DATE should be valid")
+});
 
 /// Matches a file's name against a regular expression pattern
 pub(crate) fn match_filename_regex(file_path: &Path, pattern: &str) -> Result<bool, TookaError> {
@@ -42,7 +55,7 @@ pub(crate) fn match_extensions(file_path: &Path, extensions: &[String]) -> bool 
     file_path
         .extension()
         .and_then(|ext| ext.to_str())
-        .is_some_and(|ext_str| extensions.iter().any(|ext| ext == ext_str))
+        .is_some_and(|ext_str| extensions.iter().any(|ext| ext.as_str() == ext_str))
 }
 
 /// Matches a file path against a glob pattern
@@ -106,57 +119,44 @@ fn parse_date_with_fallback(date_str: &str, fallback: NaiveDate) -> NaiveDate {
     )
 }
 
-/// Matches a file's metadata against a date range
+/// Helper function to check if a date falls within a range
+fn is_date_in_range(date: NaiveDate, date_range: &DateRange) -> bool {
+    let from = date_range
+        .from
+        .as_ref()
+        .map_or(*MIN_DATE_NAIVE, |from_str| {
+            parse_date_with_fallback(from_str, *MIN_DATE_NAIVE)
+        });
+
+    let to = date_range
+        .to
+        .as_ref()
+        .map_or(*MAX_DATE_NAIVE, |to_str| {
+            parse_date_with_fallback(to_str, *MAX_DATE_NAIVE)
+        });
+
+    date >= from && date <= to
+}
+
+/// Matches a file's metadata against a date range (created date)
 pub(crate) fn match_date_range_created(metadata: &fs::Metadata, date_range: &DateRange) -> bool {
     log::debug!("Matching against created date range: {date_range:?}");
 
     metadata.created().is_ok_and(|created| {
         let created_datetime: chrono::DateTime<Utc> = created.into();
         let created_date = created_datetime.date_naive();
-
-        let min_date = NaiveDate::from_ymd_opt(MIN_DATE.0, MIN_DATE.1, MIN_DATE.2)
-            .expect("MIN_DATE should be valid");
-        let max_date = NaiveDate::from_ymd_opt(MAX_DATE.0, MAX_DATE.1, MAX_DATE.2)
-            .expect("MAX_DATE should be valid");
-
-        let from = date_range.from.as_ref().map_or_else(
-            || min_date,
-            |from_str| parse_date_with_fallback(from_str, min_date),
-        );
-
-        let to = date_range.to.as_ref().map_or_else(
-            || max_date,
-            |to_str| parse_date_with_fallback(to_str, max_date),
-        );
-
-        created_date >= from && created_date <= to
+        is_date_in_range(created_date, date_range)
     })
 }
 
-/// Matches a file's metadata against a date range
+/// Matches a file's metadata against a date range (modified date)
 pub(crate) fn match_date_range_mod(metadata: &fs::Metadata, date_range: &DateRange) -> bool {
     log::debug!("Matching against modified date range: {date_range:?}");
 
     metadata.modified().is_ok_and(|modified| {
         let modified_datetime: chrono::DateTime<Utc> = modified.into();
         let modified_date = modified_datetime.date_naive();
-
-        let min_date = NaiveDate::from_ymd_opt(MIN_DATE.0, MIN_DATE.1, MIN_DATE.2)
-            .expect("MIN_DATE should be valid");
-        let max_date = NaiveDate::from_ymd_opt(MAX_DATE.0, MAX_DATE.1, MAX_DATE.2)
-            .expect("MAX_DATE should be valid");
-
-        let from = date_range.from.as_ref().map_or_else(
-            || min_date,
-            |from_str| parse_date_with_fallback(from_str, min_date),
-        );
-
-        let to = date_range.to.as_ref().map_or_else(
-            || max_date,
-            |to_str| parse_date_with_fallback(to_str, max_date),
-        );
-
-        modified_date >= from && modified_date <= to
+        is_date_in_range(modified_date, date_range)
     })
 }
 

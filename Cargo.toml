@@ -59,6 +59,10 @@ panic = "abort"
 name = "tooka"
 path = "src/main.rs"
 
+[[bin]]
+name = "performance_benchmarks"
+path = "benches/performance_benchmarks.rs"
+
 
 [package.metadata.packager]
 product-name = "tooka"
