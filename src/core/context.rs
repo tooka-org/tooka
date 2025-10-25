@@ -11,13 +11,13 @@ use anyhow::{Context, Result};
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Configuration version number.
-pub static CONFIG_VERSION: usize = 0;
+pub const CONFIG_VERSION: usize = 0;
 /// Default config file name.
-pub static CONFIG_FILE_NAME: &str = "tooka.yaml";
+pub const CONFIG_FILE_NAME: &str = "tooka.yaml";
 /// Default rules file name.
-pub static RULES_FILE_NAME: &str = "rules.yaml";
+pub const RULES_FILE_NAME: &str = "rules.yaml";
 /// Default folder for logs.
-pub static DEFAULT_LOGS_FOLDER: &str = "logs";
+pub const DEFAULT_LOGS_FOLDER: &str = "logs";
 
 /// Application qualifier (used for config directory identification).
 pub const APP_QUALIFIER: &str = "io";
