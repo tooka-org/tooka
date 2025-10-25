@@ -55,7 +55,7 @@ pub(crate) fn match_extensions(file_path: &Path, extensions: &[String]) -> bool 
     file_path
         .extension()
         .and_then(|ext| ext.to_str())
-        .is_some_and(|ext_str| extensions.iter().any(|ext| ext == ext_str))
+        .is_some_and(|ext_str| extensions.iter().any(|ext| ext.as_str() == ext_str))
 }
 
 /// Matches a file path against a glob pattern
