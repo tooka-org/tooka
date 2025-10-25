@@ -576,7 +576,7 @@ mod tests {
 
         // Sort the file
         let results = sort_files(
-            &[test_file.clone()],
+            std::slice::from_ref(&test_file),
             &source_path,
             &optimized_rules,
             true,
