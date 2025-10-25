@@ -49,7 +49,7 @@ When filing a bug report, use the bug report template and include:
 - A clear description of the issue
 - Steps to reproduce the behavior
 - Expected vs. actual behavior
-- Logs (see [wiki](https://github.com/Benji377/tooka/wiki/Configuration) for log location)
+- Logs (see [wiki](https://github.com/tooka-org/tooka/wiki/Configuration) for log location)
 - Your environment (OS, terminal, version)
 
 ### Suggesting Features
