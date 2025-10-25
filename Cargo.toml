@@ -24,6 +24,12 @@ trash = "5.2.2"
 walkdir = "2.5.0"
 rayon = "1.10.0"
 serde = {version = "1.0.219", features = ["derive"]}
+# Note: serde_yaml is deprecated, but we've chosen to continue using it because:
+# - Tooka doesn't require advanced YAML features
+# - No security vulnerabilities have been identified in the deprecated version
+# - Available alternatives (serde-yaml-ng, serde_yml, yaml-rust2, saphyr) are not mature enough
+# - The current implementation is stable and working
+# We will monitor for security issues and reassess alternatives as they mature.
 serde_yaml = "0.9.34"
 # Config, Logging and Error handling
 anyhow = "1.0.98"
