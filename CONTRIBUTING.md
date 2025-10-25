@@ -97,6 +97,13 @@ Documentation improvements are always appreciated:
    cargo fmt
    ```
 
+6. **Run performance benchmarks:**
+   ```bash
+   cargo run --release --bin performance_benchmarks
+   ```
+   
+   See [benches/README.md](benches/README.md) for details on the benchmark suite.
+
 ## Coding Guidelines
 
 ### General Principles
@@ -121,6 +128,13 @@ Documentation improvements are always appreciated:
 - Ensure all tests pass: `cargo test`
 - Add tests to the appropriate test module
 - Test edge cases and error conditions
+
+### Performance
+
+- Run benchmarks for performance-sensitive changes: `cargo run --release --bin performance_benchmarks`
+- Add new benchmarks for critical code paths (see [benches/README.md](benches/README.md))
+- Investigate performance regressions before merging
+- Document expected performance characteristics
 
 ### Commit Messages
 

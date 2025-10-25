@@ -1,57 +1,162 @@
 # Performance Benchmarks
 
-This directory contains benchmarks that demonstrate the performance improvements from the optimizations made to the Tooka codebase.
+This directory contains the performance benchmark suite for Tooka. The benchmarks help track performance across releases, identify regressions, and validate optimization improvements.
 
-## Running the Benchmarks
+## Running Benchmarks
 
-To run the performance comparison benchmark:
-
-```bash
-cargo build --release --bin performance_comparison
-./target/release/performance_comparison
-```
-
-Or simply:
+To run the complete benchmark suite:
 
 ```bash
-cargo run --release --bin performance_comparison
+cargo run --release --bin performance_benchmarks
 ```
 
-## What is Measured
+Or build and run directly:
 
-The benchmark compares three key optimizations:
+```bash
+cargo build --release --bin performance_benchmarks
+./target/release/performance_benchmarks
+```
+
+## Purpose
+
+The benchmark suite serves several key purposes:
+
+1. **Track Performance**: Monitor performance trends across releases and commits
+2. **Catch Regressions**: Identify performance degradations early in development
+3. **Validate Optimizations**: Confirm that optimizations deliver real improvements
+4. **Guide Development**: Highlight areas that would benefit from optimization
+
+## Current Benchmarks
 
 ### 1. Regex Compilation Caching
-- **Before**: Regex pattern was compiled on every template evaluation
-- **After**: Regex pattern is compiled once using `LazyLock`
-- **Impact**: ~122x faster in template processing (99.2% reduction in time)
-- **Use case**: File renaming with templates
+- **What**: Template pattern matching with compiled regex
+- **Optimization**: Regex compiled once with `LazyLock` instead of on every call
+- **Expected Impact**: 100x+ speedup in template processing
+- **Use Case**: File renaming with template patterns
 
 ### 2. Date Constant Caching
-- **Before**: `NaiveDate` objects were created on every date comparison
-- **After**: Date constants are created once using `LazyLock`
-- **Impact**: Eliminates repeated allocations in date filtering
-- **Use case**: Filtering files by creation/modification date ranges
+- **What**: Date constant creation for range comparisons
+- **Optimization**: Date constants cached with `LazyLock` instead of recreated
+- **Expected Impact**: Eliminates repeated allocations
+- **Use Case**: Filtering files by creation/modification dates
 
-### 3. String Comparison Optimization
-- **Before**: String equality comparison (`String == &str`)
-- **After**: Direct `as_str()` comparison (`&str == &str`)
-- **Impact**: ~12% faster extension matching
-- **Use case**: Hot path in file filtering by extension
+### 3. Extension Matching
+- **What**: String comparison in file extension checking
+- **Optimization**: Direct `as_str()` comparison instead of `String` equality
+- **Expected Impact**: 10-20% speedup in hot path
+- **Use Case**: File filtering by extension
 
-## Interpreting Results
+## Adding New Benchmarks
 
-The benchmarks use `std::hint::black_box` to prevent compiler optimizations from skewing results. Each test runs thousands of iterations to provide statistically significant measurements.
+To add a new benchmark to the suite:
 
-Performance gains will be most noticeable when:
-- Processing large numbers of files (1000+)
-- Using complex template patterns for renaming
-- Filtering by date ranges and multiple extensions
-- Running rules with many conditions
+### 1. Create a Benchmark Struct
+
+```rust
+struct MyNewBenchmark;
+
+impl Benchmark for MyNewBenchmark {
+    fn name(&self) -> &str {
+        "My New Benchmark"
+    }
+    
+    fn description(&self) -> &str {
+        "What this benchmark measures"
+    }
+    
+    fn run(&self) -> BenchmarkResult {
+        // Baseline implementation
+        let baseline_start = Instant::now();
+        for _ in 0..iterations {
+            // Old approach
+        }
+        let baseline_duration = baseline_start.elapsed();
+        
+        // Optimized implementation
+        let optimized_start = Instant::now();
+        for _ in 0..iterations {
+            // New approach
+        }
+        let optimized_duration = optimized_start.elapsed();
+        
+        BenchmarkResult {
+            name: self.name().to_string(),
+            description: self.description().to_string(),
+            baseline_duration,
+            optimized_duration,
+        }
+    }
+}
+```
+
+### 2. Register the Benchmark
+
+Add your benchmark to the `benchmarks` vector in `main()`:
+
+```rust
+let benchmarks: Vec<Box<dyn Benchmark>> = vec![
+    // ... existing benchmarks
+    Box::new(MyNewBenchmark),
+];
+```
+
+### 3. Document Expected Behavior
+
+Update this README with:
+- What the benchmark measures
+- The optimization being validated
+- Expected performance characteristics
+- Real-world use cases
+
+## Best Practices
+
+### When to Run Benchmarks
+
+- **Before major releases**: Ensure no performance regressions
+- **After optimization work**: Validate improvements are real
+- **During code review**: Compare performance impact of changes
+- **Periodically**: Track trends over time
+
+### Interpreting Results
+
+- **Speedup > 1.0**: Optimization is faster (good!)
+- **Speedup < 1.0**: Optimization is slower (investigate)
+- **High variance**: Test may need more iterations or better isolation
+
+### Adding Quality Benchmarks
+
+Good benchmarks should:
+- Test realistic scenarios from actual usage
+- Use `std::hint::black_box` to prevent optimization
+- Run enough iterations for stable measurements
+- Compare baseline vs optimized implementations
+- Document expected performance characteristics
+
+## Performance Tracking
+
+Consider tracking benchmark results over time:
+
+```bash
+# Run and save results with timestamp
+cargo run --release --bin performance_benchmarks > "benchmark_$(date +%Y%m%d).txt"
+```
+
+This creates a historical record for trend analysis.
+
+## CI Integration
+
+To integrate benchmarks into CI:
+
+```yaml
+- name: Run performance benchmarks
+  run: cargo run --release --bin performance_benchmarks
+```
+
+Add thresholds or comparison logic to fail CI if performance regresses significantly.
 
 ## Notes
 
-- Benchmarks are run in release mode with optimizations enabled
-- Timing may vary based on system performance
-- The regex caching optimization shows the most dramatic improvement
-- Real-world performance gains depend on usage patterns
+- Benchmarks run in release mode with full optimizations
+- Results may vary based on system load and hardware
+- Focus on relative performance (speedup) rather than absolute times
+- Use consistent hardware for meaningful comparisons across commits

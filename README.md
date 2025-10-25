@@ -36,6 +36,22 @@ You define what files to match (by name, extension, metadata, size, etc.) and wh
 
 ---
 
+## 🚀 Performance
+
+Tooka is designed for speed with:
+- Parallel file processing using Rayon
+- Optimized hot paths with cached operations
+- Comprehensive benchmark suite to track performance
+
+Run performance benchmarks:
+```bash
+cargo run --release --bin performance_benchmarks
+```
+
+See [benches/README.md](benches/README.md) for more details.
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see:

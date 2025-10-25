@@ -60,8 +60,8 @@ name = "tooka"
 path = "src/main.rs"
 
 [[bin]]
-name = "performance_comparison"
-path = "benches/performance_comparison.rs"
+name = "performance_benchmarks"
+path = "benches/performance_benchmarks.rs"
 
 
 [package.metadata.packager]
